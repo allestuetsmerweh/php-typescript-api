@@ -1,0 +1,16 @@
+{
+    "name": "allestuetsmerweh/php-typescript-api",
+    "type": "library",
+    "description": "Build a typed Web API using PHP and TypeScript",
+    "keywords": ["PHP","TypeScript","API"],
+    "homepage": "https://github.com/allestuetsmerweh/php-typescript-api",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Simon Hatt",
+            "email": "simon+github@hatt.style",
+            "homepage": "https://hatt.style",
+            "role": "Developer"
+        }
+    ]
+}
