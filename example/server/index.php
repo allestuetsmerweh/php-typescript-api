@@ -1,6 +1,6 @@
 <?php
 
-echo <<<ZZZZZZZZZZ
+echo <<<'ZZZZZZZZZZ'
 <!DOCTYPE html>
 <html lang='de'>
 <head>
