@@ -1,8 +1,7 @@
 <?php
 
-require_once __DIR__.'/../../../lib/api/Endpoint.php';
-require_once __DIR__.'/../../../lib/fields/types/NumberField.php';
-require_once __DIR__.'/../../../lib/fields/types/ObjectField.php';
+use PhpTypeScriptApi\Api\Endpoint;
+use PhpTypeScriptApi\Fields\FieldTypes;
 
 class ZeroDivisionException extends Exception {
     public function __construct() {
@@ -20,14 +19,14 @@ class DivideNumbersEndpoint extends Endpoint {
     }
 
     public function getResponseField() {
-        return new NumberField([]);
+        return new FieldTypes\NumberField([]);
     }
 
     public function getRequestField() {
-        return new ObjectField([
+        return new FieldTypes\ObjectField([
             'field_structure' => [
-                'dividend' => new NumberField([]),
-                'divisor' => new NumberField([]),
+                'dividend' => new FieldTypes\NumberField([]),
+                'divisor' => new FieldTypes\NumberField([]),
             ],
         ]);
     }

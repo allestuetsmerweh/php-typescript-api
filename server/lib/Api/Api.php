@@ -2,7 +2,11 @@
 
 namespace PhpTypeScriptApi\Api;
 
+require_once __DIR__.'/HttpError.php';
+
 class Api {
+    use \Psr\Log\LoggerAwareTrait;
+
     protected $endpoints = [];
 
     public function registerEndpoint($name, $get_instance) {
@@ -54,5 +58,52 @@ class Api {
         $typescript_output .= "{$typescript_request_types}\n";
         $typescript_output .= "{$typescript_response_types}\n";
         return $typescript_output;
+    }
+
+    public function serve() {
+        global $_SERVER;
+        try {
+            if ($this->logger) {
+                $handler = new \Monolog\ErrorHandler($this->logger);
+                $handler->registerErrorHandler();
+                $handler->registerExceptionHandler();
+            }
+            $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
+            if (!isset($this->endpoints[$endpoint_name])) {
+                throw new HttpError(400, 'Invalid endpoint');
+            }
+            $endpoint = $this->endpoints[$endpoint_name]();
+            if ($this->logger) {
+                $endpoint->setLogger($this->logger);
+            } else {
+                $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
+            }
+            $endpoint->setup();
+            $input = $endpoint->parseInput();
+            $result = $endpoint->call($input);
+            return $this->respond(200, $result);
+        } catch (HttpError $httperr) {
+            return $this->respond(
+                $httperr->getCode(),
+                $httperr->getStructuredAnswer()
+            );
+        }
+    }
+
+    protected function getSanitizedEndpointName($path_info) {
+        $has_path_info = preg_match(
+            '/^\/([a-zA-Z0-9]+)$/',
+            $path_info,
+            $path_info_matches
+        );
+        if (!$has_path_info) {
+            throw new HttpError(400, 'No path info');
+        }
+        return $path_info_matches[1];
+    }
+
+    protected function respond($http_code, $response) {
+        http_response_code($http_code);
+        exit(json_encode($response));
     }
 }

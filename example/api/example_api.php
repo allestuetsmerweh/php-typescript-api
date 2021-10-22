@@ -1,8 +1,10 @@
 <?php
 
-require_once __DIR__.'/../../lib/api/PhpTypeScriptApi.php';
+use PhpTypeScriptApi\Api\Api;
 
-$example_api = new PhpTypeScriptApi();
+require_once __DIR__.'/autoload.php';
+
+$example_api = new Api();
 $example_api->registerEndpoint('divideNumbers', function () {
     require_once __DIR__.'/endpoints/DivideNumbersEndpoint.php';
     return new DivideNumbersEndpoint();
