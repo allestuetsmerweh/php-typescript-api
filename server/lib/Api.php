@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpTypeScriptApi\Api;
+namespace PhpTypeScriptApi;
 
 require_once __DIR__.'/HttpError.php';
 
@@ -62,13 +62,17 @@ class Api {
 
     public function serve() {
         global $_SERVER;
+        $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
+        $this->serveEndpoint($endpoint_name);
+    }
+
+    protected function serveEndpoint($endpoint_name) {
         try {
             if ($this->logger) {
                 $handler = new \Monolog\ErrorHandler($this->logger);
                 $handler->registerErrorHandler();
                 $handler->registerExceptionHandler();
             }
-            $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
             if (!isset($this->endpoints[$endpoint_name])) {
                 throw new HttpError(400, 'Invalid endpoint');
             }

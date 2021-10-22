@@ -1,6 +1,6 @@
 <?php
 
-use PhpTypeScriptApi\Api\Endpoint;
+use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 
 class ZeroDivisionException extends Exception {

@@ -3,12 +3,13 @@
 declare(strict_types=1);
 
 use Monolog\Logger;
-use PhpTypeScriptApi\Api;
+use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
+use PhpTypeScriptApi\HttpError;
 
-require_once __DIR__.'/../_common/UnitTestCase.php';
+require_once __DIR__.'/_common/UnitTestCase.php';
 
-class FakeEndpoint extends Api\Endpoint {
+class FakeEndpoint extends Endpoint {
     public $handled_with_input;
     public $handled_with_resource;
     public $handle_with_output;
@@ -29,14 +30,6 @@ class FakeEndpoint extends Api\Endpoint {
         return new FieldTypes\Field(['allow_null' => true]);
     }
 
-    public function getSession() {
-        return $this->session;
-    }
-
-    public function getServer() {
-        return $this->server;
-    }
-
     protected function handle($input) {
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
@@ -44,7 +37,7 @@ class FakeEndpoint extends Api\Endpoint {
     }
 }
 
-class FakeEndpointWithErrors extends Api\Endpoint {
+class FakeEndpointWithErrors extends Endpoint {
     public $handle_with_throttling;
     public $handle_with_error;
     public $handle_with_http_error;
@@ -71,7 +64,7 @@ class FakeEndpointWithErrors extends Api\Endpoint {
             throw new Exception("Fake Error", 1);
         }
         if ($this->handle_with_http_error) {
-            throw new Api\HttpError(418, "I'm a teapot");
+            throw new HttpError(418, "I'm a teapot");
         }
         return $this->handle_with_output;
     }
@@ -79,7 +72,7 @@ class FakeEndpointWithErrors extends Api\Endpoint {
 
 /**
  * @internal
- * @covers \PhpTypeScriptApi\Api\Endpoint
+ * @covers \PhpTypeScriptApi\Endpoint
  */
 final class EndpointTest extends UnitTestCase {
     public function testFakeEndpoint(): void {
@@ -87,13 +80,11 @@ final class EndpointTest extends UnitTestCase {
         $logger = new Logger('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->handle_with_output = 'test_output';
-        $endpoint->setServer($fake_server);
         $endpoint->setLogger($logger);
         $result = $endpoint->call(null);
         $this->assertSame(null, $endpoint->handled_with_input);
         $this->assertSame('test_output', $result);
         $this->assertSame('fake_resource', $endpoint->handled_with_resource);
-        $this->assertSame($fake_server, $endpoint->getServer());
     }
 
     public function testFakeEndpointParseInput(): void {
@@ -129,7 +120,7 @@ final class EndpointTest extends UnitTestCase {
         try {
             $result = $endpoint->call(null);
             $this->fail('Error expected');
-        } catch (Api\HttpError $err) {
+        } catch (HttpError $err) {
             $this->assertSame(429, $err->getCode());
         }
     }
@@ -141,7 +132,7 @@ final class EndpointTest extends UnitTestCase {
         try {
             $result = $endpoint->call(null);
             $this->fail('Error expected');
-        } catch (Api\HttpError $err) {
+        } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
         }
     }
@@ -154,7 +145,7 @@ final class EndpointTest extends UnitTestCase {
         try {
             $result = $endpoint->call('test');
             $this->fail('Error expected');
-        } catch (Api\HttpError $err) {
+        } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
         }
     }
@@ -167,7 +158,7 @@ final class EndpointTest extends UnitTestCase {
         try {
             $result = $endpoint->call('test');
             $this->fail('Error expected');
-        } catch (Api\HttpError $err) {
+        } catch (HttpError $err) {
             $this->assertSame(418, $err->getCode());
         }
     }
@@ -181,7 +172,7 @@ final class EndpointTest extends UnitTestCase {
         try {
             $result = $endpoint->call('test');
             $this->fail('Error expected');
-        } catch (Api\HttpError $err) {
+        } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
         }
     }

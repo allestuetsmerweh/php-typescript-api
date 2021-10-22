@@ -24,7 +24,7 @@
     "scripts": {
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
-        "test": "composer unit_tests && composer backend_tests",
+        "test": "phpunit server/tests example_tests/backend_tests",
         "backend_tests": "phpunit example_tests/backend_tests",
         "unit_tests": "phpunit server/tests/unit_tests"
     },

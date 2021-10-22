@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpTypeScriptApi\Api;
+namespace PhpTypeScriptApi;
 
 class HttpError extends \Exception {
     public function __construct($http_status_code, $message, \Exception $previous = null) {

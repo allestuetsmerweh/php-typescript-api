@@ -1,6 +1,6 @@
 <?php
 
-namespace PhpTypeScriptApi\Api;
+namespace PhpTypeScriptApi;
 
 use PhpTypeScriptApi\Fields;
 

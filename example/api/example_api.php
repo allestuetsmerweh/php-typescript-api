@@ -1,6 +1,6 @@
 <?php
 
-use PhpTypeScriptApi\Api\Api;
+use PhpTypeScriptApi\Api;
 
 require_once __DIR__.'/autoload.php';
 
