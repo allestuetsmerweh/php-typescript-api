@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi;
 
-use PhpTypeScriptApi\Fields;
-
 require_once __DIR__.'/HttpError.php';
 
 abstract class Endpoint {

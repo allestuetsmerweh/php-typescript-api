@@ -13,6 +13,11 @@
             "role": "Developer"
         }
     ],
+    "config": {
+        "platform": {
+            "php": "7.4"
+        }
+    },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^2.16",
         "phpunit/phpunit": "^9"
@@ -24,6 +29,7 @@
     "scripts": {
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
+        "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
         "test": "phpunit server/tests example_tests/backend_tests",
         "backend_tests": "phpunit example_tests/backend_tests",
         "unit_tests": "phpunit server/tests/unit_tests"

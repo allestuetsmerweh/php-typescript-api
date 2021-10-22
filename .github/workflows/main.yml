@@ -1,0 +1,57 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  run-tests:
+    strategy:
+      matrix:
+        # see https://www.php.net/supported-versions.php
+        php-version: ['7.4', '8.0']
+    name: Tests (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php-version }}
+    - name: Get composer cache directory
+      id: composer-cache
+      run: echo "::set-output name=dir::$(composer config cache-files-dir)"
+    - name: Cache dependencies
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.composer-cache.outputs.dir }}
+        key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: ${{ runner.os }}-composer-
+    - name: Install dependencies
+      run: composer install --prefer-dist
+    # - name: Get npm cache directory
+    #   id: npm-cache
+    #   run: |
+    #     echo "::set-output name=dir::$(npm config get cache)"
+    # - uses: actions/cache@v1
+    #   with:
+    #     path: ${{ steps.npm-cache.outputs.dir }}
+    #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+    #     restore-keys: |
+    #       ${{ runner.os }}-node-
+    # - name: Install JavaScript dependencies
+    #   run: npm install
+    - name: Code style check
+      run: composer fixdiff
+    # - name: Lint JavaScript & TypeScript
+    #   run: npm run eslint
+    # - name: Lint CSS & SCSS
+    #   run: npm run stylelint
+    # - name: Compile TypeScript
+    #   run: npm run tsc
+    # - name: Jest Unit Tests
+    #   run: npm run jest-ci
+    - name: PHP Unit Tests
+      run: composer unit_test; cat ./php-coverage/coverage.txt || echo "no coverage!"
+    # - name: PHP Example Tests
+    #   run: composer backend_tests

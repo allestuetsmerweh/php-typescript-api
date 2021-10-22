@@ -39,12 +39,13 @@ class ExampleBackendTestCase extends TestCase {
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         $output = curl_exec($ch);
+        $result = $output ? json_decode($output, true) : null;
         $error = curl_error($ch);
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         return [
             'output' => $output,
-            'result' => json_decode($output, true),
+            'result' => $result,
             'error' => $error,
             'http_code' => $http_code,
         ];
