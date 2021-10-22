@@ -1,0 +1,9 @@
+# PHP tooling
+/server/vendor
+/server/php-coverage
+/server/.php_cs.cache
+/server/.phpunit.result.cache
+
+# JavaScript/Typescript tooling
+/client/node_modules/
+/example/node_modules/

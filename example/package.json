@@ -1,0 +1,28 @@
+{
+  "name": "php-typescript-api-example",
+  "version": "1.0.0",
+  "description": "Example use of the PHP TypeScript API",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/allestuetsmerweh/php-typescript-api.git"
+  },
+  "keywords": [
+    "PHP",
+    "TypeScript",
+    "API",
+    "example"
+  ],
+  "author": "Simon Hatt",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/allestuetsmerweh/php-typescript-api/issues"
+  },
+  "homepage": "https://github.com/allestuetsmerweh/php-typescript-api#readme",
+  "dependencies": {
+    "typescript": "^4.4.4"
+  }
+}
