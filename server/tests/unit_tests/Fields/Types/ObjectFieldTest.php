@@ -175,7 +175,8 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'one' => [['.' => ["Feld darf nicht leer sein."]]],
+                'one' => ["Fehlender Schlüssel 'one'."],
+                'three' => ["Fehlender Schlüssel 'three'."],
                 '.' => ["Überflüssiger Schlüssel 'additional_key'."],
             ],
             $field->getValidationErrors([
@@ -183,13 +184,19 @@ final class ObjectFieldTest extends UnitTestCase {
                 'additional_key' => 'WTF?',
             ])
         );
-        $this->assertSame([], $field->getValidationErrors([
-            'one' => 'foo',
-            'two' => 'bar',
-        ]));
+        $this->assertSame(
+            [
+                'three' => ["Fehlender Schlüssel 'three'."],
+            ],
+            $field->getValidationErrors([
+                'one' => 'foo',
+                'two' => 'bar',
+            ])
+        );
         $this->assertSame([
-            'one' => [['.' => ["Feld darf nicht leer sein."]]],
-            'two' => [['.' => ["Feld darf nicht leer sein."]]],
+            'one' => ["Fehlender Schlüssel 'one'."],
+            'two' => ["Fehlender Schlüssel 'two'."],
+            'three' => ["Fehlender Schlüssel 'three'."],
         ], $field->getValidationErrors([]));
         $this->assertSame(
             ['.' => ["Wert muss ein Objekt sein."]],
@@ -208,7 +215,7 @@ final class ObjectFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'test' => [['.' => ["Feld darf nicht leer sein."]]],
+                'test' => ["Fehlender Schlüssel 'test'."],
                 '.' => ["Überflüssiger Schlüssel 'additional_key'."],
             ],
             $field->getValidationErrors(['additional_key' => 'WTF?'])
@@ -222,7 +229,7 @@ final class ObjectFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(['test' => 'foo']));
         $this->assertSame(
             [
-                'test' => [['.' => ["Feld darf nicht leer sein."]]],
+                'test' => ["Fehlender Schlüssel 'test'."],
             ],
             $field->getValidationErrors([])
         );
