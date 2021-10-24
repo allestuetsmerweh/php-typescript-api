@@ -30,11 +30,15 @@ class ObjectField extends Field {
                 return $validation_result;
             }
             foreach ($this->field_structure as $key => $field) {
-                $item_value = $value[$key] ?? null;
-                $item_result = $field->validate($item_value);
-                if (!$item_result->isValid()) {
-                    $item_errors = $item_result->getErrors();
-                    $validation_result->recordErrorInKey($key, $item_errors);
+                if (array_key_exists($key, $value)) {
+                    $item_value = $value[$key];
+                    $item_result = $field->validate($item_value);
+                    if (!$item_result->isValid()) {
+                        $item_errors = $item_result->getErrors();
+                        $validation_result->recordErrorInKey($key, $item_errors);
+                    }    
+                } else {
+                    $validation_result->recordErrorInKey($key, "Fehlender Schlüssel '{$key}'.");
                 }
             }
             foreach ($value as $key => $item_value) {
