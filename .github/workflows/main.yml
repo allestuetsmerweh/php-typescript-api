@@ -29,28 +29,28 @@ jobs:
         restore-keys: ${{ runner.os }}-composer-
     - name: Install dependencies
       run: composer install --prefer-dist
-    # - name: Get npm cache directory
-    #   id: npm-cache
-    #   run: |
-    #     echo "::set-output name=dir::$(npm config get cache)"
-    # - uses: actions/cache@v1
-    #   with:
-    #     path: ${{ steps.npm-cache.outputs.dir }}
-    #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-    #     restore-keys: |
-    #       ${{ runner.os }}-node-
-    # - name: Install JavaScript dependencies
-    #   run: npm install
+    - name: Get npm cache directory
+      id: npm-cache
+      run: |
+        echo "::set-output name=dir::$(npm config get cache)"
+    - uses: actions/cache@v1
+      with:
+        path: ${{ steps.npm-cache.outputs.dir }}
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    - name: Install JavaScript dependencies
+      run: npm install
     - name: Code style check
       run: composer fixdiff
-    # - name: Lint JavaScript & TypeScript
-    #   run: npm run eslint
-    # - name: Lint CSS & SCSS
-    #   run: npm run stylelint
-    # - name: Compile TypeScript
-    #   run: npm run tsc
-    # - name: Jest Unit Tests
-    #   run: npm run jest-ci
+    - name: Lint JavaScript & TypeScript
+      run: npm run lint
+    - name: Build API
+      run: php ./example/api/generate.php
+    - name: Compile TypeScript
+      run: npm run tsc
+    - name: Jest Unit Tests
+      run: npm run test-ci
     - name: PHP Unit Tests
       run: composer unit_test; cat ./php-coverage/coverage.txt || echo "no coverage!"
     # - name: PHP Example Tests

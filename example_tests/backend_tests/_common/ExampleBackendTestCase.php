@@ -9,7 +9,7 @@ use PHPUnit\Framework\TestCase;
  * @coversNothing
  */
 class ExampleBackendTestCase extends TestCase {
-    public const BACKEND_URL = 'http://127.0.0.1:31270/example_api_server.php';
+    public const BACKEND_URL = 'http://127.0.0.1:30270/example_api_server.php';
 
     private static $initial_dir;
     private static $process;

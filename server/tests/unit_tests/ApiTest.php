@@ -107,12 +107,11 @@ export type SampleExport1 = any;
 export type SampleExport2 = any;
 
 // eslint-disable-next-line no-shadow
-export enum FakeApiEndpoint {
-    fakeEndpoint1 = 'fakeEndpoint1',
-    fakeEndpoint2 = 'fakeEndpoint2',
-}
+export type FakeApiEndpoint =
+    'fakeEndpoint1'|
+    'fakeEndpoint2';
 
-type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: {[fieldId: string]: any}};
+type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: any};
 
 export interface FakeApiRequests extends FakeApiEndpointMapping {
     fakeEndpoint1: any,

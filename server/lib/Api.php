@@ -16,17 +16,17 @@ class Api {
     public function getTypeScriptDefinition($name) {
         $typescript_output = "/** ### This file is auto-generated, modifying is futile! ### */\n\n";
         $typescript_exported_types = '';
-        $typescript_endpoint_enum = '';
+        $typescript_endpoint_symbols = '';
         $typescript_request_types = '';
         $typescript_response_types = '';
 
-        $typescript_endpoint_enum .= "// eslint-disable-next-line no-shadow\n";
-        $typescript_endpoint_enum .= "export enum {$name}Endpoint {\n";
+        $typescript_endpoint_symbols .= "// eslint-disable-next-line no-shadow\n";
+        $typescript_endpoint_symbols .= "export type {$name}Endpoint =\n";
         $typescript_request_types .= "export interface {$name}Requests extends {$name}EndpointMapping {\n";
         $typescript_response_types .= "export interface {$name}Responses extends {$name}EndpointMapping {\n";
         foreach ($this->endpoints as $endpoint_name => $endpoint_definition) {
             $endpoint = $endpoint_definition();
-            $typescript_endpoint_enum .= "    {$endpoint_name} = '{$endpoint_name}',\n";
+            $typescript_endpoint_symbols .= "    '{$endpoint_name}'|\n";
 
             $typescript_request_types .= "    {$endpoint_name}: ";
             $request_field = $endpoint->getRequestField();
@@ -48,13 +48,14 @@ class Api {
             $typescript_response_types .= $indented_response_type;
             $typescript_response_types .= ",\n";
         }
-        $typescript_endpoint_enum .= "}\n";
+        $typescript_endpoint_symbols = substr($typescript_endpoint_symbols, 0, -2);
+        $typescript_endpoint_symbols .= ";\n";
         $typescript_request_types .= "}\n";
         $typescript_response_types .= "}\n";
 
         $typescript_output .= "{$typescript_exported_types}\n";
-        $typescript_output .= "{$typescript_endpoint_enum}\n";
-        $typescript_output .= "type {$name}EndpointMapping = {[key in {$name}Endpoint]: {[fieldId: string]: any}};\n\n";
+        $typescript_output .= "{$typescript_endpoint_symbols}\n";
+        $typescript_output .= "type {$name}EndpointMapping = {[key in {$name}Endpoint]: any};\n\n";
         $typescript_output .= "{$typescript_request_types}\n";
         $typescript_output .= "{$typescript_response_types}\n";
         return $typescript_output;

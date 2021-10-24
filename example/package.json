@@ -2,9 +2,12 @@
   "name": "php-typescript-api-example",
   "version": "1.0.0",
   "description": "Example use of the PHP TypeScript API",
-  "main": "index.ts",
+  "main": "server/index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "tsc": "tsc",
+    "webpack-build": "webpack --mode='production'",
+    "webpack-watch": "webpack --mode='development' --watch"
   },
   "repository": {
     "type": "git",
@@ -22,7 +25,10 @@
     "url": "https://github.com/allestuetsmerweh/php-typescript-api/issues"
   },
   "homepage": "https://github.com/allestuetsmerweh/php-typescript-api#readme",
-  "dependencies": {
-    "typescript": "^4.4.4"
+  "devDependencies": {
+    "ts-loader": "^9.2.6",
+    "typescript": "^4.4.4",
+    "webpack": "^5.59.1",
+    "webpack-cli": "^4.9.1"
   }
 }
