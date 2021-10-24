@@ -93,13 +93,8 @@ class FakeApiTestApi extends Api {
  */
 final class ApiTest extends UnitTestCase {
     public function testApiGetTypeScriptDefinition(): void {
-        $fake_api = new Api();
-        $fake_api->registerEndpoint('fakeEndpoint1', function () {
-            return new FakeApiTestEndpoint1('fake-resource');
-        });
-        $fake_api->registerEndpoint('fakeEndpoint2', function () {
-            return new FakeApiTestEndpoint2('fake-resource');
-        });
+        $fake_api = $this->getFakeApi();
+
         $expected_output = <<<'ZZZZZZZZZZ'
 /** ### This file is auto-generated, modifying is futile! ### */
 
@@ -125,7 +120,31 @@ export interface FakeApiResponses extends FakeApiEndpointMapping {
 
 
 ZZZZZZZZZZ;
-        $this->assertSame($expected_output, $fake_api->getTypeScriptDefinition('FakeApi'));
+        $this->assertSame(
+            $expected_output,
+            $fake_api->getTypeScriptDefinition('FakeApi')
+        );
+    }
+
+    public function testApiGetEndpointNames(): void {
+        $fake_api = $this->getFakeApi();
+        $this->assertSame(
+            ['fakeEndpoint1', 'fakeEndpoint2'],
+            $fake_api->getEndpointNames()
+        );
+    }
+
+    public function testApiGetEndpointByName(): void {
+        $fake_api = $this->getFakeApi();
+        $fake_endpoint_2 = $fake_api->getEndpointByName('fakeEndpoint2');
+        $this->assertSame(true, $fake_endpoint_2 instanceof FakeApiTestEndpoint2);
+        $this->assertSame('fake-resource', $fake_endpoint_2->resource);
+    }
+
+    public function testApiGetInexistentEndpointByName(): void {
+        $fake_api = $this->getFakeApi();
+        $inexistent_endpoint = $fake_api->getEndpointByName('inexistent');
+        $this->assertSame(null, $inexistent_endpoint);
     }
 
     public function testApiGetSanitizedEndpointName(): void {
@@ -167,5 +186,16 @@ ZZZZZZZZZZ;
         );
         $this->assertSame([], $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+    }
+
+    protected function getFakeApi() {
+        $fake_api = new Api();
+        $fake_api->registerEndpoint('fakeEndpoint1', function () {
+            return new FakeApiTestEndpoint1('fake-resource');
+        });
+        $fake_api->registerEndpoint('fakeEndpoint2', function () {
+            return new FakeApiTestEndpoint2('fake-resource');
+        });
+        return $fake_api;
     }
 }

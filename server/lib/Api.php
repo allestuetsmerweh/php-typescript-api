@@ -61,6 +61,18 @@ class Api {
         return $typescript_output;
     }
 
+    public function getEndpointNames() {
+        return array_keys($this->endpoints);
+    }
+
+    public function getEndpointByName($name) {
+        $get_endpoint_function = $this->endpoints[$name] ?? null;
+        if (!$get_endpoint_function) {
+            return null;
+        }
+        return $get_endpoint_function();
+    }
+
     public function serve() {
         global $_SERVER;
         $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);

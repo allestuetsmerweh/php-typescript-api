@@ -30,9 +30,9 @@
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
-        "test": "phpunit server/tests example_tests/backend_tests",
-        "backend_tests": "phpunit example_tests/backend_tests",
-        "unit_tests": "phpunit server/tests/unit_tests"
+        "test": "phpunit server/tests example_tests/backend_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";",
+        "backend_tests": "phpunit example_tests/backend_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";",
+        "unit_tests": "phpunit server/tests/unit_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";"
     },
     "autoload": {
         "psr-4": {
