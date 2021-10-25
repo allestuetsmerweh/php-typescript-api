@@ -1,11 +1,11 @@
 {
   "name": "php-typescript-api",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Build a typed Web API using PHP and TypeScript",
   "main": "client/lib/index.ts",
   "directories": {
-    "lib": "lib",
-    "test": "tests"
+    "lib": "client/lib",
+    "test": "client/tests"
   },
   "scripts": {
     "eslint": "eslint ./ --fix",

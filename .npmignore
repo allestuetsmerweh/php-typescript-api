@@ -1,0 +1,17 @@
+/.github/
+/coverage/
+/example/
+/example_tests/
+/php-coverage/
+/server/
+/tscbuild/
+/vendor/
+/.editorconfig
+/.eslintignore
+/.eslintrc.js
+/.php_cs_config.php
+/composer.json
+/composer.lock
+/jest.config.js
+/phpunit.xml
+/tsconfig.json
