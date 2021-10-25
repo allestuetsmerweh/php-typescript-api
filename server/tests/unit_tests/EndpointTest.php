@@ -91,7 +91,9 @@ final class EndpointTest extends UnitTestCase {
         global $_GET, $_POST;
         $_GET = ['get_param' => json_encode('got')];
         $_POST = ['post_param' => json_encode('posted')];
+        $logger = new Logger('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
+        $endpoint->setLogger($logger);
         $parsed_input = $endpoint->parseInput();
         $this->assertSame(['post_param' => 'posted', 'get_param' => 'got'], $parsed_input);
     }

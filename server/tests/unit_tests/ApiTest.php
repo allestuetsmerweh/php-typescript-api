@@ -184,7 +184,7 @@ ZZZZZZZZZZ;
             [['http_code' => 200, 'response' => 'fake-output']],
             $fake_api->responses
         );
-        $this->assertSame([], $fake_endpoint->handled_with_input);
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
     }
 

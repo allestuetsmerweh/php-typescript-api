@@ -208,11 +208,11 @@ describe('Api', () => {
         const nullValidationError = new ValidationError('', {});
 
         function expectValidationErrorsEqual(
-            expectError: ValidationError<any, any>,
-            toEqualError: ValidationError<any, any>,
+            expectError: ValidationError,
+            toEqualError: ValidationError,
         ) {
             expect(expectError.message).toEqual(toEqualError.message);
-            expect(expectError.getValidationErrors()).toEqual(toEqualError.getValidationErrors());
+            expect(expectError.getErrorsByField()).toEqual(toEqualError.getErrorsByField());
         }
 
         it('merges empty list of errors', () => {

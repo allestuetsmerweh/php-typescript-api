@@ -1,6 +1,6 @@
 {
     "name": "allestuetsmerweh/php-typescript-api",
-    "version": "1.0.5",
+    "version": "1.0.6",
     "type": "library",
     "description": "Build a typed Web API using PHP and TypeScript",
     "keywords": ["PHP","TypeScript","API"],
@@ -31,9 +31,9 @@
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
-        "test": "phpunit server/tests example_tests/backend_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";",
-        "backend_tests": "phpunit example_tests/backend_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";",
-        "unit_tests": "phpunit server/tests/unit_tests; echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\";"
+        "test": "phpunit server/tests example_tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "backend_tests": "phpunit example_tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "unit_tests": "phpunit server/tests/unit_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\""
     },
     "autoload": {
         "psr-4": {

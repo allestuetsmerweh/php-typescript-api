@@ -13,12 +13,12 @@ describe('ValidationError', () => {
             validationErrors,
         );
         expect(validationError.message).toEqual('Validation failed');
-        expect(validationError.getValidationErrors()).toEqual(validationErrors);
+        expect(validationError.getErrorsByField()).toEqual(validationErrors);
     });
 
     it('works for empty message', () => {
         const validationError = new ValidationError('', {});
         expect(validationError.message).toEqual('');
-        expect(validationError.getValidationErrors()).toEqual({});
+        expect(validationError.getErrorsByField()).toEqual({});
     });
 });

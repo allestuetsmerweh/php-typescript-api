@@ -37,27 +37,27 @@ export abstract class Api<
     }
 
     public mergeValidationErrors(
-        validationErrors: ValidationError<Endpoints, Requests>[],
-    ): ValidationError<Endpoints, Requests> {
-        const initialValidationErrors = {} as ErrorsByField<Endpoints, Requests>;
-        let merged = new ValidationError<Endpoints, Requests>('', initialValidationErrors);
+        validationErrors: ValidationError[],
+    ): ValidationError {
+        const initialValidationErrors = {} as ErrorsByField;
+        let merged = new ValidationError('', initialValidationErrors);
         for (const validationError of validationErrors) {
             const newMessage = validationError.message
                 ? merged.message + (merged.message ? '\n' : '') + validationError.message
                 : merged.message;
             // TODO: Deep merge (concat errors if key present in both dicts)
             const newValidationErrors = {
-                ...merged.getValidationErrors(),
-                ...validationError.getValidationErrors(),
+                ...merged.getErrorsByField(),
+                ...validationError.getErrorsByField(),
             };
-            merged = new ValidationError<Endpoints, Requests>(newMessage, newValidationErrors);
+            merged = new ValidationError(newMessage, newValidationErrors);
         }
         return merged;
     }
 
     public getValidationErrorFromResponseText(
         responseText?: string,
-    ): ValidationError<Endpoints, Requests>|undefined {
+    ): ValidationError|undefined {
         if (!responseText) {
             return undefined;
         }
@@ -78,6 +78,6 @@ export abstract class Api<
         if (!validationErrors) {
             throw new Error(`Validation error missing errors: ${structuredError}`);
         }
-        return new ValidationError<Endpoints, Requests>(message, validationErrors);
+        return new ValidationError(message, validationErrors);
     }
 }
