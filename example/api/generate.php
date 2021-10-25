@@ -6,3 +6,5 @@ file_put_contents(
     __DIR__.'/../web/ExampleApiTypes.ts',
     $example_api->getTypeScriptDefinition('ExampleApi')
 );
+
+echo "\nExample API types generated 🎉\n\n";

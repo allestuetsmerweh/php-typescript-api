@@ -9,4 +9,8 @@ $example_api->registerEndpoint('divideNumbers', function () {
     require_once __DIR__.'/endpoints/DivideNumbersEndpoint.php';
     return new DivideNumbersEndpoint();
 });
+$example_api->registerEndpoint('squareRoot', function () {
+    require_once __DIR__.'/endpoints/SquareRootEndpoint.php';
+    return new SquareRootEndpoint();
+});
 return $example_api;

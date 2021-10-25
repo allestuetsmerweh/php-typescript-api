@@ -1,4 +1,5 @@
 import fetch from 'unfetch';
+import {ErrorsByField, ValidationError} from './ValidationError';
 
 export abstract class Api<
     Endpoints extends string,
@@ -22,6 +23,61 @@ export abstract class Api<
             },
             body: JSON.stringify(request),
         })
-            .then((r) => r.json());
+            .then(async (response) => {
+                const responseText = await response.text();
+                const error = this.getValidationErrorFromResponseText(responseText);
+                if (error) {
+                    throw error;
+                }
+                if (!response.ok && !error) {
+                    throw new Error('Ein Fehler ist aufgetreten. Bitte später nochmals versuchen.');
+                }
+                return response.json() as Responses[T];
+            });
+    }
+
+    public mergeValidationErrors(
+        validationErrors: ValidationError<Endpoints, Requests>[],
+    ): ValidationError<Endpoints, Requests> {
+        const initialValidationErrors = {} as ErrorsByField<Endpoints, Requests>;
+        let merged = new ValidationError<Endpoints, Requests>('', initialValidationErrors);
+        for (const validationError of validationErrors) {
+            const newMessage = validationError.message
+                ? merged.message + (merged.message ? '\n' : '') + validationError.message
+                : merged.message;
+            // TODO: Deep merge (concat errors if key present in both dicts)
+            const newValidationErrors = {
+                ...merged.getValidationErrors(),
+                ...validationError.getValidationErrors(),
+            };
+            merged = new ValidationError<Endpoints, Requests>(newMessage, newValidationErrors);
+        }
+        return merged;
+    }
+
+    public getValidationErrorFromResponseText(
+        responseText?: string,
+    ): ValidationError<Endpoints, Requests>|undefined {
+        if (!responseText) {
+            return undefined;
+        }
+        let structuredError;
+        try {
+            structuredError = JSON.parse(responseText);
+        } catch (e: unknown) {
+            return undefined;
+        }
+        if (structuredError?.error?.type !== 'ValidationError') {
+            return undefined;
+        }
+        const message = structuredError.message;
+        const validationErrors = structuredError.error.validationErrors;
+        if (!message) {
+            throw new Error(`Validation error missing message: ${structuredError}`);
+        }
+        if (!validationErrors) {
+            throw new Error(`Validation error missing errors: ${structuredError}`);
+        }
+        return new ValidationError<Endpoints, Requests>(message, validationErrors);
     }
 }

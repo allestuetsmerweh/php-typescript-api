@@ -2,10 +2,11 @@
 
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
+use PhpTypeScriptApi\Fields\ValidationError;
 
-class ZeroDivisionException extends Exception {
-    public function __construct() {
-        parent::__construct("Cannot divide by zero.");
+class ZeroDivisionException extends ValidationError {
+    public function __construct($field) {
+        parent::__construct([$field => ["Cannot divide by zero."]]);
     }
 }
 
@@ -35,7 +36,7 @@ class DivideNumbersEndpoint extends Endpoint {
         $dividend = $input['dividend'];
         $divisor = $input['divisor'];
         if ($divisor === 0 || $divisor === 0.0) {
-            throw new ZeroDivisionException();
+            throw new ZeroDivisionException('divisor');
         }
         return $dividend / $divisor;
     }

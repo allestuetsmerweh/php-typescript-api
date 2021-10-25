@@ -15,6 +15,13 @@ echo <<<'ZZZZZZZZZZ'
         <input type='submit' value='Calculate' />
         <input type='text' name='result' readonly />
     </form>
+    <hr />
+    <h2>Square root</h2>
+    <form onsubmit='return example.submitSqrtForm(this)'>
+        <input type='text' name='input' />
+        <input type='submit' value='Calculate' />
+        <input type='text' name='result' readonly />
+    </form>
 </body>
 </html>
 ZZZZZZZZZZ;
