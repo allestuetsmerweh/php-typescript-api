@@ -36,7 +36,7 @@ class ObjectField extends Field {
                     if (!$item_result->isValid()) {
                         $item_errors = $item_result->getErrors();
                         $validation_result->recordErrorInKey($key, $item_errors);
-                    }    
+                    }
                 } else {
                     $validation_result->recordErrorInKey($key, "Fehlender Schlüssel '{$key}'.");
                 }
