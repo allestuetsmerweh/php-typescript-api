@@ -1,9 +1,10 @@
 /* eslint-env node */
 
 const path = require('path');
+const WebpackShellPluginNext = require('webpack-shell-plugin-next');
 
 module.exports = {
-    entry: './example/web/index.ts',
+    entry: './web/index.ts',
     devtool: 'inline-source-map',
     module: {
         rules: [
@@ -17,9 +18,18 @@ module.exports = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js'],
     },
+    plugins: [
+        new WebpackShellPluginNext({
+            onBuildStart: {
+                scripts: ['php ./api/generate.php'],
+                blocking: true,
+                parallel: false,
+            },
+        }),
+    ],
     output: {
         filename: 'example.js',
-        path: path.resolve(__dirname, 'example', 'web', 'dist'),
+        path: path.resolve(__dirname, 'web', 'dist'),
         library: 'example',
     },
 };

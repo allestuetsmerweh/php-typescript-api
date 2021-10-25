@@ -36,23 +36,16 @@ abstract class Endpoint {
     /** Override to handle custom requests. */
     public function parseInput() {
         global $_GET, $_POST;
-        $input = [];
-        $json_input = json_decode(file_get_contents('php://input'), true);
-        if (is_array($json_input)) {
-            // @codeCoverageIgnoreStart
-            // Reason: php://input cannot be mocked.
-            foreach ($json_input as $key => $value) {
-                $input[$key] = $value;
-            }
-            // @codeCoverageIgnoreEnd
-        }
+        $input = json_decode(file_get_contents('php://input'), true);
         if (is_array($_POST)) {
             foreach ($_POST as $key => $value) {
+                $this->logger->warning("Providing the value of '{$key}' over POST will be deprecated!");
                 $input[$key] = json_decode($value, true);
             }
         }
         if (is_array($_GET)) {
             foreach ($_GET as $key => $value) {
+                $this->logger->warning("Providing the value of '{$key}' over POST will be deprecated!");
                 $input[$key] = json_decode($value, true);
             }
         }

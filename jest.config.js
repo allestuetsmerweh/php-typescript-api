@@ -14,6 +14,7 @@ const jestConfig = {
     testEnvironment: 'jsdom',
     testRegex: '.*/.*\\.test\\.ts',
     testPathIgnorePatterns: ['node_modules/'],
+    testURL: 'http://127.0.0.1:30270',
     collectCoverage: true,
     maxConcurrency: 1,
     coverageThreshold: {

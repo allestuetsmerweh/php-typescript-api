@@ -1,9 +1,4 @@
-import {ExampleApiEndpoint, ExampleApiRequests, ExampleApiResponses} from './ExampleApiTypes';
-import {Api} from '../../client/lib/Api';
-
-class ExampleApi extends Api<ExampleApiEndpoint, ExampleApiRequests, ExampleApiResponses> {
-    public baseUrl = 'http://127.0.0.1:30270/example_api_server.php';
-}
+import {ExampleApi} from './ExampleApi';
 
 const exampleApi = new ExampleApi();
 
@@ -15,6 +10,17 @@ export function submitDivideForm(form: HTMLFormElement): boolean {
         dividend: Number(dividendField && 'value' in dividendField ? dividendField.value : null),
         divisor: Number(divisorField && 'value' in divisorField ? divisorField.value : null),
     }).then((result) => {
+        if (resultField && 'value' in resultField) {
+            resultField.value = `The result is ${result}`;
+        }
+    });
+    return false;
+}
+
+export function submitSqrtForm(form: HTMLFormElement): boolean {
+    const inputField = form.elements.namedItem('input');
+    const resultField = form.elements.namedItem('result');
+    exampleApi.call('squareRoot', Number(inputField && 'value' in inputField ? inputField.value : null)).then((result) => {
         if (resultField && 'value' in resultField) {
             resultField.value = `The result is ${result}`;
         }
