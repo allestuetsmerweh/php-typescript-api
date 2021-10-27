@@ -13,4 +13,8 @@ $example_api->registerEndpoint('squareRoot', function () {
     require_once __DIR__.'/endpoints/SquareRootEndpoint.php';
     return new SquareRootEndpoint();
 });
+$example_api->registerEndpoint('searchSwissPublicTransportConnection', function () {
+    require_once __DIR__.'/endpoints/SwissPublicTransportConnectionsEndpoint.php';
+    return new SwissPublicTransportConnectionsEndpoint();
+});
 return $example_api;
