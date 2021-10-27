@@ -27,3 +27,27 @@ export function submitSqrtForm(form: HTMLFormElement): boolean {
     });
     return false;
 }
+
+export function submitSPTransportConnectionForm(form: HTMLFormElement): boolean {
+    const fromField = form.elements.namedItem('from');
+    const toField = form.elements.namedItem('to');
+    const viaField = form.elements.namedItem('via');
+    const dateField = form.elements.namedItem('date');
+    const timeField = form.elements.namedItem('time');
+    const isArrivalTimeField = form.elements.namedItem('isArrivalTime');
+    const resultField = form.elements.namedItem('result');
+    exampleApi.call('searchSwissPublicTransportConnection', {
+        from: fromField && 'value' in fromField ? fromField.value : '',
+        to: toField && 'value' in toField ? toField.value : '',
+        via: viaField && 'value' in viaField && viaField.value ? [viaField.value] : [],
+        date: dateField && 'value' in dateField ? dateField.value : '',
+        time: timeField && 'value' in timeField ? timeField.value : '',
+        isArrivalTime: isArrivalTimeField && 'value' in isArrivalTimeField ? isArrivalTimeField.value === '1' : false,
+    }).then((result) => {
+        if (resultField && 'value' in resultField) {
+            resultField.value = `The result is ${result}`;
+        }
+    });
+    return false;
+}
+

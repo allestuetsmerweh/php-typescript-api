@@ -60,12 +60,12 @@ describe('divideNumbers', () => {
         try {
             await exampleApi.call('divideNumbers', {dividend: 6, divisor: 0});
         } catch (err: unknown) {
-            if (!(err instanceof ValidationError)){
+            if (!(err instanceof ValidationError)) {
                 throw new Error('ValidationError expected');
             }
-            expect(err.message).toEqual("Fehlerhafte Eingabe.");
+            expect(err.message).toEqual('Fehlerhafte Eingabe.');
             expect(err.getErrorsByField()).toEqual({
-                'divisor': ["Cannot divide by zero."],
+                'divisor': ['Cannot divide by zero.'],
             });
         }
     });
@@ -84,12 +84,12 @@ describe('divideNumbers', () => {
         try {
             await exampleApi.call('squareRoot', -1);
         } catch (err: unknown) {
-            if (!(err instanceof ValidationError)){
+            if (!(err instanceof ValidationError)) {
                 throw new Error('ValidationError expected');
             }
-            expect(err.message).toEqual("Fehlerhafte Eingabe.");
+            expect(err.message).toEqual('Fehlerhafte Eingabe.');
             expect(err.getErrorsByField()).toEqual({
-                '.': ["Wert darf nicht kleiner als 0 sein."],
+                '.': ['Wert darf nicht kleiner als 0 sein.'],
             });
         }
     });
