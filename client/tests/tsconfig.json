@@ -4,11 +4,9 @@
     "module": "commonjs",
     "declaration": true,
     "sourceMap": true,
-    "outDir": "client/lib",
+    "outDir": "tscbuild",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true
   },
-  "include": ["client/src"],
-  "exclude": ["node_modules"]
 }

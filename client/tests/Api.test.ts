@@ -1,8 +1,8 @@
 /* eslint-env jasmine */
 
 import fetch from 'unfetch';
-import {Api} from '../lib/Api';
-import {ValidationError} from '../lib/ValidationError';
+import {Api} from '../src/Api';
+import {ValidationError} from '../src/ValidationError';
 
 type UnfetchFetchFunction = typeof fetch;
 

@@ -21,21 +21,22 @@ jobs:
     - name: Get composer cache directory
       id: composer-cache
       run: echo "::set-output name=dir::$(composer config cache-files-dir)"
-    - name: Cache dependencies
+    - name: Cache composer dependencies
       uses: actions/cache@v1
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
         key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
         restore-keys: ${{ runner.os }}-composer-
-    - name: Install dependencies
+    - name: Install composer dependencies
       run: composer install --prefer-dist
     - name: Get npm cache directory
-      id: npm-cache
+      id: npm-client-cache
       run: |
         echo "::set-output name=dir::$(npm config get cache)"
-    - uses: actions/cache@v1
+    - name: Cache npm dependencies
+      uses: actions/cache@v1
       with:
-        path: ${{ steps.npm-cache.outputs.dir }}
+        path: ${{ steps.npm-client-cache.outputs.dir }}
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
@@ -45,13 +46,29 @@ jobs:
       run: composer fixdiff
     - name: Lint JavaScript & TypeScript
       run: npm run lint
-    - name: Build API
-      run: php ./example/api/generate.php
     - name: Compile TypeScript
-      run: npm run tsc
+      run: npm run build
     - name: Jest Unit Tests
       run: npm run test-ci
     - name: PHP Unit Tests
       run: composer unit_test; cat ./php-coverage/coverage.txt || echo "no coverage!"
+
+    - name: Example - Get npm cache directory
+      id: npm-example-cache
+      run: |
+        cd example; echo "::set-output name=dir::$(npm config get cache)"
+    - name: Example - Cache npm dependencies
+      uses: actions/cache@v1
+      with:
+        path: ${{ steps.npm-example-cache.outputs.dir }}
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    - name: Example - Install JavaScript dependencies
+      run: cd example; npm install
+    - name: Example - Run Webpack
+      run: cd example; npm run webpack-build
+    - name: Example - Jest Unit Tests
+      run: cd example; npm run test-ci
     # - name: PHP Example Tests
     #   run: composer backend_tests
