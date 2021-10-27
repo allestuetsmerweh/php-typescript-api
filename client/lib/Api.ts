@@ -8,7 +8,7 @@ export abstract class Api<
 > {
     public abstract baseUrl: string;
 
-    protected fetchFunction = fetch;
+    protected fetchFunction: typeof fetch = fetch;
 
     public call<T extends Endpoints>(
         endpoint: T,
