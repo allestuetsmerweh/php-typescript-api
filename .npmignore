@@ -4,18 +4,14 @@
 /example_tests/
 /php-coverage/
 /server/
-/tscbuild/
 /vendor/
 /.editorconfig
 /.eslintignore
 /.eslintrc.js
-<<<<<<< HEAD
 /.php_cs_config.php
-=======
 /.php_cs.cache
 /.php_cs_config.php
 /.phpunit.result.cache
->>>>>>> 5bd19bf (Fix npm package)
 /composer.json
 /composer.lock
 /jest.config.js

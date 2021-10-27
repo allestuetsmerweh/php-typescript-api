@@ -1,8 +1,9 @@
 {
   "name": "php-typescript-api",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Build a typed Web API using PHP and TypeScript",
-  "main": "client/lib/index.ts",
+  "main": "tscbuild/client/lib/index.js",
+  "types": "tscbuild/client/lib/index.d.ts",
   "directories": {
     "lib": "client/lib",
     "test": "client/tests"
