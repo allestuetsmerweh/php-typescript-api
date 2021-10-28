@@ -147,7 +147,7 @@ module.exports = {
     rules: javaScriptRules,
     overrides: [
         {
-            files: ['**/*.ts'],
+            files: ['client/src/**/*.ts'],
             env: {
                 browser: true,
                 es6: true,
@@ -163,6 +163,48 @@ module.exports = {
                 'ecmaVersion': 2018,
                 'sourceType': 'module',
                 'project': './tsconfig.json',
+            },
+            plugins: ['@typescript-eslint'],
+            rules: typeScriptRules,
+        },
+        {
+            files: ['client/tests/**/*.ts'],
+            env: {
+                browser: true,
+                es6: true,
+            },
+            extends: [
+                'eslint:recommended',
+                'plugin:@typescript-eslint/eslint-recommended',
+                'plugin:@typescript-eslint/recommended',
+            ],
+            globals: { 'Atomics': 'readonly', 'SharedArrayBuffer': 'readonly' },
+            parser: '@typescript-eslint/parser',
+            parserOptions: {
+                'ecmaVersion': 2018,
+                'sourceType': 'module',
+                'project': './client/tests/tsconfig.json',
+            },
+            plugins: ['@typescript-eslint'],
+            rules: typeScriptRules,
+        },
+        {
+            files: ['example/**/*.ts'],
+            env: {
+                browser: true,
+                es6: true,
+            },
+            extends: [
+                'eslint:recommended',
+                'plugin:@typescript-eslint/eslint-recommended',
+                'plugin:@typescript-eslint/recommended',
+            ],
+            globals: { 'Atomics': 'readonly', 'SharedArrayBuffer': 'readonly' },
+            parser: '@typescript-eslint/parser',
+            parserOptions: {
+                'ecmaVersion': 2018,
+                'sourceType': 'module',
+                'project': './example/tsconfig.json',
             },
             plugins: ['@typescript-eslint'],
             rules: typeScriptRules,

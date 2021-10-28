@@ -3,14 +3,14 @@
 import {spawn, ChildProcess} from 'child_process';
 import path from 'path';
 import http from 'http';
-import {ExampleApi} from '../../example/web/ExampleApi';
-import {ValidationError} from '../../client/lib/ValidationError';
+import {ExampleApi} from '../../web/ExampleApi';
+import {ValidationError} from 'php-typescript-api';
 
 describe('divideNumbers', () => {
     let server: ChildProcess;
 
     beforeAll(async () => {
-        const examplePath = path.resolve(__dirname, '..', '..', 'example');
+        const examplePath = path.resolve(__dirname, '..', '..');
         const serverUrl = 'http://127.0.0.1:30270';
 
         server = spawn('./run.sh', [], {

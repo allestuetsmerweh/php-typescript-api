@@ -1,21 +1,24 @@
 {
   "name": "php-typescript-api",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Build a typed Web API using PHP and TypeScript",
-  "main": "tscbuild/client/lib/index.js",
-  "types": "tscbuild/client/lib/index.d.ts",
+  "main": "client/lib/index.js",
+  "types": "client/lib/index.d.ts",
   "directories": {
     "lib": "client/lib",
     "test": "client/tests"
   },
   "scripts": {
+    "build": "tsc",
     "eslint": "eslint ./ --fix",
     "jest": "jest",
     "jest-ci": "jest --runInBand",
     "lint": "npm run eslint",
+    "prepare" : "npm run build",
+    "prepublishOnly" : "npm test && npm run lint",
+    "preversion" : "npm run lint",
     "test": "npm run jest",
-    "test-ci": "npm run jest-ci",
-    "tsc": "tsc"
+    "test-ci": "npm run jest-ci"
   },
   "repository": {
     "type": "git",
@@ -33,6 +36,7 @@
   },
   "homepage": "https://github.com/allestuetsmerweh/php-typescript-api#readme",
   "dependencies": {
+    "@types/node-fetch": "^3.0.3",
     "unfetch": "^4"
   },
   "devDependencies": {

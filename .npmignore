@@ -1,4 +1,6 @@
 /.github/
+/client/src/
+/client/tests/
 /coverage/
 /example/
 /example_tests/

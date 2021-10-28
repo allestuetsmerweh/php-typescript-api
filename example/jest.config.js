@@ -12,12 +12,13 @@ const jestConfig = {
         '^.+\\.ts$': 'ts-jest',
     },
     testEnvironment: 'jsdom',
-    testRegex: 'client/tests/.*\\.test\\.ts',
+    testRegex: 'tests/.*\\.test\\.ts',
     testPathIgnorePatterns: ['node_modules/'],
+    testURL: 'http://127.0.0.1:30270',
     collectCoverage: true,
     maxConcurrency: 1,
     coverageThreshold: {
-        './client/src/': percentCoverage(100),
+        './web/': percentCoverage(100),
     },
 };
 module.exports = jestConfig;

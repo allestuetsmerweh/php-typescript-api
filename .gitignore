@@ -7,8 +7,9 @@
 /.phpunit.result.cache
 
 # JavaScript/Typescript tooling
+/client/lib
 /coverage
-/node_modules
+/example/coverage
 /example/node_modules
 /example/web/dist
-/tscbuild
+/node_modules
