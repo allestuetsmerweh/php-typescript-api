@@ -31,9 +31,31 @@
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
-        "test": "phpunit server/tests example_tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
-        "backend_tests": "phpunit example_tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "test": "phpunit server/tests example/tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "backend_tests": "phpunit example/tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
         "unit_tests": "phpunit server/tests/unit_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\""
+    },
+    "archive": {
+        "exclude": [
+            "/.github/",
+            "/client/",
+            "/coverage/",
+            "/example/",
+            "/php-coverage/",
+            "/vendor/",
+            "/.editorconfig",
+            "/.eslintignore",
+            "/.eslintrc.js",
+            "/.php_cs_config.php",
+            "/.php_cs.cache",
+            "/.php_cs_config.php",
+            "/.phpunit.result.cache",
+            "/jest.config.js",
+            "/package.json",
+            "/package-lock.json",
+            "/phpunit.xml",
+            "/tsconfig.json"
+        ]
     },
     "autoload": {
         "psr-4": {
