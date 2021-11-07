@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/Field.php';
-
 class DictField extends Field {
     private Field $item_field;
 

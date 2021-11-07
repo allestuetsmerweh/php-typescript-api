@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/Field.php';
-
 class EnumField extends Field {
     private $allowed_value_map = [];
 

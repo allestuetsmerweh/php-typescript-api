@@ -8,12 +8,6 @@ class HttpError extends \Exception {
     }
 
     public function getStructuredAnswer() {
-        $is_server_error = floor($this->getCode() / 100) == 5;
-        if ($is_server_error) {
-            return [
-                'message' => $this->getMessage(),
-            ];
-        }
         $structured_previous_error = true;
         $previous_exception = $this->getPrevious();
         if ($previous_exception && method_exists($previous_exception, 'getStructuredAnswer')) {

@@ -95,9 +95,5 @@ abstract class Endpoint {
 
     abstract public function getResponseField();
 
-    public function setServer($new_server) {
-        $this->server = $new_server;
-    }
-
     abstract protected function handle($input);
 }

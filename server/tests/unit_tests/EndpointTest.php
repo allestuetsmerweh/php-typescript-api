@@ -2,17 +2,19 @@
 
 declare(strict_types=1);
 
-use Monolog\Logger;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
+use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
 
+require_once __DIR__.'/../fake/FakeLogger.php';
 require_once __DIR__.'/_common/UnitTestCase.php';
 
 class FakeEndpoint extends Endpoint {
     public $handled_with_input;
     public $handled_with_resource;
     public $handle_with_output;
+    public $ran_runtime_setup;
 
     public function __construct($resource) {
         $this->resource = $resource;
@@ -20,6 +22,10 @@ class FakeEndpoint extends Endpoint {
 
     public static function getIdent() {
         return 'FakeEndpoint';
+    }
+
+    public function runtimeSetup() {
+        $this->ran_runtime_setup = true;
     }
 
     public function getResponseField() {
@@ -41,6 +47,7 @@ class FakeEndpointWithErrors extends Endpoint {
     public $handle_with_throttling;
     public $handle_with_error;
     public $handle_with_http_error;
+    public $handle_with_validation_error;
     public $handle_with_output;
 
     public static function getIdent() {
@@ -66,6 +73,9 @@ class FakeEndpointWithErrors extends Endpoint {
         if ($this->handle_with_http_error) {
             throw new HttpError(418, "I'm a teapot");
         }
+        if ($this->handle_with_validation_error) {
+            throw new ValidationError(['.' => ['Fundamental error']]);
+        }
         return $this->handle_with_output;
     }
 }
@@ -77,7 +87,7 @@ class FakeEndpointWithErrors extends Endpoint {
 final class EndpointTest extends UnitTestCase {
     public function testFakeEndpoint(): void {
         $fake_server = ['name' => 'fake'];
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->handle_with_output = 'test_output';
         $endpoint->setLogger($logger);
@@ -91,22 +101,23 @@ final class EndpointTest extends UnitTestCase {
         global $_GET, $_POST;
         $_GET = ['get_param' => json_encode('got')];
         $_POST = ['post_param' => json_encode('posted')];
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->setLogger($logger);
         $parsed_input = $endpoint->parseInput();
         $this->assertSame(['post_param' => 'posted', 'get_param' => 'got'], $parsed_input);
     }
 
+    public function testFakeEndpointRuntimeSetup(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeEndpoint('fake_resource');
+        $endpoint->setup();
+        $this->assertSame(true, $endpoint->ran_runtime_setup);
+    }
+
     public function testFakeEndpointSetupFunction(): void {
         global $_GET, $_POST;
         $endpoint = new FakeEndpoint('fake_resource');
-        try {
-            $endpoint->setup();
-            $this->fail('Error expected');
-        } catch (\Exception $exc) {
-            $this->assertSame('Setup function must be set', $exc->getMessage());
-        }
         $endpoint->setSetupFunction(function ($endpoint) {
             $endpoint->setupCalled = true;
         });
@@ -114,8 +125,19 @@ final class EndpointTest extends UnitTestCase {
         $this->assertSame(true, $endpoint->setupCalled);
     }
 
+    public function testFakeEndpointNoSetupImplemented(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeEndpointWithErrors('fake_resource');
+        try {
+            $endpoint->setup();
+            $this->fail('Error expected');
+        } catch (\Exception $exc) {
+            $this->assertSame('Setup function must be set', $exc->getMessage());
+        }
+    }
+
     public function testFakeEndpointWithThrottling(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         $endpoint->handle_with_throttling = true;
@@ -124,11 +146,16 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(429, $err->getCode());
+            $this->assertSame('Zu viele Anfragen.', $err->getMessage());
+            $this->assertSame([
+                'message' => 'Zu viele Anfragen.',
+                'error' => true,
+            ], $err->getStructuredAnswer());
         }
     }
 
     public function testFakeEndpointWithInvalidInput(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         try {
@@ -136,11 +163,19 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
+            $this->assertSame('Fehlerhafte Eingabe.', $err->getMessage());
+            $this->assertSame([
+                'message' => 'Fehlerhafte Eingabe.',
+                'error' => [
+                    'type' => 'ValidationError',
+                    'validationErrors' => ['.' => ['Feld darf nicht leer sein.']],
+                ],
+            ], $err->getStructuredAnswer());
         }
     }
 
     public function testFakeEndpointWithExecutionError(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         $endpoint->handle_with_error = true;
@@ -149,11 +184,19 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
+            $this->assertSame(
+                'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                $err->getMessage()
+            );
+            $this->assertSame([
+                'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'error' => true,
+            ], $err->getStructuredAnswer());
         }
     }
 
     public function testFakeEndpointWithExecutionHttpError(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         $endpoint->handle_with_http_error = true;
@@ -162,11 +205,37 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(418, $err->getCode());
+            $this->assertSame('I\'m a teapot', $err->getMessage());
+            $this->assertSame([
+                'message' => 'I\'m a teapot',
+                'error' => true,
+            ], $err->getStructuredAnswer());
+        }
+    }
+
+    public function testFakeEndpointWithExecutionValidationError(): void {
+        $logger = FakeLogger::create('EndpointTest');
+        $endpoint = new FakeEndpointWithErrors();
+        $endpoint->setLogger($logger);
+        $endpoint->handle_with_validation_error = true;
+        try {
+            $result = $endpoint->call('test');
+            $this->fail('Error expected');
+        } catch (HttpError $err) {
+            $this->assertSame(400, $err->getCode());
+            $this->assertSame('Fehlerhafte Eingabe.', $err->getMessage());
+            $this->assertSame([
+                'message' => 'Fehlerhafte Eingabe.',
+                'error' => [
+                    'type' => 'ValidationError',
+                    'validationErrors' => ['.' => ['Fundamental error']],
+                ],
+            ], $err->getStructuredAnswer());
         }
     }
 
     public function testFakeEndpointWithInvalidOutput(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         $endpoint->handle_with_error = false;
@@ -176,11 +245,22 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
+            $this->assertSame(
+                'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                $err->getMessage()
+            );
+            $this->assertSame([
+                'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'error' => [
+                    'type' => 'ValidationError',
+                    'validationErrors' => ['.' => ['Feld darf nicht leer sein.']],
+                ],
+            ], $err->getStructuredAnswer());
         }
     }
 
     public function testFakeEndpointWithoutAnyErrors(): void {
-        $logger = new Logger('EndpointTest');
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($logger);
         $endpoint->handle_with_error = false;

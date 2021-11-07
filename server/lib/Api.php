@@ -73,31 +73,42 @@ class Api {
         return $get_endpoint_function();
     }
 
+    // @codeCoverageIgnoreStart
+    // Reason: Hard to test!
     public function serve() {
         global $_SERVER;
         $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
         $this->serveEndpoint($endpoint_name);
     }
 
+    // @codeCoverageIgnoreEnd
+
     protected function serveEndpoint($endpoint_name) {
         try {
+            $endpoint_logger = null;
             if ($this->logger) {
-                $handler = new \Monolog\ErrorHandler($this->logger);
+                $endpoint_logger = $this->logger->withName("Endpoint:{$endpoint_name}");
+                $handler = new \Monolog\ErrorHandler($endpoint_logger);
                 $handler->registerErrorHandler();
                 $handler->registerExceptionHandler();
             }
             if (!isset($this->endpoints[$endpoint_name])) {
+                if ($endpoint_logger) {
+                    $endpoint_logger->warning("Invalid endpoint called: {$endpoint_name}");
+                }
                 throw new HttpError(400, 'Invalid endpoint');
             }
             $endpoint = $this->endpoints[$endpoint_name]();
-            if ($this->logger) {
-                $endpoint->setLogger($this->logger);
+            if ($endpoint_logger) {
+                $endpoint->setLogger($endpoint_logger);
             } else {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
             $endpoint->setup();
             $input = $endpoint->parseInput();
             $result = $endpoint->call($input);
+            restore_error_handler();
+            restore_exception_handler();
             return $this->respond(200, $result);
         } catch (HttpError $httperr) {
             return $this->respond(
@@ -119,8 +130,12 @@ class Api {
         return $path_info_matches[1];
     }
 
+    // @codeCoverageIgnoreStart
+    // Reason: Cannot be tested. exit would actually stop the tests, etc.
     protected function respond($http_code, $response) {
         http_response_code($http_code);
         exit(json_encode($response));
     }
+
+    // @codeCoverageIgnoreEnd
 }

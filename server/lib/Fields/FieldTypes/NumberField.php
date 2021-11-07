@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/Field.php';
-
 class NumberField extends Field {
     private $min_value;
     private $max_value;
