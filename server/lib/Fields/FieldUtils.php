@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields;
 
-require_once __DIR__.'/ValidationError.php';
-
 class FieldUtils {
     public function validate($field, $input, $options = []) {
         $validated = [];

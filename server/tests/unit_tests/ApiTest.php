@@ -6,11 +6,13 @@ use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../fake/FakeLogger.php';
 require_once __DIR__.'/_common/UnitTestCase.php';
 
 class FakeApiTestEndpoint1 extends Endpoint {
     public $handled_with_input;
     public $handled_with_resource;
+    public $handle_with_error;
     public $handle_with_output;
 
     public function __construct($resource) {
@@ -36,7 +38,14 @@ class FakeApiTestEndpoint1 extends Endpoint {
     protected function handle($input) {
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
+        if ($this->handle_with_error) {
+            throw $this->handle_with_error;
+        }
         return $this->handle_with_output;
+    }
+
+    public function testOnlyGetLogger() {
+        return $this->logger;
     }
 }
 
@@ -76,6 +85,10 @@ class FakeApiTestApi extends Api {
             'http_code' => $http_code,
             'response' => $response,
         ];
+    }
+
+    public function testOnlyGetLogger() {
+        return $this->logger;
     }
 
     public function testOnlyGetSanitizedEndpointName($path_info) {
@@ -167,7 +180,7 @@ ZZZZZZZZZZ;
         }
     }
 
-    public function testApiServeEndpoint(): void {
+    public function testApiServeEndpointWithoutLogger(): void {
         $fake_api = new FakeApiTestApi();
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
@@ -186,6 +199,90 @@ ZZZZZZZZZZ;
         );
         $this->assertSame(null, $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+        $this->assertSame(null, $fake_api->testOnlyGetLogger());
+        $this->assertSame(true, $fake_endpoint->testOnlyGetLogger() instanceof \Monolog\Logger);
+    }
+
+    public function testApiServeInexistentEndpoint(): void {
+        $fake_api = new FakeApiTestApi();
+        $logger = FakeLogger::create('ApiTest');
+        $fake_api->setLogger($logger);
+
+        $fake_api->testOnlyServeEndpoint('inexistent');
+
+        $this->assertSame(
+            [[
+                'http_code' => 400,
+                'response' => [
+                    'message' => 'Invalid endpoint',
+                    'error' => true,
+                ],
+            ]],
+            $fake_api->responses
+        );
+        $this->assertSame([
+            'WARNING Invalid endpoint called: inexistent',
+        ], $logger->handler->getPrettyRecords());
+    }
+
+    public function testApiServeEndpoint(): void {
+        $fake_api = new FakeApiTestApi();
+        $logger = FakeLogger::create('ApiTest');
+        $fake_api->setLogger($logger);
+        $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
+        $fake_endpoint->handle_with_output = 'fake-output';
+        $fake_api->registerEndpoint(
+            'fakeEndpoint1',
+            function () use ($fake_endpoint) {
+                return $fake_endpoint;
+            }
+        );
+
+        $fake_api->testOnlyServeEndpoint('fakeEndpoint1');
+
+        $this->assertSame(
+            [['http_code' => 200, 'response' => 'fake-output']],
+            $fake_api->responses
+        );
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
+        $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+        $this->assertSame([
+            'INFO Valid user request',
+            'INFO Valid user response',
+        ], $logger->handler->getPrettyRecords());
+    }
+
+    public function testApiServeEndpointWithError(): void {
+        $fake_api = new FakeApiTestApi();
+        $logger = FakeLogger::create('ApiTest');
+        $fake_api->setLogger($logger);
+        $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
+        $fake_endpoint->handle_with_error = new Exception('test_error');
+        $fake_api->registerEndpoint(
+            'fakeEndpoint1',
+            function () use ($fake_endpoint) {
+                return $fake_endpoint;
+            }
+        );
+
+        $fake_api->testOnlyServeEndpoint('fakeEndpoint1');
+
+        $this->assertSame(
+            [[
+                'http_code' => 500,
+                'response' => [
+                    'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                    'error' => true,
+                ],
+            ]],
+            $fake_api->responses
+        );
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
+        $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+        $this->assertSame([
+            'INFO Valid user request',
+            'CRITICAL Unexpected endpoint error: test_error',
+        ], $logger->handler->getPrettyRecords());
     }
 
     protected function getFakeApi() {

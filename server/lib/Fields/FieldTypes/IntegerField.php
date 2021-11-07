@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/NumberField.php';
-
 class IntegerField extends NumberField {
     protected function validate($value) {
         $validation_result = parent::validate($value);

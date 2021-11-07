@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/Field.php';
-
 class BooleanField extends Field {
     protected function validate($value) {
         $validation_result = parent::validate($value);

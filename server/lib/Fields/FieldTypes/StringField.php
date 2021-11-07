@@ -2,8 +2,6 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/Field.php';
-
 class StringField extends Field {
     private $max_length;
     private $allow_empty;
