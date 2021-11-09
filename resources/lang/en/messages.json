@@ -1,0 +1,31 @@
+{
+    "api": {
+        "invalid_endpoint": "Invalid endpoint"
+    },
+    "endpoint": {
+        "bad_input": "Bad input",
+        "internal_server_error": "An error occurred. Please try again later.",
+        "too_many_requests": "Too many requests"
+    },
+    "fields": {
+        "illegible_boolean": "Illegible binary value: {value}",
+        "illegible_integer": "Illegible integer: {value}",
+        "illegible_number": "Illegible number: {value}",
+        "missing_key": "Missing key: {key}.",
+        "must_be_allowed_value": "Value must be among the allowed values.",
+        "must_be_array": "Value must be a list.",
+        "must_be_boolean": "Value must be yes or no.",
+        "must_be_integer": "Value must be an integer.",
+        "must_be_number": "Value must be a number.",
+        "must_be_object": "Value must be an object.",
+        "must_be_scalar_value": "Value must be simple.",
+        "must_be_string": "Value must be a string.",
+        "must_have_one_key": "Value must be an object with exactly one key.",
+        "must_match_regex": "Value must have pattern {regex}.",
+        "must_not_be_empty": "Field can not be empty.",
+        "must_not_be_larger": "Value must not be greater than {max_value}.",
+        "must_not_be_smaller": "Value must not be less than {min_value}.",
+        "must_not_be_longer": "Value can not be longer than {max_length} characters.",
+        "unknown_key": "Unknown key: {key}."
+    }
+}

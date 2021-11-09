@@ -52,7 +52,7 @@ final class IntegerFieldTest extends UnitTestCase {
             $field->parse('test');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame("Unlesbare Ganzzahl: 'test'", $exc->getMessage());
+            $this->assertSame("Illegible integer: test", $exc->getMessage());
         }
     }
 
@@ -79,13 +79,13 @@ final class IntegerFieldTest extends UnitTestCase {
     public function testValidatesMinValue(): void {
         $field = new IntegerField(['min_value' => 3]);
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 3 sein.']],
+            ['.' => ['Value must not be less than 3.']],
             $field->getValidationErrors(2)
         );
         $this->assertSame([], $field->getValidationErrors(3));
         $this->assertSame([], $field->getValidationErrors(4));
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
     }
@@ -95,11 +95,11 @@ final class IntegerFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(2));
         $this->assertSame([], $field->getValidationErrors(3));
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als 3 sein.']],
+            ['.' => ['Value must not be greater than 3.']],
             $field->getValidationErrors(4)
         );
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
     }
@@ -107,7 +107,7 @@ final class IntegerFieldTest extends UnitTestCase {
     public function testAllowsNullWhenMinValueSet(): void {
         $field = new IntegerField(['allow_null' => true, 'min_value' => 3]);
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 3 sein.']],
+            ['.' => ['Value must not be less than 3.']],
             $field->getValidationErrors(2)
         );
         $this->assertSame([], $field->getValidationErrors(3));
@@ -120,7 +120,7 @@ final class IntegerFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(-4));
         $this->assertSame([], $field->getValidationErrors(-3));
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als -3 sein.']],
+            ['.' => ['Value must not be greater than -3.']],
             $field->getValidationErrors(-2)
         );
         $this->assertSame([], $field->getValidationErrors(null));
@@ -129,23 +129,23 @@ final class IntegerFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new IntegerField([]);
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.', 'Wert muss eine Ganzzahl sein.']],
+            ['.' => ['Value must be a number.', 'Value must be an integer.']],
             $field->getValidationErrors(false)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.', 'Wert muss eine Ganzzahl sein.']],
+            ['.' => ['Value must be a number.', 'Value must be an integer.']],
             $field->getValidationErrors(true)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.', 'Wert muss eine Ganzzahl sein.']],
+            ['.' => ['Value must be a number.', 'Value must be an integer.']],
             $field->getValidationErrors('test')
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.', 'Wert muss eine Ganzzahl sein.']],
+            ['.' => ['Value must be a number.', 'Value must be an integer.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.', 'Wert muss eine Ganzzahl sein.']],
+            ['.' => ['Value must be a number.', 'Value must be an integer.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

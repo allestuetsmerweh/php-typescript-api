@@ -2,12 +2,14 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class IntegerField extends NumberField {
     protected function validate($value) {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_int($value)) {
-                $validation_result->recordError("Wert muss eine Ganzzahl sein.");
+                $validation_result->recordError(__('fields.must_be_integer'));
             }
         }
         return $validation_result;
@@ -20,6 +22,6 @@ class IntegerField extends NumberField {
         if (preg_match('/^[0-9\\-]+$/', $string)) {
             return intval($string);
         }
-        throw new \Exception("Unlesbare Ganzzahl: '{$string}'");
+        throw new \Exception(__('fields.illegible_integer', ['value' => $string]));
     }
 }

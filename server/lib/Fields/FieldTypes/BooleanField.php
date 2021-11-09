@@ -2,12 +2,14 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class BooleanField extends Field {
     protected function validate($value) {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_bool($value)) {
-                $validation_result->recordError("Wert muss Ja oder Nein sein.");
+                $validation_result->recordError(__('fields.must_be_boolean'));
             }
         }
         return $validation_result;
@@ -24,7 +26,7 @@ class BooleanField extends Field {
             case '':
                 return null;
             default:
-                throw new \Exception("Unlesbarer Binärwert: '{$string}'");
+                throw new \Exception(__('fields.illegible_boolean', ['value' => $string]));
         }
     }
 

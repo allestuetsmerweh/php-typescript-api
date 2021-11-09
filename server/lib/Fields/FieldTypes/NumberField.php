@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class NumberField extends Field {
     private $min_value;
     private $max_value;
@@ -24,16 +26,22 @@ class NumberField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_numeric($value)) {
-                $validation_result->recordError("Wert muss eine Zahl sein.");
+                $validation_result->recordError(__('fields.must_be_number'));
             }
             if ($this->min_value !== null) {
                 if ($value < $this->min_value) {
-                    $validation_result->recordError("Wert darf nicht kleiner als {$this->min_value} sein.");
+                    $validation_result->recordError(__(
+                        'fields.must_not_be_smaller',
+                        ['min_value' => $this->min_value]
+                    ));
                 }
             }
             if ($this->max_value !== null) {
                 if ($value > $this->max_value) {
-                    $validation_result->recordError("Wert darf nicht grösser als {$this->max_value} sein.");
+                    $validation_result->recordError(__(
+                        'fields.must_not_be_larger',
+                        ['max_value' => $this->max_value]
+                    ));
                 }
             }
         }
@@ -47,7 +55,7 @@ class NumberField extends Field {
         if (preg_match('/^[0-9\\.\\-]+$/', $string)) {
             return floatval($string);
         }
-        throw new \Exception("Unlesbare Zahl: '{$string}'");
+        throw new \Exception(__('fields.illegible_number', ['value' => $string]));
     }
 
     public function getTypeScriptType($config = []) {

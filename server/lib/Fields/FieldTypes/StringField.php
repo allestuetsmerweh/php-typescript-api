@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class StringField extends Field {
     private $max_length;
     private $allow_empty;
@@ -24,19 +26,22 @@ class StringField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_string($value)) {
-                $validation_result->recordError("Wert muss eine Zeichenkette sein.");
+                $validation_result->recordError(__('fields.must_be_string'));
             }
         }
         if (!$this->allow_empty) {
             if ($value === '') {
                 if ($this->getDefaultValue() === null) {
-                    $validation_result->recordError("Feld darf nicht leer sein.");
+                    $validation_result->recordError(__('fields.must_not_be_empty'));
                 }
             }
         }
         if ($this->max_length !== null) {
             if (strlen($value) > $this->max_length) {
-                $validation_result->recordError("Wert darf maximal {$this->max_length} Zeichen lang sein.");
+                $validation_result->recordError(__(
+                    'fields.must_not_be_longer',
+                    ['max_length' => $this->max_length]
+                ));
             }
         }
         return $validation_result;

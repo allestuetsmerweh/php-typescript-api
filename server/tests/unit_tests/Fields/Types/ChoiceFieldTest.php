@@ -190,30 +190,30 @@ final class ChoiceFieldTest extends UnitTestCase {
             'one' => 'foo',
         ]));
         $this->assertSame([
-            'two' => [['.' => ["Feld darf nicht leer sein."]]],
+            'two' => [['.' => ["Field can not be empty."]]],
         ], $field->getValidationErrors([
             'two' => null,
         ]));
         $this->assertSame([
-            '.' => ["Wert muss ein Objekt mit genau einem Schlüssel sein."],
+            '.' => ["Value must be an object with exactly one key."],
         ], $field->getValidationErrors([
             'two' => 'bar',
             'additional_key' => 'WTF?',
         ]));
         $this->assertSame([
-            '.' => ["Unbekannter Schlüssel: 'unknown_key'."],
+            '.' => ["Unknown key: unknown_key."],
         ], $field->getValidationErrors([
             'unknown_key' => 'WTF?',
         ]));
         $this->assertSame([
-            '.' => ["Wert muss ein Objekt mit genau einem Schlüssel sein."],
+            '.' => ["Value must be an object with exactly one key."],
         ], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss ein Objekt sein."]],
+            ['.' => ["Value must be an object."]],
             $field->getValidationErrors('not_an_object')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -224,23 +224,23 @@ final class ChoiceFieldTest extends UnitTestCase {
             'allow_null' => true,
         ]);
         $this->assertSame([
-            '.' => ["Wert muss ein Objekt mit genau einem Schlüssel sein."],
+            '.' => ["Value must be an object with exactly one key."],
         ], $field->getValidationErrors([
             'test' => 'foo',
             'additional_key' => 'WTF?',
         ]));
         $this->assertSame([
-            '.' => ["Unbekannter Schlüssel: 'unknown_key'."],
+            '.' => ["Unknown key: unknown_key."],
         ], $field->getValidationErrors(['unknown_key' => 'WTF?']));
         $this->assertSame([
-            'test' => [['.' => ["Feld darf nicht leer sein."]]],
+            'test' => [['.' => ["Field can not be empty."]]],
         ], $field->getValidationErrors(['test' => null]));
         $this->assertSame([], $field->getValidationErrors(['test' => 'foo']));
         $this->assertSame([
-            '.' => ["Wert muss ein Objekt mit genau einem Schlüssel sein."],
+            '.' => ["Value must be an object with exactly one key."],
         ], $field->getValidationErrors([]));
         $this->assertSame([
-            '.' => ["Wert muss ein Objekt sein."],
+            '.' => ["Value must be an object."],
         ], $field->getValidationErrors('not_an_object'));
         $this->assertSame([], $field->getValidationErrors(null));
     }

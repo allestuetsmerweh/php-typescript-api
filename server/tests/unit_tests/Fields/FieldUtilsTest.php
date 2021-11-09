@@ -21,7 +21,7 @@ final class FieldUtilsTest extends UnitTestCase {
         } catch (ValidationError $err) {
             $this->assertMatchesRegularExpression('/^Validation Error: /', $err->getMessage());
             $this->assertSame([
-                '.' => ["Feld darf nicht leer sein."],
+                '.' => ["Field can not be empty."],
             ], $err->getValidationErrors());
         }
     }
@@ -41,7 +41,7 @@ final class FieldUtilsTest extends UnitTestCase {
         } catch (ValidationError $err) {
             $this->assertMatchesRegularExpression('/^Validation Error: /', $err->getMessage());
             $this->assertSame([
-                '.' => ["Feld darf nicht leer sein."],
+                '.' => ["Field can not be empty."],
             ], $err->getValidationErrors());
         }
     }
@@ -55,7 +55,7 @@ final class FieldUtilsTest extends UnitTestCase {
         } catch (ValidationError $err) {
             $this->assertMatchesRegularExpression('/^Validation Error: /', $err->getMessage());
             $this->assertSame([
-                '.' => ["Unlesbare Ganzzahl: 'not_an_integer'"],
+                '.' => ["Illegible integer: not_an_integer"],
             ], $err->getValidationErrors());
         }
     }

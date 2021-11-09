@@ -78,7 +78,7 @@ final class AbstractTemporalFieldTest extends UnitTestCase {
     public function testValidatesMinValue(): void {
         $field = new FakeTemporalField(['min_value' => '2020-03-13']);
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 2020-03-13 sein.']],
+            ['.' => ['Value must not be less than 2020-03-13.']],
             $field->getValidationErrors('2020-03-12')
         );
         $this->assertSame([], $field->getValidationErrors('2020-03-13'));
@@ -90,7 +90,7 @@ final class AbstractTemporalFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors('2020-03-12'));
         $this->assertSame([], $field->getValidationErrors('2020-03-13'));
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als 2020-03-13 sein.']],
+            ['.' => ['Value must not be greater than 2020-03-13.']],
             $field->getValidationErrors('2020-03-14')
         );
     }
@@ -98,27 +98,27 @@ final class AbstractTemporalFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new FakeTemporalField([]);
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(false)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(true)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(1)
         );
         $this->assertSame(
-            ['.' => ['Wert muss im Format /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/ sein.']],
+            ['.' => ['Value must have pattern /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.']],
             $field->getValidationErrors('test')
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

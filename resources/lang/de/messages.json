@@ -1,0 +1,31 @@
+{
+    "api": {
+        "invalid_endpoint": "Ungültiger Endpunkt"
+    },
+    "endpoint": {
+        "bad_input": "Fehlerhafte Eingabe",
+        "internal_server_error": "Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.",
+        "too_many_requests": "Zu viele Anfragen"
+    },
+    "fields": {
+        "illegible_boolean": "Unlesbarer Binärwert: {value}",
+        "illegible_integer": "Unlesbare Ganzzahl: {value}",
+        "illegible_number": "Unlesbare Zahl: {value}",
+        "missing_key": "Fehlender Schlüssel: {key}.",
+        "must_be_allowed_value": "Wert muss unter den erlaubten Werten sein.",
+        "must_be_array": "Wert muss eine Liste sein.",
+        "must_be_boolean": "Wert muss Ja oder Nein sein.",
+        "must_be_integer": "Wert muss eine Ganzzahl sein.",
+        "must_be_number": "Wert muss eine Zahl sein.",
+        "must_be_object": "Wert muss ein Objekt sein.",
+        "must_be_scalar_value": "Wert muss simpel sein.",
+        "must_be_string": "Wert muss eine Zeichenkette sein.",
+        "must_have_one_key": "Wert muss ein Objekt mit genau einem Schlüssel sein.",
+        "must_match_regex": "Wert muss im Format {regex} sein.",
+        "must_not_be_empty": "Feld darf nicht leer sein.",
+        "must_not_be_larger": "Wert darf nicht grösser als {max_value} sein.",
+        "must_not_be_smaller": "Wert darf nicht kleiner als {min_value} sein.",
+        "must_not_be_longer": "Wert darf maximal {max_length} Zeichen lang sein.",
+        "unknown_key": "Unbekannter Schlüssel: {key}."
+    }
+}

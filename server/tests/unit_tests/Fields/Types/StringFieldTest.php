@@ -83,7 +83,7 @@ final class StringFieldTest extends UnitTestCase {
     public function testValidatesAllowEmptyFalse(): void {
         $field = new StringField(['allow_empty' => false]);
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors('')
         );
         $this->assertSame([], $field->getValidationErrors('test'));
@@ -94,7 +94,7 @@ final class StringFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors('12'));
         $this->assertSame([], $field->getValidationErrors('123'));
         $this->assertSame(
-            ['.' => ['Wert darf maximal 3 Zeichen lang sein.']],
+            ['.' => ['Value can not be longer than 3 characters.']],
             $field->getValidationErrors('1234')
         );
     }
@@ -102,23 +102,23 @@ final class StringFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new StringField([]);
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(false)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(true)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors(1)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zeichenkette sein.']],
+            ['.' => ['Value must be a string.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

@@ -55,7 +55,7 @@ final class NumberFieldTest extends UnitTestCase {
             $field->parse('test');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame("Unlesbare Zahl: 'test'", $exc->getMessage());
+            $this->assertSame("Illegible number: test", $exc->getMessage());
         }
     }
 
@@ -82,17 +82,17 @@ final class NumberFieldTest extends UnitTestCase {
     public function testValidatesMinValue(): void {
         $field = new NumberField(['min_value' => 2.5]);
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 2.5 sein.']],
+            ['.' => ['Value must not be less than 2.5.']],
             $field->getValidationErrors(2)
         );
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 2.5 sein.']],
+            ['.' => ['Value must not be less than 2.5.']],
             $field->getValidationErrors(2.4999)
         );
         $this->assertSame([], $field->getValidationErrors(2.5));
         $this->assertSame([], $field->getValidationErrors(3));
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
     }
@@ -102,15 +102,15 @@ final class NumberFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(2));
         $this->assertSame([], $field->getValidationErrors(2.5));
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als 2.5 sein.']],
+            ['.' => ['Value must not be greater than 2.5.']],
             $field->getValidationErrors(2.5001)
         );
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als 2.5 sein.']],
+            ['.' => ['Value must not be greater than 2.5.']],
             $field->getValidationErrors(3)
         );
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
     }
@@ -118,11 +118,11 @@ final class NumberFieldTest extends UnitTestCase {
     public function testAllowsNullWhenMinValueSet(): void {
         $field = new NumberField(['allow_null' => true, 'min_value' => 2.5]);
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 2.5 sein.']],
+            ['.' => ['Value must not be less than 2.5.']],
             $field->getValidationErrors(2)
         );
         $this->assertSame(
-            ['.' => ['Wert darf nicht kleiner als 2.5 sein.']],
+            ['.' => ['Value must not be less than 2.5.']],
             $field->getValidationErrors(2.4999)
         );
         $this->assertSame([], $field->getValidationErrors(2.5));
@@ -135,11 +135,11 @@ final class NumberFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(-3));
         $this->assertSame([], $field->getValidationErrors(-2.5));
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als -2.5 sein.']],
+            ['.' => ['Value must not be greater than -2.5.']],
             $field->getValidationErrors(-2.4999)
         );
         $this->assertSame(
-            ['.' => ['Wert darf nicht grösser als -2.5 sein.']],
+            ['.' => ['Value must not be greater than -2.5.']],
             $field->getValidationErrors(-2));
         $this->assertSame([], $field->getValidationErrors(null)
     );
@@ -148,23 +148,23 @@ final class NumberFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new NumberField([]);
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.']],
+            ['.' => ['Value must be a number.']],
             $field->getValidationErrors(false)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.']],
+            ['.' => ['Value must be a number.']],
             $field->getValidationErrors(true)
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.']],
+            ['.' => ['Value must be a number.']],
             $field->getValidationErrors('test')
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.']],
+            ['.' => ['Value must be a number.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Wert muss eine Zahl sein.']],
+            ['.' => ['Value must be a number.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class EnumField extends Field {
     private $allowed_value_map = [];
 
@@ -22,11 +24,11 @@ class EnumField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_scalar($value)) {
-                $validation_result->recordError("Feld hat ungültigen Wert.");
+                $validation_result->recordError(__('fields.must_be_scalar_value'));
             } else {
                 $is_allowed_value = $this->allowed_value_map[$value] ?? false;
                 if (!$is_allowed_value) {
-                    $validation_result->recordError("Feld hat ungültigen Wert.");
+                    $validation_result->recordError(__('fields.must_be_allowed_value'));
                 }
             }
         }

@@ -3,6 +3,7 @@
 namespace PhpTypeScriptApi;
 
 require_once __DIR__.'/HttpError.php';
+require_once __DIR__.'/__.php';
 
 abstract class Endpoint {
     use \Psr\Log\LoggerAwareTrait;
@@ -45,7 +46,7 @@ abstract class Endpoint {
         }
         if (is_array($_GET)) {
             foreach ($_GET as $key => $value) {
-                $this->logger->warning("Providing the value of '{$key}' over POST will be deprecated!");
+                $this->logger->warning("Providing the value of '{$key}' over GET will be deprecated!");
                 $input[$key] = json_decode($value, true);
             }
         }
@@ -55,29 +56,30 @@ abstract class Endpoint {
     public function call($raw_input) {
         if ($this->shouldFailThrottling()) {
             $this->logger->error("Throttled user request");
-            throw new HttpError(429, "Zu viele Anfragen.");
+            throw new HttpError(429, __('endpoint.too_many_requests'));
         }
         $field_utils = Fields\FieldUtils::create();
 
         try {
             $validated_input = $field_utils->validate($this->getRequestField(), $raw_input);
+            // "Valid user request"
             $this->logger->info("Valid user request");
         } catch (Fields\ValidationError $verr) {
             $this->logger->warning("Bad user request", $verr->getStructuredAnswer());
-            throw new HttpError(400, "Fehlerhafte Eingabe.", $verr);
+            throw new HttpError(400, __('endpoint.bad_input'), $verr);
         }
 
         try {
             $raw_result = $this->handle($validated_input);
         } catch (Fields\ValidationError $verr) {
             $this->logger->warning("Bad user request", $verr->getStructuredAnswer());
-            throw new HttpError(400, "Fehlerhafte Eingabe.", $verr);
+            throw new HttpError(400, __('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();
             $this->logger->critical("Unexpected endpoint error: {$message}", $exc->getTrace());
-            throw new HttpError(500, "Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.", $exc);
+            throw new HttpError(500, __('endpoint.internal_server_error'), $exc);
         }
 
         try {
@@ -85,7 +87,7 @@ abstract class Endpoint {
             $this->logger->info("Valid user response");
         } catch (Fields\ValidationError $verr) {
             $this->logger->critical("Bad output prohibited", $verr->getStructuredAnswer());
-            throw new HttpError(500, "Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.", $verr);
+            throw new HttpError(500, __('endpoint.internal_server_error'), $verr);
         }
 
         return $validated_result;

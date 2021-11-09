@@ -132,7 +132,7 @@ final class ArrayFieldTest extends UnitTestCase {
             [
                 '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
                 '2' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '4' => [['.' => ["Feld darf nicht leer sein."]]],
+                '4' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors(['neither', 'foo', 'nor', 'bar', null])
         );
@@ -144,18 +144,18 @@ final class ArrayFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Feld darf nicht leer sein."]]],
+                '0' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors([null])
         );
         $this->assertSame([], $field->getValidationErrors(['foo', 'bar', 'foo']));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss eine Liste sein."]],
+            ['.' => ["Value must be a list."]],
             $field->getValidationErrors('not_a_list')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -179,11 +179,11 @@ final class ArrayFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(['foo', 'bar', 'foo']));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss eine Liste sein."]],
+            ['.' => ["Value must be a list."]],
             $field->getValidationErrors('not_a_list')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -197,7 +197,7 @@ final class ArrayFieldTest extends UnitTestCase {
             [
                 '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
                 '2' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '4' => [['.' => ["Feld darf nicht leer sein."]]],
+                '4' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors(['neither', 'foo', 'nor', 'bar', null])
         );
@@ -209,14 +209,14 @@ final class ArrayFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Feld darf nicht leer sein."]]],
+                '0' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors([null])
         );
         $this->assertSame([], $field->getValidationErrors(['foo', 'bar', 'foo']));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss eine Liste sein."]],
+            ['.' => ["Value must be a list."]],
             $field->getValidationErrors('not_a_list')
         );
         $this->assertSame([], $field->getValidationErrors(null));

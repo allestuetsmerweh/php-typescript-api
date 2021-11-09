@@ -3,6 +3,7 @@
 namespace PhpTypeScriptApi;
 
 require_once __DIR__.'/HttpError.php';
+require_once __DIR__.'/__.php';
 
 class Api {
     use \Psr\Log\LoggerAwareTrait;
@@ -77,6 +78,8 @@ class Api {
     // Reason: Hard to test!
     public function serve() {
         global $_SERVER;
+        $translator = Translator::getInstance();
+        $translator->setAcceptLangs($_SERVER['HTTP_ACCEPT_LANGUAGE']);
         $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
         $this->serveEndpoint($endpoint_name);
     }
@@ -96,7 +99,7 @@ class Api {
                 if ($endpoint_logger) {
                     $endpoint_logger->warning("Invalid endpoint called: {$endpoint_name}");
                 }
-                throw new HttpError(400, 'Invalid endpoint');
+                throw new HttpError(400, __('api.invalid_endpoint'));
             }
             $endpoint = $this->endpoints[$endpoint_name]();
             if ($endpoint_logger) {
@@ -125,7 +128,7 @@ class Api {
             $path_info_matches
         );
         if (!$has_path_info) {
-            throw new HttpError(400, 'No path info');
+            throw new HttpError(400, __('api.invalid_endpoint'));
         }
         return $path_info_matches[1];
     }

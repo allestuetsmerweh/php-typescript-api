@@ -146,9 +146,9 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(429, $err->getCode());
-            $this->assertSame('Zu viele Anfragen.', $err->getMessage());
+            $this->assertSame('Too many requests', $err->getMessage());
             $this->assertSame([
-                'message' => 'Zu viele Anfragen.',
+                'message' => 'Too many requests',
                 'error' => true,
             ], $err->getStructuredAnswer());
         }
@@ -163,12 +163,12 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
-            $this->assertSame('Fehlerhafte Eingabe.', $err->getMessage());
+            $this->assertSame('Bad input', $err->getMessage());
             $this->assertSame([
-                'message' => 'Fehlerhafte Eingabe.',
+                'message' => 'Bad input',
                 'error' => [
                     'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Feld darf nicht leer sein.']],
+                    'validationErrors' => ['.' => ['Field can not be empty.']],
                 ],
             ], $err->getStructuredAnswer());
         }
@@ -185,11 +185,11 @@ final class EndpointTest extends UnitTestCase {
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
             $this->assertSame(
-                'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'An error occurred. Please try again later.',
                 $err->getMessage()
             );
             $this->assertSame([
-                'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'message' => 'An error occurred. Please try again later.',
                 'error' => true,
             ], $err->getStructuredAnswer());
         }
@@ -223,9 +223,9 @@ final class EndpointTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
-            $this->assertSame('Fehlerhafte Eingabe.', $err->getMessage());
+            $this->assertSame('Bad input', $err->getMessage());
             $this->assertSame([
-                'message' => 'Fehlerhafte Eingabe.',
+                'message' => 'Bad input',
                 'error' => [
                     'type' => 'ValidationError',
                     'validationErrors' => ['.' => ['Fundamental error']],
@@ -246,14 +246,14 @@ final class EndpointTest extends UnitTestCase {
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
             $this->assertSame(
-                'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'An error occurred. Please try again later.',
                 $err->getMessage()
             );
             $this->assertSame([
-                'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                'message' => 'An error occurred. Please try again later.',
                 'error' => [
                     'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Feld darf nicht leer sein.']],
+                    'validationErrors' => ['.' => ['Field can not be empty.']],
                 ],
             ], $err->getStructuredAnswer());
         }
