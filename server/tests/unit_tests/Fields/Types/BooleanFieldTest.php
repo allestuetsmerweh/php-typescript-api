@@ -54,7 +54,7 @@ final class BooleanFieldTest extends UnitTestCase {
             $field->parse('test');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame("Unlesbarer Binärwert: 'test'", $exc->getMessage());
+            $this->assertSame("Illegible binary value: test", $exc->getMessage());
         }
     }
 
@@ -70,7 +70,7 @@ final class BooleanFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getValidationErrors(true));
         $this->assertSame([], $field->getValidationErrors(false));
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
     }
@@ -78,19 +78,19 @@ final class BooleanFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new BooleanField([]);
         $this->assertSame(
-            ['.' => ['Wert muss Ja oder Nein sein.']],
+            ['.' => ['Value must be yes or no.']],
             $field->getValidationErrors(1)
         );
         $this->assertSame(
-            ['.' => ['Wert muss Ja oder Nein sein.']],
+            ['.' => ['Value must be yes or no.']],
             $field->getValidationErrors('test')
         );
         $this->assertSame(
-            ['.' => ['Wert muss Ja oder Nein sein.']],
+            ['.' => ['Value must be yes or no.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Wert muss Ja oder Nein sein.']],
+            ['.' => ['Value must be yes or no.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

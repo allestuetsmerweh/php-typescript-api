@@ -4,6 +4,8 @@ namespace PhpTypeScriptApi\Fields\FieldTypes;
 
 use PhpTypeScriptApi\Fields;
 
+require_once __DIR__.'/../../__.php';
+
 class Field {
     private bool $allow_null = false;
     private $default_value;
@@ -33,7 +35,7 @@ class Field {
         if (!$this->allow_null) {
             if ($value === null) {
                 if ($this->default_value === null) {
-                    $validation_result->recordError("Feld darf nicht leer sein.");
+                    $validation_result->recordError(__('fields.must_not_be_empty'));
                 }
             }
         }

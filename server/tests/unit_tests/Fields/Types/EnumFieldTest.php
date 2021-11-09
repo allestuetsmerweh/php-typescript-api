@@ -73,15 +73,15 @@ final class EnumFieldTest extends UnitTestCase {
     public function testValidatesDisallowedValue(): void {
         $field = new EnumField(['allowed_values' => ['one', 'two', 'three']]);
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors('zero')
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors('four')
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors('')
         );
     }
@@ -89,27 +89,27 @@ final class EnumFieldTest extends UnitTestCase {
     public function testValidatesWeirdValues(): void {
         $field = new EnumField([]);
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors(false)
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors(true)
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors(1)
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors('test')
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be simple.']],
             $field->getValidationErrors([1])
         );
         $this->assertSame(
-            ['.' => ['Feld hat ungültigen Wert.']],
+            ['.' => ['Value must be simple.']],
             $field->getValidationErrors([1 => 'one'])
         );
     }

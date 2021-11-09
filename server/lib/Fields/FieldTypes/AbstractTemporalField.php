@@ -2,6 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
 require_once __DIR__.'/Field.php';
 
 abstract class AbstractTemporalField extends Field {
@@ -26,22 +27,29 @@ abstract class AbstractTemporalField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_string($value)) {
-                $validation_result->recordError("Wert muss eine Zeichenkette sein.");
+                $validation_result->recordError(__('fields.must_be_string'));
             } else {
                 $regex = $this->getRegex();
                 if (!preg_match($regex, $value)) {
-                    $validation_result->recordError("Wert muss im Format {$regex} sein.");
+                    $validation_result->recordError(__(
+                        'fields.must_match_regex', ['regex' => $regex]));
                 }
             }
         }
         if ($this->min_value !== null) {
             if ($value < $this->min_value) {
-                $validation_result->recordError("Wert darf nicht kleiner als {$this->min_value} sein.");
+                $validation_result->recordError(__(
+                    'fields.must_not_be_smaller',
+                    ['min_value' => $this->min_value]
+                ));
             }
         }
         if ($this->max_value !== null) {
             if ($value > $this->max_value) {
-                $validation_result->recordError("Wert darf nicht grösser als {$this->max_value} sein.");
+                $validation_result->recordError(__(
+                    'fields.must_not_be_larger',
+                    ['max_value' => $this->max_value]
+                ));
             }
         }
         return $validation_result;

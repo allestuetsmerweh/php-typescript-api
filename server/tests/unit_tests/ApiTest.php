@@ -170,13 +170,13 @@ ZZZZZZZZZZ;
             $fake_api->testOnlyGetSanitizedEndpointName('missing_slash');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame('No path info', $exc->getMessage());
+            $this->assertSame('Invalid endpoint', $exc->getMessage());
         }
         try {
             $fake_api->testOnlyGetSanitizedEndpointName('ínvãlïd_ĉĥàŕŝ');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame('No path info', $exc->getMessage());
+            $this->assertSame('Invalid endpoint', $exc->getMessage());
         }
     }
 
@@ -271,7 +271,7 @@ ZZZZZZZZZZ;
             [[
                 'http_code' => 500,
                 'response' => [
-                    'message' => 'Es ist ein Fehler aufgetreten. Bitte später nochmals versuchen.',
+                    'message' => 'An error occurred. Please try again later.',
                     'error' => true,
                 ],
             ]],

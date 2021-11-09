@@ -165,7 +165,7 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'one' => [['.' => ["Feld darf nicht leer sein."]]],
+                'one' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors([
                 'one' => null,
@@ -175,9 +175,9 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'one' => ["Fehlender Schlüssel 'one'."],
-                'three' => ["Fehlender Schlüssel 'three'."],
-                '.' => ["Überflüssiger Schlüssel 'additional_key'."],
+                'one' => ["Missing key: one."],
+                'three' => ["Missing key: three."],
+                '.' => ["Unknown key: additional_key."],
             ],
             $field->getValidationErrors([
                 'two' => 'foo',
@@ -186,7 +186,7 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'three' => ["Fehlender Schlüssel 'three'."],
+                'three' => ["Missing key: three."],
             ],
             $field->getValidationErrors([
                 'one' => 'foo',
@@ -194,16 +194,16 @@ final class ObjectFieldTest extends UnitTestCase {
             ])
         );
         $this->assertSame([
-            'one' => ["Fehlender Schlüssel 'one'."],
-            'two' => ["Fehlender Schlüssel 'two'."],
-            'three' => ["Fehlender Schlüssel 'three'."],
+            'one' => ["Missing key: one."],
+            'two' => ["Missing key: two."],
+            'three' => ["Missing key: three."],
         ], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss ein Objekt sein."]],
+            ['.' => ["Value must be an object."]],
             $field->getValidationErrors('not_an_object')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -215,27 +215,27 @@ final class ObjectFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'test' => ["Fehlender Schlüssel 'test'."],
-                '.' => ["Überflüssiger Schlüssel 'additional_key'."],
+                'test' => ["Missing key: test."],
+                '.' => ["Unknown key: additional_key."],
             ],
             $field->getValidationErrors(['additional_key' => 'WTF?'])
         );
         $this->assertSame(
             [
-                'test' => [['.' => ["Feld darf nicht leer sein."]]],
+                'test' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors(['test' => null])
         );
         $this->assertSame([], $field->getValidationErrors(['test' => 'foo']));
         $this->assertSame(
             [
-                'test' => ["Fehlender Schlüssel 'test'."],
+                'test' => ["Missing key: test."],
             ],
             $field->getValidationErrors([])
         );
         $this->assertSame(
             [
-                '.' => ["Wert muss ein Objekt sein."],
+                '.' => ["Value must be an object."],
             ],
             $field->getValidationErrors('not_an_object')
         );

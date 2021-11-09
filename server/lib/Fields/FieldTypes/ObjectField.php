@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class ObjectField extends Field {
     private $field_structure = [];
 
@@ -24,7 +26,7 @@ class ObjectField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_array($value)) {
-                $validation_result->recordError("Wert muss ein Objekt sein.");
+                $validation_result->recordError(__('fields.must_be_object'));
                 return $validation_result;
             }
             foreach ($this->field_structure as $key => $field) {
@@ -36,12 +38,14 @@ class ObjectField extends Field {
                         $validation_result->recordErrorInKey($key, $item_errors);
                     }
                 } else {
-                    $validation_result->recordErrorInKey($key, "Fehlender Schlüssel '{$key}'.");
+                    $validation_result->recordErrorInKey($key, __(
+                        'fields.missing_key', ['key' => $key]));
                 }
             }
             foreach ($value as $key => $item_value) {
                 if (!isset($this->field_structure[$key])) {
-                    $validation_result->recordError("Überflüssiger Schlüssel '{$key}'.");
+                    $validation_result->recordError(__(
+                        'fields.unknown_key', ['key' => $key]));
                 }
             }
         }

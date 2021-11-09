@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+require_once __DIR__.'/../../__.php';
+
 class ChoiceField extends Field {
     private $field_map = [];
 
@@ -24,20 +26,21 @@ class ChoiceField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_array($value)) {
-                $validation_result->recordError("Wert muss ein Objekt sein.");
+                $validation_result->recordError(__('fields.must_be_object'));
                 return $validation_result;
             }
 
             $value_keys = array_keys($value);
             if (count($value_keys) != 1) {
-                $validation_result->recordError("Wert muss ein Objekt mit genau einem Schlüssel sein.");
+                $validation_result->recordError(__('fields.must_have_one_key'));
                 return $validation_result;
             }
 
             $value_key = $value_keys[0];
             $item_field = $this->field_map[$value_key] ?? null;
             if ($item_field === null) {
-                $validation_result->recordError("Unbekannter Schlüssel: '{$value_key}'.");
+                $validation_result->recordError(__(
+                    'fields.unknown_key', ['key' => $value_key]));
                 return $validation_result;
             }
 

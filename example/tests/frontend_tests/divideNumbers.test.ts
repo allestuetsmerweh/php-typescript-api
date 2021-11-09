@@ -63,7 +63,7 @@ describe('divideNumbers', () => {
             if (!(err instanceof ValidationError)) {
                 throw new Error('ValidationError expected');
             }
-            expect(err.message).toEqual('Fehlerhafte Eingabe.');
+            expect(err.message).toEqual('Bad input');
             expect(err.getErrorsByField()).toEqual({
                 'divisor': ['Cannot divide by zero.'],
             });
@@ -87,9 +87,9 @@ describe('divideNumbers', () => {
             if (!(err instanceof ValidationError)) {
                 throw new Error('ValidationError expected');
             }
-            expect(err.message).toEqual('Fehlerhafte Eingabe.');
+            expect(err.message).toEqual('Bad input');
             expect(err.getErrorsByField()).toEqual({
-                '.': ['Wert darf nicht kleiner als 0 sein.'],
+                '.': ['Value must not be less than 0.'],
             });
         }
     });

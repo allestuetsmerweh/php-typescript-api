@@ -136,7 +136,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'key' => [['.' => ["Feld darf nicht leer sein."]]],
+                'key' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors(['key' => null])
         );
@@ -147,11 +147,11 @@ final class DictFieldTest extends UnitTestCase {
         ]));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss ein Objekt sein."]],
+            ['.' => ["Value must be an object."]],
             $field->getValidationErrors('not_an_object')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -187,11 +187,11 @@ final class DictFieldTest extends UnitTestCase {
         ]));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss ein Objekt sein."]],
+            ['.' => ["Value must be an object."]],
             $field->getValidationErrors('not_an_object')
         );
         $this->assertSame(
-            ['.' => ["Feld darf nicht leer sein."]],
+            ['.' => ["Field can not be empty."]],
             $field->getValidationErrors(null)
         );
     }
@@ -222,7 +222,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'key' => [['.' => ["Feld darf nicht leer sein."]]],
+                'key' => [['.' => ["Field can not be empty."]]],
             ],
             $field->getValidationErrors(['key' => null])
         );
@@ -233,7 +233,7 @@ final class DictFieldTest extends UnitTestCase {
         ]));
         $this->assertSame([], $field->getValidationErrors([]));
         $this->assertSame(
-            ['.' => ["Wert muss ein Objekt sein."]],
+            ['.' => ["Value must be an object."]],
             $field->getValidationErrors('not_an_object')
         );
         $this->assertSame([], $field->getValidationErrors(null));

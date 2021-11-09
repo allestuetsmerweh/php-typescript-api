@@ -83,7 +83,7 @@ final class FieldTest extends UnitTestCase {
     public function testValidatesAllowNullFalse(): void {
         $field = new Field(['allow_null' => false]);
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
         $this->assertSame([], $field->getValidationErrors('test'));
@@ -92,7 +92,7 @@ final class FieldTest extends UnitTestCase {
     public function testValidatesDefaultValueDefault(): void {
         $field = new Field(['allow_null' => false]);
         $this->assertSame(
-            ['.' => ['Feld darf nicht leer sein.']],
+            ['.' => ['Field can not be empty.']],
             $field->getValidationErrors(null)
         );
         $this->assertSame([], $field->getValidationErrors('test'));
