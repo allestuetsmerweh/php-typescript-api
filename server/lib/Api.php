@@ -16,7 +16,7 @@ class Api {
 
     public function getTypeScriptDefinition($name) {
         $typescript_output = "/** ### This file is auto-generated, modifying is futile! ### */\n\n";
-        $typescript_exported_types = '';
+        $typescript_exported_types = [];
         $typescript_endpoint_symbols = '';
         $typescript_request_types = '';
         $typescript_response_types = '';
@@ -32,7 +32,7 @@ class Api {
             $typescript_request_types .= "    {$endpoint_name}: ";
             $request_field = $endpoint->getRequestField();
             foreach ($request_field->getExportedTypeScriptTypes() as $type_ident => $exported_type) {
-                $typescript_exported_types .= "export type {$type_ident} = {$exported_type};\n";
+                $typescript_exported_types[$type_ident] = "export type {$type_ident} = {$exported_type};\n";
             }
             $request_type = $request_field->getTypeScriptType(['should_substitute' => true]);
             $indented_request_type = str_replace("\n", "\n        ", $request_type);
@@ -42,7 +42,7 @@ class Api {
             $typescript_response_types .= "    {$endpoint_name}: ";
             $response_field = $endpoint->getResponseField();
             foreach ($response_field->getExportedTypeScriptTypes() as $type_ident => $exported_type) {
-                $typescript_exported_types .= "export type {$type_ident} = {$exported_type};\n";
+                $typescript_exported_types[$type_ident] = "export type {$type_ident} = {$exported_type};\n";
             }
             $response_type = $response_field->getTypeScriptType(['should_substitute' => true]);
             $indented_response_type = str_replace("\n", "\n        ", $response_type);
@@ -54,7 +54,9 @@ class Api {
         $typescript_request_types .= "}\n";
         $typescript_response_types .= "}\n";
 
-        $typescript_output .= "{$typescript_exported_types}\n";
+        foreach ($typescript_exported_types as $type_ident => $typescript_exported_type) {
+            $typescript_output .= "{$typescript_exported_type}\n";
+        }
         $typescript_output .= "{$typescript_endpoint_symbols}\n";
         $typescript_output .= "type {$name}EndpointMapping = {[key in {$name}Endpoint]: any};\n\n";
         $typescript_output .= "{$typescript_request_types}\n";

@@ -5,7 +5,7 @@ namespace PhpTypeScriptApi;
 class Translator {
     protected static $instance;
 
-    const LANG_PATH = __DIR__.'/../../resources/lang/';
+    public const LANG_PATH = __DIR__.'/../../resources/lang/';
 
     protected $project_langs_dict = ['en' => true];
     protected $accept_langs = ['en'];
