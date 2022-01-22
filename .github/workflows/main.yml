@@ -68,6 +68,8 @@ jobs:
       run: cd example; npm install
     - name: Example - Run Webpack
       run: cd example; npm run webpack-build
+    - name: Lint JavaScript & TypeScript
+      run: npm run lint
     - name: Example - Jest Unit Tests
       run: cd example; npm run test-ci
     # - name: PHP Example Tests

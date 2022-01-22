@@ -17,4 +17,8 @@ $example_api->registerEndpoint('searchSwissPublicTransportConnection', function 
     require_once __DIR__.'/endpoints/SwissPublicTransportConnectionsEndpoint.php';
     return new SwissPublicTransportConnectionsEndpoint();
 });
+$example_api->registerEndpoint('empty', function () {
+    require_once __DIR__.'/endpoints/EmptyEndpoint.php';
+    return new EmptyEndpoint();
+});
 return $example_api;

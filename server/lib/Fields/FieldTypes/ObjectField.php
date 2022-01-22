@@ -67,6 +67,9 @@ class ObjectField extends Field {
             $object_type .= "    '{$key}': {$item_type},\n";
         }
         $object_type .= "}";
+        if ($object_type === "{\n}") {
+            $object_type = "Record<string, never>";
+        }
         $or_null = $this->getAllowNull() ? '|null' : '';
         return "{$object_type}{$or_null}";
     }

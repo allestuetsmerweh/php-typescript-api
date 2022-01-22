@@ -23,12 +23,29 @@ final class ObjectFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
+    public function testTypeScriptTypeEmpty(): void {
+        $field = new ObjectField([
+            'field_structure' => [],
+        ]);
+        $this->assertSame("Record<string, never>", $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
     public function testTypeScriptTypeWithNullAllowed(): void {
         $field = new ObjectField([
             'field_structure' => ['test' => new FakeItemField([])],
             'allow_null' => true,
         ]);
         $this->assertSame("{\n    'test': ItemType,\n}|null", $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
+    public function testTypeScriptTypeEmptyWithNullAllowed(): void {
+        $field = new ObjectField([
+            'field_structure' => [],
+            'allow_null' => true,
+        ]);
+        $this->assertSame("Record<string, never>|null", $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 

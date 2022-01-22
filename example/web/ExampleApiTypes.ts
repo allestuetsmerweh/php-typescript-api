@@ -5,19 +5,23 @@ export type SPTransportLocation = {
     'name': string,
     'coordinate': SPTransportCoordinates,
 };
+
 export type SPTransportCoordinates = {
     'type': string,
     'x': number,
     'y': number,
 };
+
 export type SPTransportConnection = {
     'sections': Array<SPTransportSection>,
 };
+
 export type SPTransportSection = {
     'departure': SPTransportStop,
     'arrival': SPTransportStop,
     'passList': Array<SPTransportStop>,
 };
+
 export type SPTransportStop = {
     'stationId': string,
     'arrival': string|null,
@@ -30,7 +34,8 @@ export type SPTransportStop = {
 export type ExampleApiEndpoint =
     'divideNumbers'|
     'squareRoot'|
-    'searchSwissPublicTransportConnection';
+    'searchSwissPublicTransportConnection'|
+    'empty';
 
 type ExampleApiEndpointMapping = {[key in ExampleApiEndpoint]: any};
 
@@ -48,6 +53,7 @@ export interface ExampleApiRequests extends ExampleApiEndpointMapping {
             'time': string,
             'isArrivalTime': boolean|null,
         },
+    empty: Record<string, never>,
 }
 
 export interface ExampleApiResponses extends ExampleApiEndpointMapping {
@@ -57,5 +63,6 @@ export interface ExampleApiResponses extends ExampleApiEndpointMapping {
             'stationById': {[key: string]: SPTransportLocation},
             'connections': Array<SPTransportConnection>,
         },
+    empty: Record<string, never>,
 }
 
