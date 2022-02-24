@@ -76,12 +76,60 @@ final class StringFieldTest extends UnitTestCase {
 
     public function testValidatesAllowEmptyTrue(): void {
         $field = new StringField(['allow_empty' => true]);
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors(null)
+        );
+        $this->assertSame([], $field->getValidationErrors(''));
+        $this->assertSame([], $field->getValidationErrors('test'));
+    }
+
+    public function testValidatesAllowEmptyTrueForAllowedNull(): void {
+        $field = new StringField(['allow_null' => true, 'allow_empty' => true]);
+        $this->assertSame([], $field->getValidationErrors(null));
+        $this->assertSame([], $field->getValidationErrors(''));
+        $this->assertSame([], $field->getValidationErrors('test'));
+    }
+
+    public function testValidatesAllowEmptyTrueForDisallowedNull(): void {
+        $field = new StringField(['allow_null' => false, 'allow_empty' => true]);
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors(null)
+        );
         $this->assertSame([], $field->getValidationErrors(''));
         $this->assertSame([], $field->getValidationErrors('test'));
     }
 
     public function testValidatesAllowEmptyFalse(): void {
         $field = new StringField(['allow_empty' => false]);
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors(null)
+        );
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors('')
+        );
+        $this->assertSame([], $field->getValidationErrors('test'));
+    }
+
+    public function testValidatesAllowEmptyFalseForAllowedNull(): void {
+        $field = new StringField(['allow_null' => true, 'allow_empty' => false]);
+        $this->assertSame([], $field->getValidationErrors(null));
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors('')
+        );
+        $this->assertSame([], $field->getValidationErrors('test'));
+    }
+
+    public function testValidatesAllowEmptyFalseForDisallowedNull(): void {
+        $field = new StringField(['allow_null' => false, 'allow_empty' => false]);
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors(null)
+        );
         $this->assertSame(
             ['.' => ['Field can not be empty.']],
             $field->getValidationErrors('')
@@ -96,6 +144,19 @@ final class StringFieldTest extends UnitTestCase {
         $this->assertSame(
             ['.' => ['Value can not be longer than 3 characters.']],
             $field->getValidationErrors('1234')
+        );
+    }
+
+    public function testValidatesMaxLengthForAllowedNull(): void {
+        $field = new StringField(['allow_null' => true, 'max_length' => 3]);
+        $this->assertSame([], $field->getValidationErrors(null));
+    }
+
+    public function testValidatesMaxLengthForDisallowedNull(): void {
+        $field = new StringField(['allow_null' => false, 'max_length' => 3]);
+        $this->assertSame(
+            ['.' => ['Field can not be empty.']],
+            $field->getValidationErrors(null)
         );
     }
 
