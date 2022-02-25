@@ -32,7 +32,7 @@ export class ValidationError extends Error {
                     const thisErrors = newErrorsByField['.'] || [];
                     newErrorsByField['.'] = [...thisErrors, error];
                 } else {
-                    for (const fieldId in error) {
+                    for (const fieldId of Object.keys(error)) {
                         const errors = error[fieldId];
                         const existingErrors = newErrorsByField[fieldId] || [];
                         newErrorsByField[fieldId] = [
