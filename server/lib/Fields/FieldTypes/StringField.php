@@ -37,7 +37,7 @@ class StringField extends Field {
             }
         }
         if ($this->max_length !== null) {
-            if (strlen($value) > $this->max_length) {
+            if ($value !== null && strlen($value) > $this->max_length) {
                 $validation_result->recordError(__(
                     'fields.must_not_be_longer',
                     ['max_length' => $this->max_length]
