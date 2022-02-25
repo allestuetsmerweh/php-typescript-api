@@ -263,14 +263,14 @@ describe('Api', () => {
         it('concatenates errors on the same field', () => {
             const mergedError = api.mergeValidationErrors([
                 validationError1,
+                validationError2,
                 validationError1,
             ]);
             const expectedError = new ValidationError(
-                'testMessage1\ntestMessage1',
+                'testMessage1\ntestMessage2\ntestMessage1',
                 {
-                    // TODO: This should be:
-                    // 'field1': ['testError1', 'testError1'],
-                    'field1': ['testError1'],
+                    'field1': ['testError1', 'testError1'],
+                    'field2': ['testError2'],
                 },
             );
             expectValidationErrorsEqual(mergedError, expectedError);

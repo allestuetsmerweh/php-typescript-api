@@ -45,11 +45,15 @@ export abstract class Api<
             const newMessage = validationError.message
                 ? merged.message + (merged.message ? '\n' : '') + validationError.message
                 : merged.message;
-            // TODO: Deep merge (concat errors if key present in both dicts)
+            const newErrorsByField = validationError.getErrorsByField();
             const newValidationErrors = {
                 ...merged.getErrorsByField(),
-                ...validationError.getErrorsByField(),
             };
+            for (const fieldId of Object.keys(newErrorsByField)) {
+                const existingErrors = newValidationErrors[fieldId] ?? [];
+                const newErrors = newErrorsByField[fieldId];
+                newValidationErrors[fieldId] = [...existingErrors, ...newErrors];
+            }
             merged = new ValidationError(newMessage, newValidationErrors);
         }
         return merged;
