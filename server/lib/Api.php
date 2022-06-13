@@ -2,6 +2,10 @@
 
 namespace PhpTypeScriptApi;
 
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+
 require_once __DIR__.'/HttpError.php';
 require_once __DIR__.'/__.php';
 
@@ -76,19 +80,17 @@ class Api {
         return $get_endpoint_function();
     }
 
-    // @codeCoverageIgnoreStart
-    // Reason: Hard to test!
     public function serve() {
-        global $_SERVER;
-        $translator = Translator::getInstance();
-        $translator->setAcceptLangs($_SERVER['HTTP_ACCEPT_LANGUAGE']);
-        $endpoint_name = $this->getSanitizedEndpointName($_SERVER['PATH_INFO']);
-        $this->serveEndpoint($endpoint_name);
+        $request = Request::createFromGlobals();
+        $response = $this->getResponse($request);
+        $response->prepare($request);
+        $response->send();
     }
 
-    // @codeCoverageIgnoreEnd
-
-    protected function serveEndpoint($endpoint_name) {
+    public function getResponse(Request $request): JsonResponse {
+        $translator = Translator::getInstance();
+        $translator->setAcceptLangs($request->server->get('HTTP_ACCEPT_LANGUAGE'));
+        $endpoint_name = $this->getSanitizedEndpointName($request->server->get('PATH_INFO'));
         try {
             $endpoint_logger = null;
             if ($this->logger) {
@@ -114,11 +116,11 @@ class Api {
             $result = $endpoint->call($input);
             restore_error_handler();
             restore_exception_handler();
-            return $this->respond(200, $result);
+            return new JsonResponse($result, Response::HTTP_OK);
         } catch (HttpError $httperr) {
-            return $this->respond(
+            return new JsonResponse(
+                $httperr->getStructuredAnswer(),
                 $httperr->getCode(),
-                $httperr->getStructuredAnswer()
             );
         }
     }
@@ -134,13 +136,4 @@ class Api {
         }
         return $path_info_matches[1];
     }
-
-    // @codeCoverageIgnoreStart
-    // Reason: Cannot be tested. exit would actually stop the tests, etc.
-    protected function respond($http_code, $response) {
-        http_response_code($http_code);
-        exit(json_encode($response));
-    }
-
-    // @codeCoverageIgnoreEnd
 }

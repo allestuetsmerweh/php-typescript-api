@@ -37,7 +37,7 @@ class Translator {
     }
 
     public function setAcceptLangs($accept_lang_str) {
-        $raw_accept_langs = explode(',', $accept_lang_str);
+        $raw_accept_langs = explode(',', $accept_lang_str ?? '');
         $accept_langs = array_map(function ($raw_accept_lang) {
             $lang = explode(';', $raw_accept_lang)[0];
             return trim(str_replace('-', '_', strtolower($lang)));
@@ -104,5 +104,9 @@ class Translator {
             self::$instance = $instance;
         }
         return self::$instance;
+    }
+
+    public static function resetInstance() {
+        self::$instance = null;
     }
 }

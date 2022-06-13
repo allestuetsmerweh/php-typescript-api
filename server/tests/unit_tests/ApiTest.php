@@ -5,6 +5,9 @@ declare(strict_types=1);
 use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 require_once __DIR__.'/../fake/FakeLogger.php';
 require_once __DIR__.'/_common/UnitTestCase.php';
@@ -78,25 +81,12 @@ class FakeApiTestEndpoint2 extends Endpoint {
 }
 
 class FakeApiTestApi extends Api {
-    public $responses = [];
-
-    protected function respond($http_code, $response) {
-        $this->responses[] = [
-            'http_code' => $http_code,
-            'response' => $response,
-        ];
-    }
-
     public function testOnlyGetLogger() {
         return $this->logger;
     }
 
     public function testOnlyGetSanitizedEndpointName($path_info) {
         return parent::getSanitizedEndpointName($path_info);
-    }
-
-    public function testOnlyServeEndpoint($endpoint_name) {
-        return parent::serveEndpoint($endpoint_name);
     }
 }
 
@@ -228,7 +218,12 @@ ZZZZZZZZZZ;
         }
     }
 
-    public function testApiServeEndpointWithoutLogger(): void {
+    public function testApiServe(): void {
+        global $_SERVER;
+        $server_backup = $_SERVER;
+        $_SERVER = [
+            'PATH_INFO' => '/fakeEndpoint1',
+        ];
         $fake_api = new FakeApiTestApi();
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
@@ -239,12 +234,42 @@ ZZZZZZZZZZ;
             }
         );
 
-        $fake_api->testOnlyServeEndpoint('fakeEndpoint1');
+        ob_start();
+        $fake_api->serve();
+        $output = ob_get_contents();
+        ob_end_clean();
 
-        $this->assertSame(
-            [['http_code' => 200, 'response' => 'fake-output']],
-            $fake_api->responses
+        $this->assertSame(json_encode('fake-output'), $output);
+
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
+        $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+        $this->assertSame(null, $fake_api->testOnlyGetLogger());
+        $this->assertSame(true, $fake_endpoint->testOnlyGetLogger() instanceof \Monolog\Logger);
+        
+        $_SERVER = $server_backup;
+    }
+
+    public function testApiGetResponseWithoutLogger(): void {
+        $fake_api = new FakeApiTestApi();
+        $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
+        $fake_endpoint->handle_with_output = 'fake-output';
+        $fake_api->registerEndpoint(
+            'fakeEndpoint1',
+            function () use ($fake_endpoint) {
+                return $fake_endpoint;
+            }
         );
+        $request = new Request();
+        $request->server->set('PATH_INFO', '/fakeEndpoint1');
+        $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
+        
+        $response = $fake_api->getResponse($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/json', $response->headers->get('Content-Type'));
+        $this->assertSame(null, $response->getCharset());
+        $this->assertSame(json_encode('fake-output'), $response->getContent());
+
         $this->assertSame(null, $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
         $this->assertSame(null, $fake_api->testOnlyGetLogger());
@@ -255,25 +280,26 @@ ZZZZZZZZZZ;
         $fake_api = new FakeApiTestApi();
         $logger = FakeLogger::create('ApiTest');
         $fake_api->setLogger($logger);
+        $request = new Request();
+        $request->server->set('PATH_INFO', '/inexistent');
+        $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
 
-        $fake_api->testOnlyServeEndpoint('inexistent');
+        $response = $fake_api->getResponse($request);
 
-        $this->assertSame(
-            [[
-                'http_code' => 400,
-                'response' => [
-                    'message' => 'Invalid endpoint',
-                    'error' => true,
-                ],
-            ]],
-            $fake_api->responses
-        );
+        $this->assertSame(400, $response->getStatusCode());
+        $this->assertSame('application/json', $response->headers->get('Content-Type'));
+        $this->assertSame(null, $response->getCharset());
+        $this->assertSame(json_encode([
+            'message' => 'Invalid endpoint',
+            'error' => true,
+        ]), $response->getContent());
+
         $this->assertSame([
             'WARNING Invalid endpoint called: inexistent',
         ], $logger->handler->getPrettyRecords());
     }
 
-    public function testApiServeEndpoint(): void {
+    public function testApiGetResponse(): void {
         $fake_api = new FakeApiTestApi();
         $logger = FakeLogger::create('ApiTest');
         $fake_api->setLogger($logger);
@@ -285,22 +311,27 @@ ZZZZZZZZZZ;
                 return $fake_endpoint;
             }
         );
+        $request = new Request();
+        $request->server->set('PATH_INFO', '/fakeEndpoint1');
+        $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
 
-        $fake_api->testOnlyServeEndpoint('fakeEndpoint1');
+        $response = $fake_api->getResponse($request);
 
-        $this->assertSame(
-            [['http_code' => 200, 'response' => 'fake-output']],
-            $fake_api->responses
-        );
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/json', $response->headers->get('Content-Type'));
+        $this->assertSame(null, $response->getCharset());
+        $this->assertSame(json_encode('fake-output'), $response->getContent());
+
         $this->assertSame(null, $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+
         $this->assertSame([
             'INFO Valid user request',
             'INFO Valid user response',
         ], $logger->handler->getPrettyRecords());
     }
 
-    public function testApiServeEndpointWithError(): void {
+    public function testApiGetResponseWithError(): void {
         $fake_api = new FakeApiTestApi();
         $logger = FakeLogger::create('ApiTest');
         $fake_api->setLogger($logger);
@@ -312,21 +343,23 @@ ZZZZZZZZZZ;
                 return $fake_endpoint;
             }
         );
+        $request = new Request();
+        $request->server->set('PATH_INFO', '/fakeEndpoint1');
+        $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
 
-        $fake_api->testOnlyServeEndpoint('fakeEndpoint1');
+        $response = $fake_api->getResponse($request);
 
-        $this->assertSame(
-            [[
-                'http_code' => 500,
-                'response' => [
-                    'message' => 'An error occurred. Please try again later.',
-                    'error' => true,
-                ],
-            ]],
-            $fake_api->responses
-        );
+        $this->assertSame(500, $response->getStatusCode());
+        $this->assertSame('application/json', $response->headers->get('Content-Type'));
+        $this->assertSame(null, $response->getCharset());
+        $this->assertSame(json_encode([
+            'message' => 'An error occurred. Please try again later.',
+            'error' => true,
+        ]), $response->getContent());
+
         $this->assertSame(null, $fake_endpoint->handled_with_input);
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+
         $this->assertSame([
             'INFO Valid user request',
             'CRITICAL Unexpected endpoint error: test_error',
