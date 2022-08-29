@@ -2,14 +2,16 @@
 
 declare(strict_types=1);
 
-class FakeLogHandler implements Monolog\Handler\HandlerInterface {
-    public $records = [];
+use Monolog\LogRecord;
 
-    public function isHandling(array $args): bool {
+class FakeLogHandler implements Monolog\Handler\HandlerInterface {
+    public array $records = [];
+
+    public function isHandling(LogRecord $record): bool {
         return true;
     }
 
-    public function handle(array $record): bool {
+    public function handle(LogRecord $record): bool {
         $this->records[] = $record;
         return true;
     }
@@ -22,8 +24,9 @@ class FakeLogHandler implements Monolog\Handler\HandlerInterface {
 
     public function getPrettyRecords() {
         return array_map(function ($record) {
-            $level_name = $record['level_name'];
-            $message = $record['message'];
+            $arr = $record->toArray();
+            $level_name = $arr['level_name'];
+            $message = $arr['message'];
             return "{$level_name} {$message}";
         }, $this->records);
     }
