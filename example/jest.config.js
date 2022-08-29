@@ -12,9 +12,11 @@ const jestConfig = {
         '^.+\\.ts$': 'ts-jest',
     },
     testEnvironment: 'jsdom',
+    testEnvironmentOptions: {
+        url: 'http://127.0.0.1:30270',
+    },
     testRegex: 'tests/.*\\.test\\.ts',
     testPathIgnorePatterns: ['node_modules/'],
-    testURL: 'http://127.0.0.1:30270',
     collectCoverage: true,
     maxConcurrency: 1,
     coverageThreshold: {

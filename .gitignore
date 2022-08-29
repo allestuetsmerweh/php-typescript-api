@@ -10,5 +10,6 @@
 /coverage
 /example/coverage
 /example/node_modules
+/example/vendor
 /example/web/dist
 /node_modules

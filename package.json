@@ -1,6 +1,6 @@
 {
   "name": "php-typescript-api",
-  "version": "1.0.15",
+  "version": "1.0.17",
   "description": "Build a typed Web API using PHP and TypeScript",
   "main": "client/lib/index.js",
   "types": "client/lib/index.d.ts",
@@ -14,9 +14,9 @@
     "jest": "jest",
     "jest-ci": "jest --runInBand",
     "lint": "npm run eslint",
-    "prepare" : "npm run build",
-    "prepublishOnly" : "npm test && npm run lint",
-    "preversion" : "npm run lint",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm test && npm run lint",
+    "preversion": "npm run lint",
     "test": "npm run jest",
     "test-ci": "npm run jest-ci"
   },
@@ -36,16 +36,17 @@
   },
   "homepage": "https://github.com/allestuetsmerweh/php-typescript-api#readme",
   "dependencies": {
-    "@types/node-fetch": "^3.0.3",
+    "@types/node-fetch": "^2.6.2",
     "unfetch": "^4"
   },
   "devDependencies": {
-    "@types/jest": "^27.0.2",
+    "@types/jest": "^28.1",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
     "eslint": "^8.1.0",
-    "jest": "^27.3.1",
-    "ts-jest": "^27.0.7",
+    "jest": "^28.1",
+    "jest-environment-jsdom": "^29.0.1",
+    "ts-jest": "^28.0",
     "typescript": "^4.4.4"
   }
 }
