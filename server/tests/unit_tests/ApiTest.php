@@ -6,8 +6,6 @@ use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
 
 require_once __DIR__.'/../fake/FakeLogger.php';
 require_once __DIR__.'/_common/UnitTestCase.php';
@@ -245,7 +243,7 @@ ZZZZZZZZZZ;
         $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
         $this->assertSame(null, $fake_api->testOnlyGetLogger());
         $this->assertSame(true, $fake_endpoint->testOnlyGetLogger() instanceof \Monolog\Logger);
-        
+
         $_SERVER = $server_backup;
     }
 
@@ -262,7 +260,7 @@ ZZZZZZZZZZ;
         $request = new Request();
         $request->server->set('PATH_INFO', '/fakeEndpoint1');
         $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
-        
+
         $response = $fake_api->getResponse($request);
 
         $this->assertSame(200, $response->getStatusCode());

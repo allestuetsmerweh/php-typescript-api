@@ -142,7 +142,7 @@ final class NumberFieldTest extends UnitTestCase {
             ['.' => ['Value must not be greater than -2.5.']],
             $field->getValidationErrors(-2));
         $this->assertSame([], $field->getValidationErrors(null)
-    );
+        );
     }
 
     public function testValidatesWeirdValues(): void {

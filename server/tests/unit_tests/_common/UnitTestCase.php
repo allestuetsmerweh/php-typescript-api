@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use PHPUnit\Framework\TestCase;
 use PhpTypeScriptApi\Translator;
+use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
