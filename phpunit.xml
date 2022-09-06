@@ -6,7 +6,10 @@
 >
     <testsuites>
         <testsuite name="Unit Tests">
-            <directory>./server/tests/unit_tests</directory>
+            <directory>./server/tests/UnitTests</directory>
+        </testsuite>
+        <testsuite name="Backend Tests">
+            <directory>./example/tests/BackendTests</directory>
         </testsuite>
     </testsuites>
     <coverage 
