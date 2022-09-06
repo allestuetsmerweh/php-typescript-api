@@ -72,5 +72,5 @@ jobs:
       run: npm run lint
     - name: Example - Jest Unit Tests
       run: cd example; npm run test-ci
-    # - name: PHP Example Tests
-    #   run: composer backend_tests
+    - name: PHP Example Tests
+      run: composer backend_tests

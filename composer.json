@@ -33,9 +33,9 @@
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
-        "test": "phpunit server/tests example/tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
-        "backend_tests": "phpunit example/tests/backend_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
-        "unit_tests": "phpunit server/tests/unit_tests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\""
+        "test": "phpunit server/tests example/tests/BackendTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "backend_tests": "phpunit example/tests/BackendTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
+        "unit_tests": "phpunit server/tests/UnitTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\""
     },
     "archive": {
         "exclude": [
@@ -61,7 +61,13 @@
     },
     "autoload": {
         "psr-4": {
-            "PhpTypeScriptApi\\": "server/lib"
+            "PhpTypeScriptApi\\": "server/lib/"
         }
+    },
+    "autoload-dev": {
+      "psr-4": {
+        "PhpTypeScriptApi\\Tests\\": "server/tests/",
+        "PhpTypeScriptApi\\BackendTests\\": "example/tests/BackendTests/"
+      }
     }
 }
