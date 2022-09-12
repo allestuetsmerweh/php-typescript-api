@@ -25,5 +25,6 @@ class EmptyEndpoint extends Endpoint {
     }
 
     protected function handle($input) {
+        return [];
     }
 }
