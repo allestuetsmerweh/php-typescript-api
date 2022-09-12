@@ -2,9 +2,6 @@
 
 namespace PhpTypeScriptApi;
 
-require_once __DIR__.'/HttpError.php';
-require_once __DIR__.'/__.php';
-
 abstract class Endpoint {
     use \Psr\Log\LoggerAwareTrait;
 
@@ -20,6 +17,7 @@ abstract class Endpoint {
     }
 
     public function runtimeSetup() {
+        $this->logger->critical("Setup function must be set!");
         throw new \Exception("Setup function must be set");
     }
 
@@ -75,6 +73,7 @@ abstract class Endpoint {
             $this->logger->warning("Bad user request", $verr->getStructuredAnswer());
             throw new HttpError(400, __('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
+            $this->logger->warning("HTTP error {$http_error->getCode()}", [$http_error]);
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();

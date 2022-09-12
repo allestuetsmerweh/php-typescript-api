@@ -26,6 +26,7 @@ class FakeEndpoint extends Endpoint {
     }
 
     public function runtimeSetup() {
+        $this->logger->info("Runtime setup...");
         $this->ran_runtime_setup = true;
     }
 
@@ -38,6 +39,7 @@ class FakeEndpoint extends Endpoint {
     }
 
     protected function handle($input) {
+        $this->logger->info("Handling...");
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
         return $this->handle_with_output;
@@ -69,14 +71,18 @@ class FakeEndpointWithErrors extends Endpoint {
 
     protected function handle($input) {
         if ($this->handle_with_error) {
+            $this->logger->info("Handling with error...");
             throw new \Exception("Fake Error", 1);
         }
         if ($this->handle_with_http_error) {
+            $this->logger->info("Handling with HTTP error...");
             throw new HttpError(418, "I'm a teapot");
         }
         if ($this->handle_with_validation_error) {
+            $this->logger->info("Handling with validation error...");
             throw new ValidationError(['.' => ['Fundamental error']]);
         }
+        $this->logger->info("Handling with output...");
         return $this->handle_with_output;
     }
 }
@@ -96,6 +102,11 @@ final class EndpointTest extends UnitTestCase {
         $this->assertSame(null, $endpoint->handled_with_input);
         $this->assertSame('test_output', $result);
         $this->assertSame('fake_resource', $endpoint->handled_with_resource);
+        $this->assertSame([
+            "INFO Valid user request",
+            "INFO Handling...",
+            "INFO Valid user response",
+        ], $logger->handler->getPrettyRecords());
     }
 
     public function testFakeEndpointParseInput(): void {
@@ -107,33 +118,53 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->setLogger($logger);
         $parsed_input = $endpoint->parseInput();
         $this->assertSame(['post_param' => 'posted', 'get_param' => 'got'], $parsed_input);
+        $this->assertSame([
+            "WARNING Providing the value of 'post_param' over POST will be deprecated!",
+            "WARNING Providing the value of 'get_param' over GET will be deprecated!",
+        ], $logger->handler->getPrettyRecords());
     }
 
     public function testFakeEndpointRuntimeSetup(): void {
         global $_GET, $_POST;
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
+        $endpoint->setLogger($logger);
         $endpoint->setup();
         $this->assertSame(true, $endpoint->ran_runtime_setup);
+        $this->assertSame([
+            "INFO Runtime setup...",
+        ], $logger->handler->getPrettyRecords());
     }
 
     public function testFakeEndpointSetupFunction(): void {
         global $_GET, $_POST;
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
-        $endpoint->setSetupFunction(function ($endpoint) {
+        $endpoint->setLogger($logger);
+        $endpoint->setSetupFunction(function ($endpoint) use ($logger) {
+            $logger->info("Setup...");
             $endpoint->setupCalled = true;
         });
         $endpoint->setup();
         $this->assertSame(true, $endpoint->setupCalled);
+        $this->assertSame([
+            "INFO Setup...",
+        ], $logger->handler->getPrettyRecords());
     }
 
     public function testFakeEndpointNoSetupImplemented(): void {
         global $_GET, $_POST;
+        $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpointWithErrors('fake_resource');
+        $endpoint->setLogger($logger);
         try {
             $endpoint->setup();
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame('Setup function must be set', $exc->getMessage());
+            $this->assertSame([
+                "CRITICAL Setup function must be set!",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -152,6 +183,9 @@ final class EndpointTest extends UnitTestCase {
                 'message' => 'Too many requests',
                 'error' => true,
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "ERROR Throttled user request",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -172,6 +206,9 @@ final class EndpointTest extends UnitTestCase {
                     'validationErrors' => ['.' => ['Field can not be empty.']],
                 ],
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "WARNING Bad user request",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -193,6 +230,11 @@ final class EndpointTest extends UnitTestCase {
                 'message' => 'An error occurred. Please try again later.',
                 'error' => true,
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "INFO Valid user request",
+                "INFO Handling with error...",
+                "CRITICAL Unexpected endpoint error: Fake Error",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -211,6 +253,11 @@ final class EndpointTest extends UnitTestCase {
                 'message' => 'I\'m a teapot',
                 'error' => true,
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "INFO Valid user request",
+                "INFO Handling with HTTP error...",
+                "WARNING HTTP error 418",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -232,6 +279,11 @@ final class EndpointTest extends UnitTestCase {
                     'validationErrors' => ['.' => ['Fundamental error']],
                 ],
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "INFO Valid user request",
+                "INFO Handling with validation error...",
+                "WARNING Bad user request",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -257,6 +309,11 @@ final class EndpointTest extends UnitTestCase {
                     'validationErrors' => ['.' => ['Field can not be empty.']],
                 ],
             ], $err->getStructuredAnswer());
+            $this->assertSame([
+                "INFO Valid user request",
+                "INFO Handling with output...",
+                "CRITICAL Bad output prohibited",
+            ], $logger->handler->getPrettyRecords());
         }
     }
 
@@ -268,5 +325,10 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->handle_with_output = 'test';
         $result = $endpoint->call('test');
         $this->assertSame('test', $result);
+        $this->assertSame([
+            "INFO Valid user request",
+            "INFO Handling with output...",
+            "INFO Valid user response",
+        ], $logger->handler->getPrettyRecords());
     }
 }
