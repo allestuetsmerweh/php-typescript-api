@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/../../__.php';
+use function PhpTypeScriptApi\__;
 
 class ObjectField extends Field {
     private $field_structure = [];

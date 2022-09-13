@@ -57,7 +57,12 @@ class Translator {
         $this->fallback_chain = $fallback_chain;
     }
 
-    public function trans(?string $id, array $parameters = [], string $domain = null, string $locale = null) {
+    public function trans(
+        ?string $id,
+        array $parameters = [],
+        string $domain = null,
+        string $locale = null
+    ) {
         $lang_message = $this->getLangMessage($id);
         if (!$lang_message) {
             return '';
@@ -110,3 +115,11 @@ class Translator {
         self::$instance = null;
     }
 }
+
+// @codeCoverageIgnoreStart
+// Reason: Functions can't be tested...
+function __(?string $id, array $parameters = [], string $domain = null, string $locale = null): string {
+    $translator = Translator::getInstance();
+    return $translator->trans($id, $parameters, $domain, $locale);
+}
+// @codeCoverageIgnoreEnd

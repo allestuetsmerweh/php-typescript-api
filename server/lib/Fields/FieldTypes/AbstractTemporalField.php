@@ -2,8 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/../../__.php';
-require_once __DIR__.'/Field.php';
+use function PhpTypeScriptApi\__;
 
 abstract class AbstractTemporalField extends Field {
     private $min_value;
