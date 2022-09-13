@@ -2,9 +2,9 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use PhpTypeScriptApi\Fields;
+use function PhpTypeScriptApi\__;
 
-require_once __DIR__.'/../../__.php';
+use PhpTypeScriptApi\Fields;
 
 class Field {
     private bool $allow_null = false;

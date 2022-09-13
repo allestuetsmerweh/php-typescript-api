@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-require_once __DIR__.'/../../__.php';
+use function PhpTypeScriptApi\__;
 
 class ChoiceField extends Field {
     private $field_map = [];

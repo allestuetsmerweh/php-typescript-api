@@ -6,9 +6,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-require_once __DIR__.'/HttpError.php';
-require_once __DIR__.'/__.php';
-
 class Api {
     use \Psr\Log\LoggerAwareTrait;
 
