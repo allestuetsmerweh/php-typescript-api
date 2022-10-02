@@ -114,10 +114,16 @@ class Translator {
     public static function resetInstance() {
         self::$instance = null;
     }
+
+    public static function __(?string $id, array $parameters = [], string $domain = null, string $locale = null): string {
+        $translator = self::getInstance();
+        return $translator->trans($id, $parameters, $domain, $locale);
+    }
 }
 
 // @codeCoverageIgnoreStart
 // Reason: Functions can't be tested...
+/** @deprecated Use Translator::__() instead. */
 function __(?string $id, array $parameters = [], string $domain = null, string $locale = null): string {
     $translator = Translator::getInstance();
     return $translator->trans($id, $parameters, $domain, $locale);

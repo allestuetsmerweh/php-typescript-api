@@ -11,6 +11,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Fields\FieldUtils
  */
 final class FieldUtilsTest extends UnitTestCase {

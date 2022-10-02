@@ -2,9 +2,8 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
-
 use PhpTypeScriptApi\Fields;
+use PhpTypeScriptApi\Translator;
 
 class Field {
     private bool $allow_null = false;
@@ -35,7 +34,7 @@ class Field {
         if (!$this->allow_null) {
             if ($value === null) {
                 if ($this->default_value === null) {
-                    $validation_result->recordError(__('fields.must_not_be_empty'));
+                    $validation_result->recordError(Translator::__('fields.must_not_be_empty'));
                 }
             }
         }

@@ -15,6 +15,7 @@ class FakeTemporalField extends AbstractTemporalField {
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Fields\FieldTypes\AbstractTemporalField
  */
 final class AbstractTemporalFieldTest extends UnitTestCase {

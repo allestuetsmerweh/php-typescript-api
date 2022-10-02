@@ -89,6 +89,7 @@ class FakeEndpointWithErrors extends Endpoint {
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Endpoint
  */
 final class EndpointTest extends UnitTestCase {

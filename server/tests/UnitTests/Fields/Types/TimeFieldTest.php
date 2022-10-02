@@ -9,6 +9,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Fields\FieldTypes\TimeField
  */
 final class TimeFieldTest extends UnitTestCase {

@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 class StringField extends Field {
     private $max_length;
@@ -26,19 +26,19 @@ class StringField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_string($value)) {
-                $validation_result->recordError(__('fields.must_be_string'));
+                $validation_result->recordError(Translator::__('fields.must_be_string'));
             }
         }
         if (!$this->allow_empty) {
             if ($value === '') {
                 if ($this->getDefaultValue() === null) {
-                    $validation_result->recordError(__('fields.must_not_be_empty'));
+                    $validation_result->recordError(Translator::__('fields.must_not_be_empty'));
                 }
             }
         }
         if ($this->max_length !== null) {
             if ($value !== null && strlen($value) > $this->max_length) {
-                $validation_result->recordError(__(
+                $validation_result->recordError(Translator::__(
                     'fields.must_not_be_longer',
                     ['max_length' => $this->max_length]
                 ));

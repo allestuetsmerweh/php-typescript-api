@@ -91,6 +91,7 @@ class FakeApiTestApi extends Api {
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Api
  */
 final class ApiTest extends UnitTestCase {

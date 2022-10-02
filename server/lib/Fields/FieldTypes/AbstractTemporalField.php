@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 abstract class AbstractTemporalField extends Field {
     private $min_value;
@@ -26,18 +26,18 @@ abstract class AbstractTemporalField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_string($value)) {
-                $validation_result->recordError(__('fields.must_be_string'));
+                $validation_result->recordError(Translator::__('fields.must_be_string'));
             } else {
                 $regex = $this->getRegex();
                 if (!preg_match($regex, $value)) {
-                    $validation_result->recordError(__(
+                    $validation_result->recordError(Translator::__(
                         'fields.must_match_regex', ['regex' => $regex]));
                 }
             }
         }
         if ($this->min_value !== null) {
             if ($value < $this->min_value) {
-                $validation_result->recordError(__(
+                $validation_result->recordError(Translator::__(
                     'fields.must_not_be_smaller',
                     ['min_value' => $this->min_value]
                 ));
@@ -45,7 +45,7 @@ abstract class AbstractTemporalField extends Field {
         }
         if ($this->max_value !== null) {
             if ($value > $this->max_value) {
-                $validation_result->recordError(__(
+                $validation_result->recordError(Translator::__(
                     'fields.must_not_be_larger',
                     ['max_value' => $this->max_value]
                 ));

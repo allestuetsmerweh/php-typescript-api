@@ -9,6 +9,7 @@ use PhpTypeScriptApi\Translator;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 class TranslatorForTest extends Translator {
@@ -53,6 +54,7 @@ class TranslatorForTest extends Translator {
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\Translator
  */
 final class TranslatorTest extends UnitTestCase {

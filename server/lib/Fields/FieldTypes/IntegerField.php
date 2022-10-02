@@ -2,14 +2,14 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 class IntegerField extends NumberField {
     protected function validate($value) {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_int($value)) {
-                $validation_result->recordError(__('fields.must_be_integer'));
+                $validation_result->recordError(Translator::__('fields.must_be_integer'));
             }
         }
         return $validation_result;
@@ -22,6 +22,6 @@ class IntegerField extends NumberField {
         if (preg_match('/^[0-9\\-]+$/', $string)) {
             return intval($string);
         }
-        throw new \Exception(__('fields.illegible_integer', ['value' => $string]));
+        throw new \Exception(Translator::__('fields.illegible_integer', ['value' => $string]));
     }
 }

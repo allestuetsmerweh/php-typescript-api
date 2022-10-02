@@ -2,14 +2,14 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 class BooleanField extends Field {
     protected function validate($value) {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_bool($value)) {
-                $validation_result->recordError(__('fields.must_be_boolean'));
+                $validation_result->recordError(Translator::__('fields.must_be_boolean'));
             }
         }
         return $validation_result;
@@ -26,7 +26,7 @@ class BooleanField extends Field {
             case '':
                 return null;
             default:
-                throw new \Exception(__('fields.illegible_boolean', ['value' => $string]));
+                throw new \Exception(Translator::__('fields.illegible_boolean', ['value' => $string]));
         }
     }
 
