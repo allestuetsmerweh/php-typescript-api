@@ -54,7 +54,7 @@ abstract class Endpoint {
     public function call($raw_input) {
         if ($this->shouldFailThrottling()) {
             $this->logger->error("Throttled user request");
-            throw new HttpError(429, __('endpoint.too_many_requests'));
+            throw new HttpError(429, Translator::__('endpoint.too_many_requests'));
         }
         $field_utils = Fields\FieldUtils::create();
 
@@ -64,21 +64,21 @@ abstract class Endpoint {
             $this->logger->info("Valid user request");
         } catch (Fields\ValidationError $verr) {
             $this->logger->warning("Bad user request", $verr->getStructuredAnswer());
-            throw new HttpError(400, __('endpoint.bad_input'), $verr);
+            throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         }
 
         try {
             $raw_result = $this->handle($validated_input);
         } catch (Fields\ValidationError $verr) {
             $this->logger->warning("Bad user request", $verr->getStructuredAnswer());
-            throw new HttpError(400, __('endpoint.bad_input'), $verr);
+            throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
             $this->logger->warning("HTTP error {$http_error->getCode()}", [$http_error]);
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();
             $this->logger->critical("Unexpected endpoint error: {$message}", $exc->getTrace());
-            throw new HttpError(500, __('endpoint.internal_server_error'), $exc);
+            throw new HttpError(500, Translator::__('endpoint.internal_server_error'), $exc);
         }
 
         try {
@@ -86,7 +86,7 @@ abstract class Endpoint {
             $this->logger->info("Valid user response");
         } catch (Fields\ValidationError $verr) {
             $this->logger->critical("Bad output prohibited", $verr->getStructuredAnswer());
-            throw new HttpError(500, __('endpoint.internal_server_error'), $verr);
+            throw new HttpError(500, Translator::__('endpoint.internal_server_error'), $verr);
         }
 
         return $validated_result;

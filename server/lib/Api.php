@@ -100,7 +100,7 @@ class Api {
                 if ($endpoint_logger) {
                     $endpoint_logger->warning("Invalid endpoint called: {$endpoint_name}");
                 }
-                throw new HttpError(400, __('api.invalid_endpoint'));
+                throw new HttpError(400, Translator::__('api.invalid_endpoint'));
             }
             $endpoint = $this->endpoints[$endpoint_name]();
             if ($endpoint_logger) {
@@ -129,7 +129,7 @@ class Api {
             $path_info_matches
         );
         if (!$has_path_info) {
-            throw new HttpError(400, __('api.invalid_endpoint'));
+            throw new HttpError(400, Translator::__('api.invalid_endpoint'));
         }
         return $path_info_matches[1];
     }

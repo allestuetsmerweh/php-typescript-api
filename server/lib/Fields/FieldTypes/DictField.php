@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 class DictField extends Field {
     private Field $item_field;
@@ -24,7 +24,7 @@ class DictField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_array($value)) {
-                $validation_result->recordError(__('fields.must_be_object'));
+                $validation_result->recordError(Translator::__('fields.must_be_object'));
                 return $validation_result;
             }
             foreach ($value as $key => $item_value) {

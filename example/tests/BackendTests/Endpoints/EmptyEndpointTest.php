@@ -8,6 +8,7 @@ use PhpTypeScriptApi\BackendTests\Common\ExampleBackendTestCase;
 
 /**
  * @internal
+ *
  * @coversNothing
  */
 final class EmptyEndpointTest extends ExampleBackendTestCase {

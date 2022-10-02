@@ -10,6 +10,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
  * @internal
+ *
  * @covers \PhpTypeScriptApi\HttpError
  */
 final class HttpErrorTest extends UnitTestCase {

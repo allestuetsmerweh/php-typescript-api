@@ -2,7 +2,7 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
-use function PhpTypeScriptApi\__;
+use PhpTypeScriptApi\Translator;
 
 class ChoiceField extends Field {
     private $field_map = [];
@@ -26,20 +26,20 @@ class ChoiceField extends Field {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_array($value)) {
-                $validation_result->recordError(__('fields.must_be_object'));
+                $validation_result->recordError(Translator::__('fields.must_be_object'));
                 return $validation_result;
             }
 
             $value_keys = array_keys($value);
             if (count($value_keys) != 1) {
-                $validation_result->recordError(__('fields.must_have_one_key'));
+                $validation_result->recordError(Translator::__('fields.must_have_one_key'));
                 return $validation_result;
             }
 
             $value_key = $value_keys[0];
             $item_field = $this->field_map[$value_key] ?? null;
             if ($item_field === null) {
-                $validation_result->recordError(__(
+                $validation_result->recordError(Translator::__(
                     'fields.unknown_key', ['key' => $value_key]));
                 return $validation_result;
             }
