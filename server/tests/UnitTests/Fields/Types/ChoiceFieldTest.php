@@ -60,6 +60,27 @@ final class ChoiceFieldTest extends UnitTestCase {
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
+    public function testTypeScriptTypeWithEmptyFieldMap(): void {
+        $field = new ChoiceField(['field_map' => []]);
+        $this->assertSame('Record<string, never>', $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
+    public function testTypeScriptTypeWithEmptyFieldMapNullAllowed(): void {
+        $field = new ChoiceField(['field_map' => [], 'allow_null' => true]);
+        $this->assertSame('Record<string, never>|null', $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
+    public function testTypeScriptTypeWithUndefinedFieldMap(): void {
+        try {
+            $field = new ChoiceField([]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`field_map` must be defined.', $th->getMessage());
+        }
+    }
+
     public function testSubstitutedItemTypeScriptType(): void {
         $field = new ChoiceField([
             'field_map' => [
@@ -135,7 +156,7 @@ final class ChoiceFieldTest extends UnitTestCase {
     }
 
     public function testParse(): void {
-        $field = new ChoiceField([]);
+        $field = new ChoiceField(['field_map' => []]);
         try {
             $field->parse('test');
             $this->fail('Error expected');
@@ -145,8 +166,12 @@ final class ChoiceFieldTest extends UnitTestCase {
     }
 
     public function testConstructorDefault(): void {
-        $field = new ChoiceField([]);
-        $this->assertSame([], $field->getFieldMap());
+        try {
+            $field = new ChoiceField([]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`field_map` must be defined.', $th->getMessage());
+        }
     }
 
     public function testConstructorValid(): void {

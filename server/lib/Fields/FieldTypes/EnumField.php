@@ -10,6 +10,9 @@ class EnumField extends Field {
     public function __construct($config = []) {
         parent::__construct($config);
         $allowed_values = $config['allowed_values'] ?? [];
+        if (count($allowed_values) <= 0) {
+            throw new \Exception('`allowed_values` must not be empty.');
+        }
         $this->allowed_value_map = [];
         foreach ($allowed_values as $allowed_value) {
             $this->allowed_value_map[$allowed_value] = true;

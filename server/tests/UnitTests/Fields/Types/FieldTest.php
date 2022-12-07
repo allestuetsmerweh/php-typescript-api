@@ -15,13 +15,13 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 final class FieldTest extends UnitTestCase {
     public function testTypeScriptType(): void {
         $field = new Field([]);
-        $this->assertSame('any', $field->getTypeScriptType());
+        $this->assertSame('unknown', $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
     public function testTypeScriptTypeWithNullAllowed(): void {
         $field = new Field(['allow_null' => true]);
-        $this->assertSame('any', $field->getTypeScriptType());
+        $this->assertSame('unknown', $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
@@ -29,7 +29,7 @@ final class FieldTest extends UnitTestCase {
         $field = new Field(['export_as' => 'ExportedType']);
         $this->assertSame('ExportedType', $field->getTypeScriptType());
         $this->assertSame([
-            'ExportedType' => 'any',
+            'ExportedType' => 'unknown',
         ], $field->getExportedTypeScriptTypes());
     }
 
@@ -40,7 +40,7 @@ final class FieldTest extends UnitTestCase {
         ]);
         $this->assertSame('ExportedType', $field->getTypeScriptType());
         $this->assertSame([
-            'ExportedType' => 'any',
+            'ExportedType' => 'unknown',
         ], $field->getExportedTypeScriptTypes());
     }
 

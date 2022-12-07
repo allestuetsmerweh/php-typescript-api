@@ -9,7 +9,10 @@ class ChoiceField extends Field {
 
     public function __construct($config = []) {
         parent::__construct($config);
-        $field_map = $config['field_map'] ?? [];
+        $field_map = $config['field_map'] ?? null;
+        if ($field_map === null) {
+            throw new \Exception('`field_map` must be defined.');
+        }
         foreach ($field_map as $key => $field) {
             if (!($field instanceof Field)) {
                 throw new \Exception("Field für Schlüssel '{$key}' muss ein Field sein.");
@@ -72,6 +75,9 @@ class ChoiceField extends Field {
             $object_types[] = $object_type;
         }
         $object_types_string = implode('|', $object_types);
+        if ($object_types_string === '') {
+            $object_types_string = "Record<string, never>";
+        }
         $or_null = $this->getAllowNull() ? '|null' : '';
         return "{$object_types_string}{$or_null}";
     }
