@@ -101,25 +101,25 @@ final class ApiTest extends UnitTestCase {
         $expected_output = <<<'ZZZZZZZZZZ'
 /** ### This file is auto-generated, modifying is futile! ### */
 
-export type SampleExport1 = any;
+export type SampleExport1 = unknown;
 
-export type SampleExport2 = any;
+export type SampleExport2 = unknown;
 
 // eslint-disable-next-line no-shadow
 export type FakeApiEndpoint =
     'fakeEndpoint1'|
     'fakeEndpoint2';
 
-type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: any};
+type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
 
 export interface FakeApiRequests extends FakeApiEndpointMapping {
-    fakeEndpoint1: any,
+    fakeEndpoint1: unknown,
     fakeEndpoint2: SampleExport2,
 }
 
 export interface FakeApiResponses extends FakeApiEndpointMapping {
     fakeEndpoint1: SampleExport1,
-    fakeEndpoint2: any,
+    fakeEndpoint2: unknown,
 }
 
 
@@ -145,9 +145,9 @@ ZZZZZZZZZZ;
         $expected_output = <<<'ZZZZZZZZZZ'
 /** ### This file is auto-generated, modifying is futile! ### */
 
-export type SampleExport1 = any;
+export type SampleExport1 = unknown;
 
-export type SampleExport2 = any;
+export type SampleExport2 = unknown;
 
 // eslint-disable-next-line no-shadow
 export type FakeApiEndpoint =
@@ -155,18 +155,18 @@ export type FakeApiEndpoint =
     'fakeEndpoint1Again'|
     'fakeEndpoint2';
 
-type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: any};
+type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
 
 export interface FakeApiRequests extends FakeApiEndpointMapping {
-    fakeEndpoint1: any,
-    fakeEndpoint1Again: any,
+    fakeEndpoint1: unknown,
+    fakeEndpoint1Again: unknown,
     fakeEndpoint2: SampleExport2,
 }
 
 export interface FakeApiResponses extends FakeApiEndpointMapping {
     fakeEndpoint1: SampleExport1,
     fakeEndpoint1Again: SampleExport1,
-    fakeEndpoint2: any,
+    fakeEndpoint2: unknown,
 }
 
 

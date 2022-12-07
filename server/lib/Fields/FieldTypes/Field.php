@@ -53,7 +53,7 @@ class Field {
         if ($this->export_as !== null && $should_substitute) {
             return $this->export_as;
         }
-        return 'any';
+        return 'unknown';
     }
 
     public function getExportedTypeScriptTypes() {

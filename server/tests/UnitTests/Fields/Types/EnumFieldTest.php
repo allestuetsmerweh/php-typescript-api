@@ -13,6 +13,33 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
  * @covers \PhpTypeScriptApi\Fields\FieldTypes\EnumField
  */
 final class EnumFieldTest extends UnitTestCase {
+    public function testCreateWithNoAllowedValues(): void {
+        try {
+            $field = new EnumField(['allowed_values' => []]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
+        }
+    }
+
+    public function testCreateWithNoAllowedValuesNullAllowed(): void {
+        try {
+            $field = new EnumField(['allowed_values' => [], 'allow_null' => true]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
+        }
+    }
+
+    public function testCreateWithUndefinedAllowedValues(): void {
+        try {
+            $field = new EnumField([]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
+        }
+    }
+
     public function testTypeScriptType(): void {
         $field = new EnumField(['allowed_values' => ['one', 'two', 'three']]);
         $this->assertSame('\'one\'|\'two\'|\'three\'', $field->getTypeScriptType());
@@ -48,6 +75,18 @@ final class EnumFieldTest extends UnitTestCase {
         ], $field->getExportedTypeScriptTypes());
     }
 
+    public function testTypeScriptTypeWithOnlyOneAllowedValue(): void {
+        $field = new EnumField(['allowed_values' => ['KPdSU']]);
+        $this->assertSame('\'KPdSU\'', $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
+    public function testTypeScriptTypeWithOnlyOneAllowedValueNullAllowed(): void {
+        $field = new EnumField(['allowed_values' => ['KPdSU'], 'allow_null' => true]);
+        $this->assertSame('\'KPdSU\'|null', $field->getTypeScriptType());
+        $this->assertSame([], $field->getExportedTypeScriptTypes());
+    }
+
     public function testParse(): void {
         $field = new EnumField(['allowed_values' => ['one', 'two', 'three']]);
         $this->assertSame('test', $field->parse('test'));
@@ -56,8 +95,12 @@ final class EnumFieldTest extends UnitTestCase {
     }
 
     public function testAllowedValuesDefault(): void {
-        $field = new EnumField([]);
-        $this->assertSame([], $field->getAllowedValues());
+        try {
+            $field = new EnumField([]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
+        }
     }
 
     public function testAllowedValuesSet(): void {
@@ -89,7 +132,7 @@ final class EnumFieldTest extends UnitTestCase {
     }
 
     public function testValidatesWeirdValues(): void {
-        $field = new EnumField([]);
+        $field = new EnumField(['allowed_values' => ['KPdSU']]);
         $this->assertSame(
             ['.' => ['Value must be among the allowed values.']],
             $field->getValidationErrors(false)

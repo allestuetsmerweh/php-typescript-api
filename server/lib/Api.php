@@ -59,7 +59,7 @@ class Api {
             $typescript_output .= "{$typescript_exported_type}\n";
         }
         $typescript_output .= "{$typescript_endpoint_symbols}\n";
-        $typescript_output .= "type {$name}EndpointMapping = {[key in {$name}Endpoint]: any};\n\n";
+        $typescript_output .= "type {$name}EndpointMapping = {[key in {$name}Endpoint]: unknown};\n\n";
         $typescript_output .= "{$typescript_request_types}\n";
         $typescript_output .= "{$typescript_response_types}\n";
         return $typescript_output;
