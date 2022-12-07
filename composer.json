@@ -1,6 +1,6 @@
 {
     "name": "allestuetsmerweh/php-typescript-api",
-    "version": "2.0.3",
+    "version": "2.1.0",
     "type": "library",
     "description": "Build a typed Web API using PHP and TypeScript",
     "keywords": ["PHP","TypeScript","API"],
