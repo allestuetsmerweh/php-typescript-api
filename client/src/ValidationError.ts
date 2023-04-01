@@ -1,5 +1,7 @@
 export type ErrorsByField = {[fieldId in string]: Array<ErrorsByField|string>};
 
+export type ErrorsByFlatField = {[fieldId in string]: string[]};
+
 export class ValidationError extends Error {
     /* istanbul ignore next */
     constructor(
@@ -12,6 +14,33 @@ export class ValidationError extends Error {
 
     public getErrorsByField(): ErrorsByField {
         return this.errorsByField;
+    }
+
+    public getErrorsByFlatField(): ErrorsByFlatField {
+        const flatMap: ErrorsByFlatField = {};
+        this.populateErrorsByFlatField(this.errorsByField, flatMap, '');
+        return flatMap;
+    }
+
+    protected populateErrorsByFlatField(
+        errorsByField: ErrorsByField,
+        flatMap: ErrorsByFlatField,
+        prefix: string,
+    ): void {
+        for (const fieldId of Object.keys(errorsByField)) {
+            for (const error of errorsByField[fieldId]) {
+                if (typeof error === 'string') {
+                    const flatFieldId = prefix
+                        ? (fieldId === '.' ? prefix : `${prefix}.${fieldId}`)
+                        : fieldId;
+                    const thisErrors = flatMap[flatFieldId] || [];
+                    flatMap[flatFieldId] = [...thisErrors, error];
+                } else {
+                    const newPrefix = prefix ? `${prefix}.${fieldId}` : fieldId;
+                    this.populateErrorsByFlatField(error, flatMap, newPrefix);
+                }
+            }
+        }
     }
 
     public getErrorsForField(fieldId: string): string[] {
