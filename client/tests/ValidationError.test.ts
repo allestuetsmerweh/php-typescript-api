@@ -53,6 +53,20 @@ describe('ValidationError', () => {
         validationErrors,
     );
 
+    describe('getErrorsByFlatField', () => {
+        it('works for a', () => {
+            expect(validationError.getErrorsByFlatField())
+                .toEqual({
+                    '.': ['Existential problem.', 'Another existential problem'],
+                    'a': ['Problem in key a', 'Another problem in key a', 'Problem from field a', 'Another problem from field a'],
+                    'a.aa': ['Problem in key aa', 'Problem from field aa', 'Another problem in key aa'],
+                    'a.aa.aaa': ['Problem in key aaa', 'Another problem in key aaa'],
+                    'a.ab': ['Problem in key ab'],
+                    'a.ac': ['Problem in key ac'],
+                });
+        });
+    });
+
     describe('getErrorsForField', () => {
         it('works for a', () => {
             expect(validationError.getErrorsForField('a'))
