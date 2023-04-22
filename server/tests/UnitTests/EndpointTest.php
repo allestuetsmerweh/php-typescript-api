@@ -10,12 +10,15 @@ use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
 use PhpTypeScriptApi\Tests\Fake\FakeLogger;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
+use Symfony\Component\HttpFoundation\Request;
 
 class FakeEndpoint extends Endpoint {
     public $handled_with_input;
     public $handled_with_resource;
     public $handle_with_output;
-    public $ran_runtime_setup;
+    public $ran_runtime_setup = false;
+
+    public $resource;
 
     public function __construct($resource) {
         $this->resource = $resource;
@@ -110,19 +113,36 @@ final class EndpointTest extends UnitTestCase {
         ], $logger->handler->getPrettyRecords());
     }
 
-    public function testFakeEndpointParseInput(): void {
-        global $_GET, $_POST;
-        $_GET = ['get_param' => json_encode('got')];
-        $_POST = ['post_param' => json_encode('posted')];
+    public function testFakeEndpointParseInputJson(): void {
+        $content_json = json_encode(['json' => 'input']);
+        $request = new Request([], [], [], [], [], [], $content_json);
         $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->setLogger($logger);
-        $parsed_input = $endpoint->parseInput();
-        $this->assertSame(['post_param' => 'posted', 'get_param' => 'got'], $parsed_input);
-        $this->assertSame([
-            "WARNING Providing the value of 'post_param' over POST will be deprecated!",
-            "WARNING Providing the value of 'get_param' over GET will be deprecated!",
-        ], $logger->handler->getPrettyRecords());
+        $parsed_input = $endpoint->parseInput($request);
+        $this->assertSame(['json' => 'input'], $parsed_input);
+        $this->assertSame([], $logger->handler->getPrettyRecords());
+    }
+
+    public function testFakeEndpointParseInputGet(): void {
+        $get_params = ['request' => json_encode(['got' => 'input'])];
+        $request = new Request($get_params);
+        $logger = FakeLogger::create('EndpointTest');
+        $endpoint = new FakeEndpoint('fake_resource');
+        $endpoint->setLogger($logger);
+        $parsed_input = $endpoint->parseInput($request);
+        $this->assertSame(['got' => 'input'], $parsed_input);
+        $this->assertSame([], $logger->handler->getPrettyRecords());
+    }
+
+    public function testFakeEndpointParseInputEmpty(): void {
+        $request = new Request();
+        $logger = FakeLogger::create('EndpointTest');
+        $endpoint = new FakeEndpoint('fake_resource');
+        $endpoint->setLogger($logger);
+        $parsed_input = $endpoint->parseInput($request);
+        $this->assertSame(null, $parsed_input);
+        $this->assertSame([], $logger->handler->getPrettyRecords());
     }
 
     public function testFakeEndpointRuntimeSetup(): void {
@@ -138,16 +158,18 @@ final class EndpointTest extends UnitTestCase {
     }
 
     public function testFakeEndpointSetupFunction(): void {
-        global $_GET, $_POST;
+        global $_GET, $_POST, $setup_called;
         $logger = FakeLogger::create('EndpointTest');
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->setLogger($logger);
+        $setup_called = false;
         $endpoint->setSetupFunction(function ($endpoint) use ($logger) {
+            global $setup_called;
             $logger->info("Setup...");
-            $endpoint->setupCalled = true;
+            $setup_called = true;
         });
         $endpoint->setup();
-        $this->assertSame(true, $endpoint->setupCalled);
+        $this->assertSame(true, $setup_called);
         $this->assertSame([
             "INFO Setup...",
         ], $logger->handler->getPrettyRecords());

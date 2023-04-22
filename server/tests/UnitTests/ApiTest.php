@@ -17,6 +17,9 @@ class FakeApiTestEndpoint1 extends Endpoint {
     public $handle_with_error;
     public $handle_with_output;
 
+    public $resource;
+    public $runtimeSetupCompleted = false;
+
     public function __construct($resource) {
         $this->resource = $resource;
     }
@@ -55,6 +58,8 @@ class FakeApiTestEndpoint2 extends Endpoint {
     public $handled_with_input;
     public $handled_with_resource;
     public $handle_with_output;
+
+    public $resource;
 
     public function __construct($resource) {
         $this->resource = $resource;

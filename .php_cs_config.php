@@ -14,8 +14,9 @@ return $config
         '@PhpCsFixer' => true,
         '@Symfony' => true,
         'blank_line_before_statement' => false,
-        'braces' => [
-            'position_after_functions_and_oop_constructs' => 'same',
+        'curly_braces_position' => [
+            'functions_opening_brace' => 'same_line',
+            'classes_opening_brace' => 'same_line',
         ],
         'increment_style' => [
             'style' => 'post',
