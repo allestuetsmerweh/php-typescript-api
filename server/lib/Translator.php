@@ -17,8 +17,7 @@ class Translator {
             $lang_path = $this::LANG_PATH;
             return
                 $entry !== '.' && $entry !== '..'
-                && is_file("{$lang_path}{$entry}/messages.json")
-            ;
+                && is_file("{$lang_path}{$entry}/messages.json");
         });
         $this->setProjectLangs($langs);
     }

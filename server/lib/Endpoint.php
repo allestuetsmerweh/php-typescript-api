@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi;
 
+use Symfony\Component\HttpFoundation\Request;
+
 abstract class Endpoint {
     use \Psr\Log\LoggerAwareTrait;
 
@@ -33,20 +35,11 @@ abstract class Endpoint {
     }
 
     /** Override to handle custom requests. */
-    public function parseInput() {
-        global $_GET, $_POST;
-        $input = json_decode(file_get_contents('php://input'), true);
-        if (is_array($_POST)) {
-            foreach ($_POST as $key => $value) {
-                $this->logger->warning("Providing the value of '{$key}' over POST will be deprecated!");
-                $input[$key] = json_decode($value, true);
-            }
-        }
-        if (is_array($_GET)) {
-            foreach ($_GET as $key => $value) {
-                $this->logger->warning("Providing the value of '{$key}' over GET will be deprecated!");
-                $input[$key] = json_decode($value, true);
-            }
+    public function parseInput(Request $request) {
+        $input = json_decode($request->getContent(), true);
+        // GET param `request`.
+        if (!$input && $request->query->has('request')) {
+            $input = json_decode($request->get('request'), true);
         }
         return $input;
     }

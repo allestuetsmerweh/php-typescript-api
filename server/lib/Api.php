@@ -109,7 +109,7 @@ class Api {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
             $endpoint->setup();
-            $input = $endpoint->parseInput();
+            $input = $endpoint->parseInput($request);
             $result = $endpoint->call($input);
             restore_error_handler();
             restore_exception_handler();
