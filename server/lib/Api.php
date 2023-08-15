@@ -11,8 +11,8 @@ class Api {
 
     protected $endpoints = [];
 
-    public function registerEndpoint($name, $get_instance) {
-        $this->endpoints[$name] = $get_instance;
+    public function registerEndpoint($name, $endpoint_or_getter) {
+        $this->endpoints[$name] = $endpoint_or_getter;
     }
 
     public function getTypeScriptDefinition($name) {
@@ -26,8 +26,8 @@ class Api {
         $typescript_endpoint_symbols .= "export type {$name}Endpoint =\n";
         $typescript_request_types .= "export interface {$name}Requests extends {$name}EndpointMapping {\n";
         $typescript_response_types .= "export interface {$name}Responses extends {$name}EndpointMapping {\n";
-        foreach ($this->endpoints as $endpoint_name => $endpoint_definition) {
-            $endpoint = $endpoint_definition();
+        foreach ($this->endpoints as $endpoint_name => $endpoint_or_getter) {
+            $endpoint = $this->maybeCreateEndpointInstance($endpoint_or_getter);
             $typescript_endpoint_symbols .= "    '{$endpoint_name}'|\n";
 
             $typescript_request_types .= "    {$endpoint_name}: ";
@@ -69,12 +69,24 @@ class Api {
         return array_keys($this->endpoints);
     }
 
-    public function getEndpointByName($name) {
-        $get_endpoint_function = $this->endpoints[$name] ?? null;
-        if (!$get_endpoint_function) {
+    public function getEndpointByName(string $name): Endpoint|null {
+        $endpoint_or_getter = $this->endpoints[$name] ?? null;
+        if (!$endpoint_or_getter) {
             return null;
         }
-        return $get_endpoint_function();
+        return $this->maybeCreateEndpointInstance($endpoint_or_getter);
+    }
+
+    protected function maybeCreateEndpointInstance(
+        Endpoint|callable $endpoint_or_getter
+    ): Endpoint {
+        if (
+            is_callable($endpoint_or_getter)
+            && !($endpoint_or_getter instanceof Endpoint)
+        ) {
+            return $endpoint_or_getter();
+        }
+        return $endpoint_or_getter;
     }
 
     public function serve() {
@@ -102,7 +114,8 @@ class Api {
                 }
                 throw new HttpError(400, Translator::__('api.invalid_endpoint'));
             }
-            $endpoint = $this->endpoints[$endpoint_name]();
+            $endpoint_or_getter = $this->endpoints[$endpoint_name];
+            $endpoint = $this->maybeCreateEndpointInstance($endpoint_or_getter);
             if ($endpoint_logger) {
                 $endpoint->setLogger($endpoint_logger);
             } else {

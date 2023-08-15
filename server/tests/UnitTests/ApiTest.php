@@ -190,7 +190,14 @@ ZZZZZZZZZZ;
         );
     }
 
-    public function testApiGetEndpointByName(): void {
+    public function testApiGetEndpointByNameFromEndpoint(): void {
+        $fake_api = $this->getFakeApi();
+        $fake_endpoint_1 = $fake_api->getEndpointByName('fakeEndpoint1');
+        $this->assertSame(true, $fake_endpoint_1 instanceof FakeApiTestEndpoint1);
+        $this->assertSame('fake-resource', $fake_endpoint_1->resource);
+    }
+
+    public function testApiGetEndpointByNameFromGetter(): void {
         $fake_api = $this->getFakeApi();
         $fake_endpoint_2 = $fake_api->getEndpointByName('fakeEndpoint2');
         $this->assertSame(true, $fake_endpoint_2 instanceof FakeApiTestEndpoint2);
@@ -223,7 +230,7 @@ ZZZZZZZZZZ;
         }
     }
 
-    public function testApiServe(): void {
+    public function testApiServeEndpoint(): void {
         global $_SERVER;
         $server_backup = $_SERVER;
         $_SERVER = [
@@ -232,8 +239,34 @@ ZZZZZZZZZZ;
         $fake_api = new FakeApiTestApi();
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
+        $fake_api->registerEndpoint('fakeEndpoint1', $fake_endpoint);
+
+        ob_start();
+        $fake_api->serve();
+        $output = ob_get_contents();
+        ob_end_clean();
+
+        $this->assertSame(json_encode('fake-output'), $output);
+
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
+        $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+        $this->assertSame(null, $fake_api->testOnlyGetLogger());
+        $this->assertSame(true, $fake_endpoint->testOnlyGetLogger() instanceof \Monolog\Logger);
+
+        $_SERVER = $server_backup;
+    }
+
+    public function testApiServeGetter(): void {
+        global $_SERVER;
+        $server_backup = $_SERVER;
+        $_SERVER = [
+            'PATH_INFO' => '/fakeEndpoint2',
+        ];
+        $fake_api = new FakeApiTestApi();
+        $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
+        $fake_endpoint->handle_with_output = 'fake-output';
         $fake_api->registerEndpoint(
-            'fakeEndpoint1',
+            'fakeEndpoint2',
             function () use ($fake_endpoint) {
                 return $fake_endpoint;
             }
@@ -304,20 +337,47 @@ ZZZZZZZZZZ;
         ], $logger->handler->getPrettyRecords());
     }
 
-    public function testApiGetResponse(): void {
+    public function testApiGetResponseFromEndpoint(): void {
+        $fake_api = new FakeApiTestApi();
+        $logger = FakeLogger::create('ApiTest');
+        $fake_api->setLogger($logger);
+        $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
+        $fake_endpoint->handle_with_output = 'fake-output';
+        $fake_api->registerEndpoint('fakeEndpoint1', $fake_endpoint);
+        $request = new Request();
+        $request->server->set('PATH_INFO', '/fakeEndpoint1');
+        $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
+
+        $response = $fake_api->getResponse($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertSame('application/json', $response->headers->get('Content-Type'));
+        $this->assertSame(null, $response->getCharset());
+        $this->assertSame(json_encode('fake-output'), $response->getContent());
+
+        $this->assertSame(null, $fake_endpoint->handled_with_input);
+        $this->assertSame('fake-resource', $fake_endpoint->handled_with_resource);
+
+        $this->assertSame([
+            'INFO Valid user request',
+            'INFO Valid user response',
+        ], $logger->handler->getPrettyRecords());
+    }
+
+    public function testApiGetResponseFromGetter(): void {
         $fake_api = new FakeApiTestApi();
         $logger = FakeLogger::create('ApiTest');
         $fake_api->setLogger($logger);
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
         $fake_api->registerEndpoint(
-            'fakeEndpoint1',
+            'fakeEndpoint2',
             function () use ($fake_endpoint) {
                 return $fake_endpoint;
             }
         );
         $request = new Request();
-        $request->server->set('PATH_INFO', '/fakeEndpoint1');
+        $request->server->set('PATH_INFO', '/fakeEndpoint2');
         $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
 
         $response = $fake_api->getResponse($request);
@@ -373,9 +433,12 @@ ZZZZZZZZZZ;
 
     protected function getFakeApi() {
         $fake_api = new Api();
-        $fake_api->registerEndpoint('fakeEndpoint1', function () {
-            return new FakeApiTestEndpoint1('fake-resource');
-        });
+        // Directly register endpoint
+        $fake_api->registerEndpoint(
+            'fakeEndpoint1',
+            new FakeApiTestEndpoint1('fake-resource'),
+        );
+        // Register endpoint getter
         $fake_api->registerEndpoint('fakeEndpoint2', function () {
             return new FakeApiTestEndpoint2('fake-resource');
         });
