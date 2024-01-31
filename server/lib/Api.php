@@ -69,7 +69,7 @@ class Api {
         return array_keys($this->endpoints);
     }
 
-    public function getEndpointByName(string $name): Endpoint|null {
+    public function getEndpointByName(string $name): null|Endpoint {
         $endpoint_or_getter = $this->endpoints[$name] ?? null;
         if (!$endpoint_or_getter) {
             return null;
@@ -78,7 +78,7 @@ class Api {
     }
 
     protected function maybeCreateEndpointInstance(
-        Endpoint|callable $endpoint_or_getter
+        callable|Endpoint $endpoint_or_getter
     ): Endpoint {
         if (
             is_callable($endpoint_or_getter)

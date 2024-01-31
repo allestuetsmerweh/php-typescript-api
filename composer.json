@@ -1,6 +1,6 @@
 {
     "name": "allestuetsmerweh/php-typescript-api",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "type": "library",
     "description": "Build a typed Web API using PHP and TypeScript",
     "keywords": ["PHP","TypeScript","API"],
@@ -20,14 +20,14 @@
         }
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.4",
-        "phpunit/phpunit": "^9"
+        "friendsofphp/php-cs-fixer": ">=3.4",
+        "phpunit/phpunit": ">=9"
     },
     "require": {
-        "monolog/monolog": "^3.2",
+        "monolog/monolog": ">=3.2",
         "php": ">=8.1",
-        "psr/log": "^3.0",
-        "symfony/http-foundation": "^6.1"
+        "psr/log": ">=3.0",
+        "symfony/http-foundation": ">=6.1"
     },
     "scripts": {
         "run-example": "cd ./example; ./run.sh",
