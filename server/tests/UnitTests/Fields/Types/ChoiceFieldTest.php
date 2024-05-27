@@ -21,12 +21,12 @@ final class ChoiceFieldTest extends UnitTestCase {
             ],
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'action1': ItemType,
-        }|{
-            'action2': ItemType,
-        }
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'action1': ItemType,
+            }|{
+                'action2': ItemType,
+            }
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
@@ -39,12 +39,12 @@ final class ChoiceFieldTest extends UnitTestCase {
             'allow_null' => true,
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'type1': ItemType,
-        }|{
-            'type2': ItemType,
-        }|null
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'type1': ItemType,
+            }|{
+                'type2': ItemType,
+            }|null
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
@@ -53,10 +53,10 @@ final class ChoiceFieldTest extends UnitTestCase {
             'field_map' => ['test' => new FakeItemField(['allow_null' => true])],
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'test': ItemType|null,
-        }
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'test': ItemType|null,
+            }
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([], $field->getExportedTypeScriptTypes());
     }
 
@@ -89,12 +89,12 @@ final class ChoiceFieldTest extends UnitTestCase {
             ],
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'one': ExportedType1,
-        }|{
-            'two': ExportedType2,
-        }
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'one': ExportedType1,
+            }|{
+                'two': ExportedType2,
+            }
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([
             'ExportedType1' => 'ItemType',
             'ExportedType2' => 'ItemType',
@@ -112,10 +112,10 @@ final class ChoiceFieldTest extends UnitTestCase {
         $this->assertSame("ExportedType", $field->getTypeScriptType());
         $this->assertSame([
             'ExportedType' => <<<'ZZZZZZZZZZ'
-            {
-                'test': ItemType,
-            }|null
-            ZZZZZZZZZZ,
+                {
+                    'test': ItemType,
+                }|null
+                ZZZZZZZZZZ,
         ], $field->getExportedTypeScriptTypes());
     }
 
@@ -127,10 +127,10 @@ final class ChoiceFieldTest extends UnitTestCase {
             'allow_null' => true,
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'test': ExportedType,
-        }|null
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'test': ExportedType,
+            }|null
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([
             'ExportedType' => 'ItemType',
         ], $field->getExportedTypeScriptTypes());
@@ -146,10 +146,10 @@ final class ChoiceFieldTest extends UnitTestCase {
             ],
         ]);
         $this->assertSame(<<<'ZZZZZZZZZZ'
-        {
-            'test': ExportedType,
-        }
-        ZZZZZZZZZZ, $field->getTypeScriptType());
+            {
+                'test': ExportedType,
+            }
+            ZZZZZZZZZZ, $field->getTypeScriptType());
         $this->assertSame([
             'ExportedType' => 'ItemType|null',
         ], $field->getExportedTypeScriptTypes());

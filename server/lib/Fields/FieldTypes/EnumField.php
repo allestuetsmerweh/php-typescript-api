@@ -2,12 +2,15 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+use PhpTypeScriptApi\Fields;
 use PhpTypeScriptApi\Translator;
 
 class EnumField extends Field {
-    private $allowed_value_map = [];
+    /** @var array<string, bool> */
+    private array $allowed_value_map = [];
 
-    public function __construct($config = []) {
+    /** @param array<string, mixed> $config */
+    public function __construct(array $config = []) {
         parent::__construct($config);
         $allowed_values = $config['allowed_values'] ?? [];
         if (count($allowed_values) <= 0) {
@@ -15,15 +18,19 @@ class EnumField extends Field {
         }
         $this->allowed_value_map = [];
         foreach ($allowed_values as $allowed_value) {
+            if (!is_string($allowed_value)) {
+                throw new \Exception('`allowed_values` must all be strings.');
+            }
             $this->allowed_value_map[$allowed_value] = true;
         }
     }
 
-    public function getAllowedValues() {
+    /** @return array<string> */
+    public function getAllowedValues(): array {
         return array_keys($this->allowed_value_map);
     }
 
-    protected function validate($value) {
+    protected function validate(mixed $value): Fields\ValidationResult {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_scalar($value)) {
@@ -38,7 +45,8 @@ class EnumField extends Field {
         return $validation_result;
     }
 
-    public function getTypeScriptType($config = []) {
+    /** @param array<string, mixed> $config */
+    public function getTypeScriptType(array $config = []): string {
         $should_substitute = $config['should_substitute'] ?? true;
         if ($this->export_as !== null && $should_substitute) {
             return $this->export_as;

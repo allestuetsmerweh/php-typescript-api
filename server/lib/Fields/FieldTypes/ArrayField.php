@@ -2,12 +2,14 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+use PhpTypeScriptApi\Fields;
 use PhpTypeScriptApi\Translator;
 
 class ArrayField extends Field {
     private Field $item_field;
 
-    public function __construct($config = []) {
+    /** @param array<string, mixed> $config */
+    public function __construct(array $config = []) {
         parent::__construct($config);
         $item_field = $config['item_field'] ?? null;
         if (!($item_field instanceof Field)) {
@@ -16,11 +18,11 @@ class ArrayField extends Field {
         $this->item_field = $item_field;
     }
 
-    public function getItemField() {
+    public function getItemField(): Field {
         return $this->item_field;
     }
 
-    protected function validate($value) {
+    protected function validate(mixed $value): Fields\ValidationResult {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_array($value)) {
@@ -39,11 +41,12 @@ class ArrayField extends Field {
         return $validation_result;
     }
 
-    public function parse($string) {
+    public function parse(?string $string): mixed {
         throw new \Exception("Unlesbares Feld: ArrayField");
     }
 
-    public function getTypeScriptType($config = []) {
+    /** @param array<string, mixed> $config */
+    public function getTypeScriptType(array $config = []): string {
         $should_substitute = $config['should_substitute'] ?? true;
         if ($this->export_as !== null && $should_substitute) {
             return $this->export_as;
@@ -56,7 +59,8 @@ class ArrayField extends Field {
         return "Array<{$item_type}>{$or_null}";
     }
 
-    public function getExportedTypeScriptTypes() {
+    /** @return array<string, string> */
+    public function getExportedTypeScriptTypes(): array {
         return array_merge(
             parent::getExportedTypeScriptTypes(),
             $this->item_field->getExportedTypeScriptTypes(),

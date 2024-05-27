@@ -38,7 +38,10 @@ final class FieldUtilsTest extends UnitTestCase {
         $field_utils = FieldUtils::create();
         try {
             $field_utils->validate(
-                new FieldTypes\Field(['allow_null' => false]), '', ['parse' => true]);
+                new FieldTypes\Field(['allow_null' => false]),
+                '',
+                ['parse' => true]
+            );
             $this->fail('Error expected');
         } catch (ValidationError $err) {
             $this->assertMatchesRegularExpression('/^Validation Error: /', $err->getMessage());
@@ -52,7 +55,10 @@ final class FieldUtilsTest extends UnitTestCase {
         $field_utils = FieldUtils::create();
         try {
             $field_utils->validate(
-                new FieldTypes\IntegerField([]), 'not_an_integer', ['parse' => true]);
+                new FieldTypes\IntegerField([]),
+                'not_an_integer',
+                ['parse' => true]
+            );
             $this->fail('Error expected');
         } catch (ValidationError $err) {
             $this->assertMatchesRegularExpression('/^Validation Error: /', $err->getMessage());

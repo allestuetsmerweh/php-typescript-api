@@ -2,10 +2,11 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+use PhpTypeScriptApi\Fields;
 use PhpTypeScriptApi\Translator;
 
 class IntegerField extends NumberField {
-    protected function validate($value) {
+    protected function validate(mixed $value): Fields\ValidationResult {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_int($value)) {
@@ -15,8 +16,8 @@ class IntegerField extends NumberField {
         return $validation_result;
     }
 
-    public function parse($string) {
-        if ($string == '') {
+    public function parse(?string $string): mixed {
+        if ($string === null || $string === '') {
             return null;
         }
         if (preg_match('/^[0-9\\-]+$/', $string)) {

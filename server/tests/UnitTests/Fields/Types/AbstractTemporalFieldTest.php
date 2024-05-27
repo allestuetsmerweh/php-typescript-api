@@ -8,7 +8,7 @@ use PhpTypeScriptApi\Fields\FieldTypes\AbstractTemporalField;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 class FakeTemporalField extends AbstractTemporalField {
-    protected function getRegex() {
+    protected function getRegex(): string {
         return '/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/';
     }
 }

@@ -10,15 +10,15 @@ use PhpTypeScriptApi\Fields\FieldTypes;
  * https://transport.opendata.ch/docs.html#connections
  */
 class SwissPublicTransportConnectionsEndpoint extends Endpoint {
-    public function runtimeSetup() {
+    public function runtimeSetup(): void {
         // no runtime setup required.
     }
 
-    public static function getIdent() {
+    public static function getIdent(): string {
         return 'SwissPublicTransportConnectionsEndpoint';
     }
 
-    public function getResponseField() {
+    public function getResponseField(): FieldTypes\Field {
         /** A geographic location. */
         $coordinates_field = new FieldTypes\ObjectField([
             'field_structure' => [
@@ -83,7 +83,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         ]);
     }
 
-    public function getRequestField() {
+    public function getRequestField(): FieldTypes\Field {
         return new FieldTypes\ObjectField([
             'field_structure' => [
                 'from' => new FieldTypes\StringField([]),
@@ -101,7 +101,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         ]);
     }
 
-    protected function handle($input) {
+    protected function handle(mixed $input): mixed {
         $base_url = 'https://transport.opendata.ch/v1/connections';
         $get_params = http_build_query([
             'from' => $input['from'],
@@ -112,6 +112,9 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
             'isArrivalTime' => $input['isArrivalTime'],
         ]);
         $backend_response = file_get_contents("{$base_url}?{$get_params}");
+        if (!$backend_response) {
+            return ['stationById' => [], 'connections' => []];
+        }
         $backend_result = json_decode($backend_response, true);
         return [
             'stationById' => $this->getStationByIds($backend_result),
@@ -119,7 +122,12 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         ];
     }
 
-    protected function getStationByIds($backend_result) {
+    /**
+     * @param array<string, mixed> $backend_result
+     *
+     * @return array<int|string, array{id: string, name: string, coordinate: array{type: string, x: int|float, y: int|float}}>
+     */
+    protected function getStationByIds(array $backend_result): array {
         $station_by_id = [];
         foreach ($backend_result['connections'] as $connection) {
             foreach ($connection['sections'] as $section) {
@@ -136,7 +144,12 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         return $station_by_id;
     }
 
-    protected function convertStation($backend_station) {
+    /**
+     * @param array<string, mixed> $backend_station
+     *
+     * @return array{id: string, name: string, coordinate: array{type: string, x: int|float, y: int|float}}
+     */
+    protected function convertStation(array $backend_station): array {
         return [
             'id' => $backend_station['id'],
             'name' => $backend_station['name'],
@@ -148,7 +161,12 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         ];
     }
 
-    protected function getConnections($backend_result) {
+    /**
+     * @param array<string, mixed> $backend_result
+     *
+     * @return array<array{sections: array<mixed>}>
+     */
+    protected function getConnections(array $backend_result): array {
         $new_connections = [];
         foreach ($backend_result['connections'] as $connection) {
             $new_sections = [];
@@ -168,7 +186,12 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         return $new_connections;
     }
 
-    protected function convertStop($backend_stop) {
+    /**
+     * @param array<string, mixed> $backend_stop
+     *
+     * @return array{stationId: string, arrival: ?string, departure: ?string, delay: int|float, platform: ?string}
+     */
+    protected function convertStop(array $backend_stop): array {
         return [
             'stationId' => $backend_stop['station']['id'],
             'arrival' => $this->getTime($backend_stop['arrival'] ?? null),
@@ -178,7 +201,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         ];
     }
 
-    protected function getTime($backend_value) {
+    protected function getTime(?string $backend_value): ?string {
         if (!$backend_value) {
             return null;
         }

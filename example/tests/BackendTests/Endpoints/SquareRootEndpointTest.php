@@ -27,7 +27,7 @@ final class SquareRootEndpointTest extends ExampleBackendTestCase {
     public function testSquareRootZero(): void {
         $result = $this->callBackend('squareRoot', 0);
         $this->assertSame(200, $result['http_code']);
-        $this->assertSame(null, $result['result']);
+        $this->assertSame(0, $result['result']);
     }
 
     public function testSquareRootImaginary(): void {

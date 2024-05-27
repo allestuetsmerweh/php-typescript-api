@@ -2,27 +2,29 @@
 
 namespace PhpTypeScriptApi\Fields\FieldTypes;
 
+use PhpTypeScriptApi\Fields;
 use PhpTypeScriptApi\Translator;
 
 class StringField extends Field {
-    private $max_length;
-    private $allow_empty;
+    private ?int $max_length;
+    private bool $allow_empty;
 
-    public function __construct($config = []) {
+    /** @param array<string, mixed> $config */
+    public function __construct(array $config = []) {
         parent::__construct($config);
         $this->max_length = $config['max_length'] ?? null;
         $this->allow_empty = $config['allow_empty'] ?? false;
     }
 
-    public function getMaxLength() {
+    public function getMaxLength(): ?int {
         return $this->max_length;
     }
 
-    public function getAllowEmpty() {
+    public function getAllowEmpty(): bool {
         return $this->allow_empty;
     }
 
-    protected function validate($value) {
+    protected function validate(mixed $value): Fields\ValidationResult {
         $validation_result = parent::validate($value);
         if ($value !== null) { // The null case has been handled by the parent.
             if (!is_string($value)) {
@@ -40,18 +42,19 @@ class StringField extends Field {
             if ($value !== null && strlen($value) > $this->max_length) {
                 $validation_result->recordError(Translator::__(
                     'fields.must_not_be_longer',
-                    ['max_length' => $this->max_length]
+                    ['max_length' => "{$this->max_length}"]
                 ));
             }
         }
         return $validation_result;
     }
 
-    public function parse($string) {
+    public function parse(?string $string): mixed {
         return $string;
     }
 
-    public function getTypeScriptType($config = []) {
+    /** @param array<string, mixed> $config */
+    public function getTypeScriptType(array $config = []): string {
         $should_substitute = $config['should_substitute'] ?? true;
         if ($this->export_as !== null && $should_substitute) {
             return $this->export_as;

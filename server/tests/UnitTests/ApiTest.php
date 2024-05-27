@@ -7,40 +7,40 @@ namespace PhpTypeScriptApi\Tests\UnitTests;
 use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
-use PhpTypeScriptApi\Tests\Fake\FakeLogger;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 class FakeApiTestEndpoint1 extends Endpoint {
-    public $handled_with_input;
-    public $handled_with_resource;
-    public $handle_with_error;
-    public $handle_with_output;
+    public mixed $handled_with_input = null;
+    public mixed $handled_with_resource = null;
+    public ?\Exception $handle_with_error = null;
+    public mixed $handle_with_output = null;
 
-    public $resource;
-    public $runtimeSetupCompleted = false;
+    public mixed $resource = null;
+    public bool $runtimeSetupCompleted = false;
 
-    public function __construct($resource) {
+    public function __construct(mixed $resource) {
         $this->resource = $resource;
     }
 
-    public static function getIdent() {
+    public static function getIdent(): string {
         return 'FakeEndpoint1';
     }
 
-    public function runtimeSetup() {
+    public function runtimeSetup(): void {
         $this->runtimeSetupCompleted = true;
     }
 
-    public function getResponseField() {
+    public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\Field(['export_as' => 'SampleExport1']);
     }
 
-    public function getRequestField() {
+    public function getRequestField(): FieldTypes\Field {
         return new FieldTypes\Field(['allow_null' => true]);
     }
 
-    protected function handle($input) {
+    protected function handle(mixed $input): mixed {
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
         if ($this->handle_with_error) {
@@ -49,35 +49,35 @@ class FakeApiTestEndpoint1 extends Endpoint {
         return $this->handle_with_output;
     }
 
-    public function testOnlyGetLogger() {
+    public function testOnlyGetLogger(): ?LoggerInterface {
         return $this->logger;
     }
 }
 
 class FakeApiTestEndpoint2 extends Endpoint {
-    public $handled_with_input;
-    public $handled_with_resource;
-    public $handle_with_output;
+    public mixed $handled_with_input;
+    public mixed $handled_with_resource;
+    public mixed $handle_with_output;
 
-    public $resource;
+    public mixed $resource;
 
-    public function __construct($resource) {
+    public function __construct(mixed $resource) {
         $this->resource = $resource;
     }
 
-    public static function getIdent() {
+    public static function getIdent(): string {
         return 'FakeEndpoint2';
     }
 
-    public function getResponseField() {
+    public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\Field(['allow_null' => false]);
     }
 
-    public function getRequestField() {
+    public function getRequestField(): FieldTypes\Field {
         return new FieldTypes\Field(['export_as' => 'SampleExport2']);
     }
 
-    protected function handle($input) {
+    protected function handle(mixed $input): mixed {
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
         return $this->handle_with_output;
@@ -85,11 +85,11 @@ class FakeApiTestEndpoint2 extends Endpoint {
 }
 
 class FakeApiTestApi extends Api {
-    public function testOnlyGetLogger() {
+    public function testOnlyGetLogger(): ?LoggerInterface {
         return $this->logger;
     }
 
-    public function testOnlyGetSanitizedEndpointName($path_info) {
+    public function testOnlyGetSanitizedEndpointName(string $path_info): string {
         return parent::getSanitizedEndpointName($path_info);
     }
 }
@@ -104,31 +104,31 @@ final class ApiTest extends UnitTestCase {
         $fake_api = $this->getFakeApi();
 
         $expected_output = <<<'ZZZZZZZZZZ'
-/** ### This file is auto-generated, modifying is futile! ### */
+            /** ### This file is auto-generated, modifying is futile! ### */
 
-export type SampleExport1 = unknown;
+            export type SampleExport1 = unknown;
 
-export type SampleExport2 = unknown;
+            export type SampleExport2 = unknown;
 
-// eslint-disable-next-line no-shadow
-export type FakeApiEndpoint =
-    'fakeEndpoint1'|
-    'fakeEndpoint2';
+            // eslint-disable-next-line no-shadow
+            export type FakeApiEndpoint =
+                'fakeEndpoint1'|
+                'fakeEndpoint2';
 
-type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
+            type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
 
-export interface FakeApiRequests extends FakeApiEndpointMapping {
-    fakeEndpoint1: unknown,
-    fakeEndpoint2: SampleExport2,
-}
+            export interface FakeApiRequests extends FakeApiEndpointMapping {
+                fakeEndpoint1: unknown,
+                fakeEndpoint2: SampleExport2,
+            }
 
-export interface FakeApiResponses extends FakeApiEndpointMapping {
-    fakeEndpoint1: SampleExport1,
-    fakeEndpoint2: unknown,
-}
+            export interface FakeApiResponses extends FakeApiEndpointMapping {
+                fakeEndpoint1: SampleExport1,
+                fakeEndpoint2: unknown,
+            }
 
 
-ZZZZZZZZZZ;
+            ZZZZZZZZZZ;
         $this->assertSame(
             $expected_output,
             $fake_api->getTypeScriptDefinition('FakeApi')
@@ -148,34 +148,34 @@ ZZZZZZZZZZ;
         });
 
         $expected_output = <<<'ZZZZZZZZZZ'
-/** ### This file is auto-generated, modifying is futile! ### */
+            /** ### This file is auto-generated, modifying is futile! ### */
 
-export type SampleExport1 = unknown;
+            export type SampleExport1 = unknown;
 
-export type SampleExport2 = unknown;
+            export type SampleExport2 = unknown;
 
-// eslint-disable-next-line no-shadow
-export type FakeApiEndpoint =
-    'fakeEndpoint1'|
-    'fakeEndpoint1Again'|
-    'fakeEndpoint2';
+            // eslint-disable-next-line no-shadow
+            export type FakeApiEndpoint =
+                'fakeEndpoint1'|
+                'fakeEndpoint1Again'|
+                'fakeEndpoint2';
 
-type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
+            type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
 
-export interface FakeApiRequests extends FakeApiEndpointMapping {
-    fakeEndpoint1: unknown,
-    fakeEndpoint1Again: unknown,
-    fakeEndpoint2: SampleExport2,
-}
+            export interface FakeApiRequests extends FakeApiEndpointMapping {
+                fakeEndpoint1: unknown,
+                fakeEndpoint1Again: unknown,
+                fakeEndpoint2: SampleExport2,
+            }
 
-export interface FakeApiResponses extends FakeApiEndpointMapping {
-    fakeEndpoint1: SampleExport1,
-    fakeEndpoint1Again: SampleExport1,
-    fakeEndpoint2: unknown,
-}
+            export interface FakeApiResponses extends FakeApiEndpointMapping {
+                fakeEndpoint1: SampleExport1,
+                fakeEndpoint1Again: SampleExport1,
+                fakeEndpoint2: unknown,
+            }
 
 
-ZZZZZZZZZZ;
+            ZZZZZZZZZZ;
         $this->assertSame(
             $expected_output,
             $fake_api->getTypeScriptDefinition('FakeApi')
@@ -193,14 +193,18 @@ ZZZZZZZZZZ;
     public function testApiGetEndpointByNameFromEndpoint(): void {
         $fake_api = $this->getFakeApi();
         $fake_endpoint_1 = $fake_api->getEndpointByName('fakeEndpoint1');
-        $this->assertSame(true, $fake_endpoint_1 instanceof FakeApiTestEndpoint1);
+        if (!$fake_endpoint_1 instanceof FakeApiTestEndpoint1) {
+            throw new \Exception("Must be a FakeApiTestEndpoint1");
+        }
         $this->assertSame('fake-resource', $fake_endpoint_1->resource);
     }
 
     public function testApiGetEndpointByNameFromGetter(): void {
         $fake_api = $this->getFakeApi();
         $fake_endpoint_2 = $fake_api->getEndpointByName('fakeEndpoint2');
-        $this->assertSame(true, $fake_endpoint_2 instanceof FakeApiTestEndpoint2);
+        if (!$fake_endpoint_2 instanceof FakeApiTestEndpoint2) {
+            throw new \Exception("Must be a FakeApiTestEndpoint2");
+        }
         $this->assertSame('fake-resource', $fake_endpoint_2->resource);
     }
 
@@ -316,8 +320,7 @@ ZZZZZZZZZZ;
 
     public function testApiServeInexistentEndpoint(): void {
         $fake_api = new FakeApiTestApi();
-        $logger = FakeLogger::create('ApiTest');
-        $fake_api->setLogger($logger);
+        $fake_api->setLogger($this->fakeLogger);
         $request = new Request();
         $request->server->set('PATH_INFO', '/inexistent');
         $request->server->set('HTTP_ACCEPT_LANGUAGE', 'en');
@@ -334,13 +337,12 @@ ZZZZZZZZZZ;
 
         $this->assertSame([
             'WARNING Invalid endpoint called: inexistent',
-        ], $logger->handler->getPrettyRecords());
+        ], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testApiGetResponseFromEndpoint(): void {
         $fake_api = new FakeApiTestApi();
-        $logger = FakeLogger::create('ApiTest');
-        $fake_api->setLogger($logger);
+        $fake_api->setLogger($this->fakeLogger);
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
         $fake_api->registerEndpoint('fakeEndpoint1', $fake_endpoint);
@@ -361,13 +363,12 @@ ZZZZZZZZZZ;
         $this->assertSame([
             'INFO Valid user request',
             'INFO Valid user response',
-        ], $logger->handler->getPrettyRecords());
+        ], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testApiGetResponseFromGetter(): void {
         $fake_api = new FakeApiTestApi();
-        $logger = FakeLogger::create('ApiTest');
-        $fake_api->setLogger($logger);
+        $fake_api->setLogger($this->fakeLogger);
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_output = 'fake-output';
         $fake_api->registerEndpoint(
@@ -393,13 +394,12 @@ ZZZZZZZZZZ;
         $this->assertSame([
             'INFO Valid user request',
             'INFO Valid user response',
-        ], $logger->handler->getPrettyRecords());
+        ], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testApiGetResponseWithError(): void {
         $fake_api = new FakeApiTestApi();
-        $logger = FakeLogger::create('ApiTest');
-        $fake_api->setLogger($logger);
+        $fake_api->setLogger($this->fakeLogger);
         $fake_endpoint = new FakeApiTestEndpoint1('fake-resource');
         $fake_endpoint->handle_with_error = new \Exception('test_error');
         $fake_api->registerEndpoint(
@@ -428,10 +428,10 @@ ZZZZZZZZZZ;
         $this->assertSame([
             'INFO Valid user request',
             'CRITICAL Unexpected endpoint error: test_error',
-        ], $logger->handler->getPrettyRecords());
+        ], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    protected function getFakeApi() {
+    protected function getFakeApi(): Api {
         $fake_api = new Api();
         // Directly register endpoint
         $fake_api->registerEndpoint(
