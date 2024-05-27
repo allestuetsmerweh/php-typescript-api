@@ -1,35 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     bootstrap="./server/tests/autoload.php"
     colors="true"
-    forceCoversAnnotation="true"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.1/phpunit.xsd"
+    cacheDirectory=".phpunit.cache"
+    requireCoverageMetadata="true"
 >
-    <testsuites>
-        <testsuite name="Unit Tests">
-            <directory>./server/tests/UnitTests</directory>
-        </testsuite>
-        <testsuite name="Backend Tests">
-            <directory>./example/tests/BackendTests</directory>
-        </testsuite>
-    </testsuites>
-    <coverage 
-        cacheDirectory="./php-coverage/cache"
-        includeUncoveredFiles="true"
-        processUncoveredFiles="true"
-        pathCoverage="false"
-        ignoreDeprecatedCodeUnits="true"
-        disableCodeCoverageIgnore="false"
-    >
-        <include>
-            <directory suffix=".php">./server/lib</directory>
-        </include>
-        <report>
-            <!-- <clover outputFile="php-coverage/clover.xml"/> -->
-            <!-- <crap4j outputFile="php-coverage/crap4j.xml" threshold="50"/> -->
-            <html outputDirectory="php-coverage/html-coverage" lowUpperBound="50" highLowerBound="90"/>
-            <!-- <php outputFile="php-coverage/coverage.php"/> -->
-            <text outputFile="php-coverage/coverage.txt" showUncoveredFiles="false" showOnlySummary="false"/>
-            <!-- <xml outputDirectory="php-coverage/xml-coverage"/> -->
-        </report>
-    </coverage>
+  <testsuites>
+    <testsuite name="Unit Tests">
+      <directory>./server/tests/UnitTests</directory>
+    </testsuite>
+    <testsuite name="Backend Tests">
+      <directory>./example/tests/BackendTests</directory>
+    </testsuite>
+  </testsuites>
+  <coverage
+      cacheDirectory="./php-coverage/cache"
+      includeUncoveredFiles="true"
+      pathCoverage="false"
+      ignoreDeprecatedCodeUnits="true"
+      disableCodeCoverageIgnore="false"
+  >
+    <report>
+      <!-- <clover outputFile="php-coverage/clover.xml"/> -->
+      <!-- <crap4j outputFile="php-coverage/crap4j.xml" threshold="50"/> -->
+      <html outputDirectory="php-coverage/html-coverage" lowUpperBound="50" highLowerBound="90"/>
+      <!-- <php outputFile="php-coverage/coverage.php"/> -->
+      <text outputFile="php-coverage/coverage.txt" showUncoveredFiles="false" showOnlySummary="false"/>
+      <!-- <xml outputDirectory="php-coverage/xml-coverage"/> -->
+    </report>
+  </coverage>
+  <source>
+    <include>
+      <directory suffix=".php">./server/lib</directory>
+    </include>
+  </source>
 </phpunit>

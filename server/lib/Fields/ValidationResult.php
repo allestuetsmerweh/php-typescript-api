@@ -3,27 +3,30 @@
 namespace PhpTypeScriptApi\Fields;
 
 class ValidationResult {
-    public $errors = [];
+    /** @var array<string, array<array<mixed>|string>> */
+    public array $errors = [];
 
-    public function recordError($message) {
+    public function recordError(string $message): void {
         $this->recordErrorInKey('.', $message);
     }
 
-    public function recordErrorInKey($key, $message) {
+    /** @param string|array<string, array<array<mixed>|string>> $message */
+    public function recordErrorInKey(string $key, array|string $message): void {
         $errors = $this->errors[$key] ?? [];
         $errors[] = $message;
         $this->errors[$key] = $errors;
     }
 
-    public function getErrors() {
+    /** @return array<string, array<array<mixed>|string>> */
+    public function getErrors(): array {
         return $this->errors;
     }
 
-    public function isValid() {
+    public function isValid(): bool {
         return empty($this->errors);
     }
 
-    public static function create() {
+    public static function create(): self {
         return new self();
     }
 }

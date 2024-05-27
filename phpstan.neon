@@ -1,0 +1,8 @@
+parameters:
+    level: 8
+    paths:
+        - example/api
+        - example/tests
+        - example/web
+        - server/lib
+        - server/tests

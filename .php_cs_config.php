@@ -11,10 +11,12 @@ return $config
         '@DoctrineAnnotation' => true,
         '@PSR1' => true,
         '@PSR2' => true,
+        '@PSR12' => true,
         '@PhpCsFixer' => true,
         '@Symfony' => true,
+        '@PHP82Migration' => true,
         'blank_line_before_statement' => false,
-        'curly_braces_position' => [
+        'braces_position' => [
             'functions_opening_brace' => 'same_line',
             'classes_opening_brace' => 'same_line',
         ],

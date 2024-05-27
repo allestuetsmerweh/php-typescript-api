@@ -3,18 +3,24 @@
 namespace PhpTypeScriptApi;
 
 class Translator {
-    protected static $instance;
+    protected static ?Translator $instance = null;
 
-    public const LANG_PATH = __DIR__.'/../../resources/lang/';
+    protected static string $lang_path = __DIR__.'/../../resources/lang/';
 
-    protected $project_langs_dict = ['en' => true];
-    protected $accept_langs = ['en'];
-    protected $fallback_chain = ['en'];
+    /** @var array<string, bool> */
+    protected array $project_langs_dict = ['en' => true];
+    /** @var array<string> */
+    protected array $accept_langs = ['en'];
+    /** @var array<string> */
+    protected array $fallback_chain = ['en'];
 
-    public function readProjectLangs() {
-        $entries = scandir($this::LANG_PATH);
+    public function readProjectLangs(): void {
+        $entries = scandir($this::$lang_path);
+        if (!$entries) {
+            return;
+        }
         $langs = array_filter($entries, function ($entry) {
-            $lang_path = $this::LANG_PATH;
+            $lang_path = $this::$lang_path;
             return
                 $entry !== '.' && $entry !== '..'
                 && is_file("{$lang_path}{$entry}/messages.json");
@@ -22,11 +28,17 @@ class Translator {
         $this->setProjectLangs($langs);
     }
 
-    public function getProjectLangs() {
+    /**
+     * @return array<string>
+     */
+    public function getProjectLangs(): array {
         return array_keys($this->project_langs_dict);
     }
 
-    public function setProjectLangs($langs) {
+    /**
+     * @param array<string> $langs
+     */
+    public function setProjectLangs(array $langs): void {
         $langs_dict = [];
         foreach ($langs as $lang) {
             $langs_dict[$lang] = true;
@@ -35,7 +47,7 @@ class Translator {
         $this->calculateFallbackChain();
     }
 
-    public function setAcceptLangs($accept_lang_str) {
+    public function setAcceptLangs(?string $accept_lang_str): void {
         $raw_accept_langs = explode(',', $accept_lang_str ?? '');
         $accept_langs = array_map(function ($raw_accept_lang) {
             $lang = explode(';', $raw_accept_lang)[0];
@@ -45,7 +57,7 @@ class Translator {
         $this->calculateFallbackChain();
     }
 
-    protected function calculateFallbackChain() {
+    protected function calculateFallbackChain(): void {
         $fallback_chain = [];
         foreach ($this->accept_langs as $accept_lang) {
             $is_project_lang = $this->project_langs_dict[$accept_lang] ?? false;
@@ -56,12 +68,15 @@ class Translator {
         $this->fallback_chain = $fallback_chain;
     }
 
+    /**
+     * @param array<string, string> $parameters
+     */
     public function trans(
-        ?string $id,
+        string $id,
         array $parameters = [],
-        string $domain = null,
-        string $locale = null
-    ) {
+        ?string $domain = null,
+        ?string $locale = null
+    ): string {
         $lang_message = $this->getLangMessage($id);
         if (!$lang_message) {
             return '';
@@ -74,14 +89,18 @@ class Translator {
             return $message;
             // @codeCoverageIgnoreEnd
         }
-        return msgfmt_format_message($lang, $message, $parameters);
+        $result = msgfmt_format_message($lang, $message, $parameters);
+        return $result ? $result : '';
     }
 
-    protected function getLangMessage(?string $id) {
+    /**
+     * @return array<string>
+     */
+    protected function getLangMessage(string $id): ?array {
         $id_parts = explode('.', $id);
         foreach ($this->fallback_chain as $lang) {
             $messages = $this->readMessagesJson($lang);
-            if (isset($messages[$id])) {
+            if (is_string($messages[$id] ?? null)) {
                 return [$lang, $messages[$id]];
             }
             $message = $messages;
@@ -95,13 +114,20 @@ class Translator {
         return null;
     }
 
-    protected function readMessagesJson($lang) {
-        $lang_path = $this::LANG_PATH;
+    /**
+     * @return array<string, string|array<string, string>>
+     */
+    protected function readMessagesJson(string $lang): array {
+        $lang_path = $this::$lang_path;
         $messages_json_path = "{$lang_path}{$lang}/messages.json";
-        return json_decode(file_get_contents($messages_json_path), true) ?? [];
+        $messages_json_content = file_get_contents($messages_json_path);
+        if (!$messages_json_content) {
+            return [];
+        }
+        return json_decode($messages_json_content, true) ?? [];
     }
 
-    public static function getInstance() {
+    public static function getInstance(): Translator {
         if (self::$instance === null) {
             $instance = new self();
             $instance->readProjectLangs();
@@ -110,11 +136,19 @@ class Translator {
         return self::$instance;
     }
 
-    public static function resetInstance() {
+    public static function resetInstance(): void {
         self::$instance = null;
     }
 
-    public static function __(?string $id, array $parameters = [], string $domain = null, string $locale = null): string {
+    /**
+     * @param array<string, string> $parameters
+     */
+    public static function __(
+        string $id,
+        array $parameters = [],
+        ?string $domain = null,
+        ?string $locale = null,
+    ): string {
         $translator = self::getInstance();
         return $translator->trans($id, $parameters, $domain, $locale);
     }
@@ -122,8 +156,17 @@ class Translator {
 
 // @codeCoverageIgnoreStart
 // Reason: Functions can't be tested...
-/** @deprecated Use Translator::__() instead. */
-function __(?string $id, array $parameters = [], string $domain = null, string $locale = null): string {
+/**
+ * @deprecated use Translator::__() instead
+ *
+ * @param array<string, string> $parameters
+ */
+function __(
+    string $id,
+    array $parameters = [],
+    ?string $domain = null,
+    ?string $locale = null,
+): string {
     $translator = Translator::getInstance();
     return $translator->trans($id, $parameters, $domain, $locale);
 }

@@ -37,7 +37,7 @@ export type ExampleApiEndpoint =
     'searchSwissPublicTransportConnection'|
     'empty';
 
-type ExampleApiEndpointMapping = {[key in ExampleApiEndpoint]: any};
+type ExampleApiEndpointMapping = {[key in ExampleApiEndpoint]: unknown};
 
 export interface ExampleApiRequests extends ExampleApiEndpointMapping {
     divideNumbers: {

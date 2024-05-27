@@ -15,7 +15,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 final class EnumFieldTest extends UnitTestCase {
     public function testCreateWithNoAllowedValues(): void {
         try {
-            $field = new EnumField(['allowed_values' => []]);
+            new EnumField(['allowed_values' => []]);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
@@ -24,7 +24,7 @@ final class EnumFieldTest extends UnitTestCase {
 
     public function testCreateWithNoAllowedValuesNullAllowed(): void {
         try {
-            $field = new EnumField(['allowed_values' => [], 'allow_null' => true]);
+            new EnumField(['allowed_values' => [], 'allow_null' => true]);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
@@ -33,10 +33,19 @@ final class EnumFieldTest extends UnitTestCase {
 
     public function testCreateWithUndefinedAllowedValues(): void {
         try {
-            $field = new EnumField([]);
+            new EnumField([]);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame('`allowed_values` must not be empty.', $th->getMessage());
+        }
+    }
+
+    public function testCreateWithNonStringAllowedValues(): void {
+        try {
+            new EnumField(['allowed_values' => [null]]);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('`allowed_values` must all be strings.', $th->getMessage());
         }
     }
 

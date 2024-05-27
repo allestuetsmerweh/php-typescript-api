@@ -9,13 +9,17 @@ use Symfony\Component\HttpFoundation\Response;
 class Api {
     use \Psr\Log\LoggerAwareTrait;
 
-    protected $endpoints = [];
+    /** @var array<string, Endpoint|callable> */
+    protected array $endpoints = [];
 
-    public function registerEndpoint($name, $endpoint_or_getter) {
+    public function registerEndpoint(
+        string $name,
+        callable|Endpoint $endpoint_or_getter,
+    ): void {
         $this->endpoints[$name] = $endpoint_or_getter;
     }
 
-    public function getTypeScriptDefinition($name) {
+    public function getTypeScriptDefinition(string $name): string {
         $typescript_output = "/** ### This file is auto-generated, modifying is futile! ### */\n\n";
         $typescript_exported_types = [];
         $typescript_endpoint_symbols = '';
@@ -65,11 +69,12 @@ class Api {
         return $typescript_output;
     }
 
-    public function getEndpointNames() {
+    /** @return array<string> */
+    public function getEndpointNames(): array {
         return array_keys($this->endpoints);
     }
 
-    public function getEndpointByName(string $name): null|Endpoint {
+    public function getEndpointByName(string $name): ?Endpoint {
         $endpoint_or_getter = $this->endpoints[$name] ?? null;
         if (!$endpoint_or_getter) {
             return null;
@@ -89,7 +94,7 @@ class Api {
         return $endpoint_or_getter;
     }
 
-    public function serve() {
+    public function serve(): void {
         $request = Request::createFromGlobals();
         $response = $this->getResponse($request);
         $response->prepare($request);
@@ -100,42 +105,43 @@ class Api {
         $translator = Translator::getInstance();
         $translator->setAcceptLangs($request->server->get('HTTP_ACCEPT_LANGUAGE'));
         $endpoint_name = $this->getSanitizedEndpointName($request->server->get('PATH_INFO'));
+        if ($this->logger) {
+            $handler = new \Monolog\ErrorHandler($this->logger);
+            $handler->registerErrorHandler();
+            $handler->registerExceptionHandler();
+        }
         try {
-            $endpoint_logger = null;
-            if ($this->logger) {
-                $endpoint_logger = $this->logger->withName("Endpoint:{$endpoint_name}");
-                $handler = new \Monolog\ErrorHandler($endpoint_logger);
-                $handler->registerErrorHandler();
-                $handler->registerExceptionHandler();
-            }
             if (!isset($this->endpoints[$endpoint_name])) {
-                if ($endpoint_logger) {
-                    $endpoint_logger->warning("Invalid endpoint called: {$endpoint_name}");
+                if ($this->logger) {
+                    $this->logger->warning("Invalid endpoint called: {$endpoint_name}");
                 }
                 throw new HttpError(400, Translator::__('api.invalid_endpoint'));
             }
             $endpoint_or_getter = $this->endpoints[$endpoint_name];
             $endpoint = $this->maybeCreateEndpointInstance($endpoint_or_getter);
-            if ($endpoint_logger) {
-                $endpoint->setLogger($endpoint_logger);
+            if ($this->logger) {
+                $endpoint->setLogger($this->logger);
             } else {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
             $endpoint->setup();
             $input = $endpoint->parseInput($request);
             $result = $endpoint->call($input);
-            restore_error_handler();
-            restore_exception_handler();
             return new JsonResponse($result, Response::HTTP_OK);
         } catch (HttpError $httperr) {
             return new JsonResponse(
                 $httperr->getStructuredAnswer(),
                 $httperr->getCode(),
             );
+        } finally {
+            if ($this->logger) {
+                restore_error_handler();
+                restore_exception_handler();
+            }
         }
     }
 
-    protected function getSanitizedEndpointName($path_info) {
+    protected function getSanitizedEndpointName(string $path_info): string {
         $has_path_info = preg_match(
             '/^\/([a-zA-Z0-9]+)$/',
             $path_info,

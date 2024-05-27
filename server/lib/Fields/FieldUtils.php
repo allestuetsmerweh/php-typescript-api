@@ -2,8 +2,17 @@
 
 namespace PhpTypeScriptApi\Fields;
 
+use PhpTypeScriptApi\Fields\FieldTypes\Field;
+
 class FieldUtils {
-    public function validate($field, $input, $options = []) {
+    /**
+     * @param array<string, mixed> $options
+     */
+    public function validate(
+        Field $field,
+        mixed $input,
+        array $options = []
+    ): mixed {
         $validated = [];
         $errors = [];
         $value = $input ?? null;
@@ -27,7 +36,7 @@ class FieldUtils {
         return $validated;
     }
 
-    public static function create() {
+    public static function create(): self {
         return new self();
     }
 }

@@ -8,6 +8,7 @@ use Monolog\Handler\HandlerInterface;
 use Monolog\LogRecord;
 
 class FakeLogHandler implements HandlerInterface {
+    /** @var array<LogRecord> */
     public array $records = [];
 
     public function isHandling(LogRecord $record): bool {
@@ -25,7 +26,8 @@ class FakeLogHandler implements HandlerInterface {
     public function close(): void {
     }
 
-    public function getPrettyRecords() {
+    /** @return array<string> */
+    public function getPrettyRecords(): array {
         return array_map(function ($record) {
             $arr = $record->toArray();
             $level_name = $arr['level_name'];
