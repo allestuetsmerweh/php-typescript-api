@@ -37,12 +37,14 @@ class ExampleBackendTestCase extends TestCase {
     public function callBackend(string $endpoint, mixed $input): array {
         $backend_url = self::BACKEND_URL;
         $url = "{$backend_url}/{$endpoint}";
+        $json = json_encode($input);
+        assert(!is_bool($json));
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($input));
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $json);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type:application/json']);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $output = curl_exec($ch);
         $result = is_string($output) ? json_decode($output, true) : null;
         $error = curl_error($ch);

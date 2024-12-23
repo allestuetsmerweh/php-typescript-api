@@ -5,7 +5,7 @@ Build a typed Web API using PHP and TypeScript
 **Disclaimer: This is not an officially supported Google product**
 
 This project:
-- helps with data validation on the server side by providing [fields](https://github.com/allestuetsmerweh/php-typescript-api/tree/main/server/lib/Fields/FieldTypes) to define allowed request/response types.
+- helps with data validation on the server side by providing [fields](https://github.com/allestuetsmerweh/php-typescript-api/tree/main/server/lib/Fields/FieldTypes) or [phpstan](https://phpstan.org/writing-php-code/phpdoc-types) to define allowed request/response types.
 - generates a typed API client in TypeScript.
 - consists of a 
   [server (PHP)](https://github.com/allestuetsmerweh/php-typescript-api/tree/main/server) library,

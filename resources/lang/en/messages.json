@@ -8,7 +8,7 @@
         "too_many_requests": "Too many requests"
     },
     "fields": {
-        "illegible_boolean": "Illegible binary value: {value}",
+        "illegible_boolean": "Illegible yes/no value: {value}",
         "illegible_integer": "Illegible integer: {value}",
         "illegible_number": "Illegible number: {value}",
         "missing_key": "Missing key: {key}.",
@@ -20,6 +20,7 @@
         "must_be_object": "Value must be an object.",
         "must_be_scalar_value": "Value must be simple.",
         "must_be_string": "Value must be a string.",
+        "must_be_type": "Value must be of type {type}.",
         "must_have_one_key": "Value must be an object with exactly one key.",
         "must_match_regex": "Value must have pattern {regex}.",
         "must_not_be_empty": "Field can not be empty.",

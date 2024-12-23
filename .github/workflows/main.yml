@@ -22,7 +22,7 @@ jobs:
       id: composer-cache
       run: echo "::set-output name=dir::$(composer config cache-files-dir)"
     - name: Cache composer dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v3
       with:
         path: ${{ steps.composer-cache.outputs.dir }}
         key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
@@ -34,7 +34,7 @@ jobs:
       run: |
         echo "::set-output name=dir::$(npm config get cache)"
     - name: Cache npm dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v3
       with:
         path: ${{ steps.npm-client-cache.outputs.dir }}
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -58,7 +58,7 @@ jobs:
       run: |
         cd example; echo "::set-output name=dir::$(npm config get cache)"
     - name: Example - Cache npm dependencies
-      uses: actions/cache@v1
+      uses: actions/cache@v3
       with:
         path: ${{ steps.npm-example-cache.outputs.dir }}
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
@@ -70,7 +70,7 @@ jobs:
       run: cd example; npm run webpack-build
     - name: Lint JavaScript & TypeScript
       run: npm run lint
-    - name: Example - Jest Unit Tests
+    - name: Example - Jest end-to-end Tests
       run: cd example; npm run test-ci
-    - name: PHP Example Tests
+    - name: PHP Example Backend Tests
       run: composer backend_tests
