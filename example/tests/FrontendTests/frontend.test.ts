@@ -6,7 +6,7 @@ import http from 'http';
 import {ExampleApi} from '../../web/ExampleApi';
 import {ValidationError} from 'php-typescript-api';
 
-describe('', () => {
+describe('frontend end-to-end', () => {
     let server: ChildProcess;
 
     beforeAll(async () => {
@@ -47,7 +47,7 @@ describe('', () => {
     });
 
     describe('divideNumbers', () => {
-        it('works end to end', async () => {
+        it('works end-to-end', async () => {
             const exampleApi = new ExampleApi();
 
             const result1 = await exampleApi.call('divideNumbers', {dividend: 6, divisor: 3});
@@ -60,7 +60,7 @@ describe('', () => {
             expect(result3).toEqual(1.3333333333333333);
         });
 
-        it('works end to end in error case', async () => {
+        it('works end-to-end in error case', async () => {
             const exampleApi = new ExampleApi();
 
             try {
@@ -76,16 +76,36 @@ describe('', () => {
                 });
             }
         });
+    });
 
-        it('works end to end', async () => {
+    describe('empty', () => {
+        it('works end-to-end', async () => {
             const exampleApi = new ExampleApi();
 
-            const result = await exampleApi.call('squareRoot', 16);
+            const result1 = await exampleApi.call('empty', {});
+            expect(result1).toEqual([]);
+        });
+    });
 
-            expect(result).toEqual(4);
+    describe('squareRoot', () => {
+        it('works end-to-end', async () => {
+            const exampleApi = new ExampleApi();
+
+            const result1 = await exampleApi.call('squareRoot', 9);
+            expect(result1).toEqual(3);
+
+            const result2 = await exampleApi.call('squareRoot', 2);
+            expect(result2).toEqual(1.4142135623730951);
         });
 
-        it('works end to end in error case', async () => {
+        it('works end-to-end for zero case', async () => {
+            const exampleApi = new ExampleApi();
+
+            const result1 = await exampleApi.call('squareRoot', 0);
+            expect(result1).toEqual(0);
+        });
+
+        it('works end-to-end in error case', async () => {
             const exampleApi = new ExampleApi();
 
             try {
@@ -103,38 +123,27 @@ describe('', () => {
         });
     });
 
-    describe('empty', () => {
-        it('works end to end', async () => {
+    // Typed endpoints
+
+    describe('divideNumbersTyped', () => {
+        it('works end-to-end', async () => {
             const exampleApi = new ExampleApi();
 
-            const result1 = await exampleApi.call('empty', {});
-            expect(result1).toEqual([]);
-        });
-    });
+            const result1 = await exampleApi.call('divideNumbersTyped', {dividend: 6, divisor: 3});
+            expect(result1).toEqual(2);
 
-    describe('squareRoot', () => {
-        it('works end to end', async () => {
-            const exampleApi = new ExampleApi();
+            const result2 = await exampleApi.call('divideNumbersTyped', {dividend: 6, divisor: 12});
+            expect(result2).toEqual(0.5);
 
-            const result1 = await exampleApi.call('squareRoot', 9);
-            expect(result1).toEqual(3);
-
-            const result2 = await exampleApi.call('squareRoot', 2);
-            expect(result2).toEqual(1.4142135623730951);
+            const result3 = await exampleApi.call('divideNumbersTyped', {dividend: 4, divisor: 3});
+            expect(result3).toEqual(1.3333333333333333);
         });
 
-        it('works end to end for zero case', async () => {
-            const exampleApi = new ExampleApi();
-
-            const result1 = await exampleApi.call('squareRoot', 0);
-            expect(result1).toEqual(0);
-        });
-
-        it('works end to end in error case', async () => {
+        it('works end-to-end in error case', async () => {
             const exampleApi = new ExampleApi();
 
             try {
-                await exampleApi.call('squareRoot', -1);
+                await exampleApi.call('divideNumbersTyped', {dividend: 6, divisor: 0});
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
@@ -142,7 +151,72 @@ describe('', () => {
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
-                    '.': ['Value must not be less than 0.'],
+                    'divisor': ['Cannot divide by zero.'],
+                });
+            }
+        });
+    });
+
+    describe('emptyTyped', () => {
+        it('works end-to-end', async () => {
+            const exampleApi = new ExampleApi();
+
+            const result1 = await exampleApi.call('emptyTyped', {});
+            expect(result1).toEqual([]);
+        });
+    });
+
+    describe('squareRootTyped', () => {
+        it('works end-to-end', async () => {
+            const exampleApi = new ExampleApi();
+
+            const result1 = await exampleApi.call('squareRootTyped', 9);
+            expect(result1).toEqual(3);
+
+            const result2 = await exampleApi.call('squareRootTyped', 2);
+            expect(result2).toEqual(1.4142135623730951);
+
+            const result3 = await exampleApi.call('squareRootTyped', 1.5);
+            expect(result3).toEqual(1.224744871391589);
+
+        });
+
+        it('works end-to-end for zero case', async () => {
+            const exampleApi = new ExampleApi();
+
+            const result1 = await exampleApi.call('squareRootTyped', 0);
+            expect(result1).toEqual(0);
+        });
+
+        it('works end-to-end in error case', async () => {
+            const exampleApi = new ExampleApi();
+
+            try {
+                await exampleApi.call('squareRootTyped', -1);
+                throw new Error('error expected');
+            } catch (err: unknown) {
+                if (!(err instanceof ValidationError)) {
+                    throw new Error('ValidationError expected');
+                }
+                expect(err.message).toEqual('Bad input');
+                expect(err.getErrorsByField()).toEqual({
+                    '.': [
+                        {'.': ['Value must be of type float.']},
+                        {'.': ['Value must not be less than 0.']},
+                    ],
+                });
+            }
+
+            try {
+                await exampleApi.call('squareRootTyped', -1.5);
+                throw new Error('error expected');
+            } catch (err: unknown) {
+                if (!(err instanceof ValidationError)) {
+                    throw new Error('ValidationError expected');
+                }
+                expect(err.message).toEqual('Bad input');
+                expect(err.getErrorsByField()).toEqual({
+                    '.': ['Value must not be negative'],
                 });
             }
         });

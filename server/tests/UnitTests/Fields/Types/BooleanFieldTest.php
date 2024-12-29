@@ -56,7 +56,7 @@ final class BooleanFieldTest extends UnitTestCase {
             $field->parse('test');
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame("Illegible binary value: test", $exc->getMessage());
+            $this->assertSame("Illegible yes/no value: test", $exc->getMessage());
         }
     }
 

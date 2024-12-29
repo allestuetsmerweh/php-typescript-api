@@ -8,7 +8,7 @@
         "too_many_requests": "Zu viele Anfragen"
     },
     "fields": {
-        "illegible_boolean": "Unlesbarer Binärwert: {value}",
+        "illegible_boolean": "Unlesbarer Ja/Nein-Wert: {value}",
         "illegible_integer": "Unlesbare Ganzzahl: {value}",
         "illegible_number": "Unlesbare Zahl: {value}",
         "missing_key": "Fehlender Schlüssel: {key}.",

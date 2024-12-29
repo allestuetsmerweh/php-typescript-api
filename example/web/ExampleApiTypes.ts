@@ -30,12 +30,26 @@ export type SPTransportStop = {
     'platform': string|null,
 };
 
+export type SptLocation = {'id': string, 'name': string, 'coordinate': SptCoordinate};
+
+export type SptConnection = {'sections': Array<SptSection>};
+
+export type SptCoordinate = {'type': string, 'x': string, 'y': string};
+
+export type SptSection = {'departure': SptStop, 'arrival': SptStop, 'passList': Array<SptStop>};
+
+export type SptStop = {'stationId': string, 'arrival': (string | null), 'departure': (string | null), 'delay': (number | null), 'platform': (string | null)};
+
 // eslint-disable-next-line no-shadow
 export type ExampleApiEndpoint =
     'divideNumbers'|
     'squareRoot'|
     'searchSwissPublicTransportConnection'|
-    'empty';
+    'empty'|
+    'divideNumbersTyped'|
+    'squareRootTyped'|
+    'searchSwissPublicTransportConnectionTyped'|
+    'emptyTyped';
 
 type ExampleApiEndpointMapping = {[key in ExampleApiEndpoint]: unknown};
 
@@ -54,6 +68,10 @@ export interface ExampleApiRequests extends ExampleApiEndpointMapping {
             'isArrivalTime': boolean|null,
         },
     empty: Record<string, never>,
+    divideNumbersTyped: {'dividend': number, 'divisor': number},
+    squareRootTyped: (number | number),
+    searchSwissPublicTransportConnectionTyped: {'from': string, 'to': string, 'via': (Array<string> | null), 'date': string, 'time': string, 'isArrivalTime': (boolean | null)},
+    emptyTyped: Record<string, never>,
 }
 
 export interface ExampleApiResponses extends ExampleApiEndpointMapping {
@@ -64,5 +82,9 @@ export interface ExampleApiResponses extends ExampleApiEndpointMapping {
             'connections': Array<SPTransportConnection>,
         },
     empty: Record<string, never>,
+    divideNumbersTyped: number,
+    squareRootTyped: number,
+    searchSwissPublicTransportConnectionTyped: {'stationById': {[key: string]: SptLocation}, 'connections': Array<SptConnection>},
+    emptyTyped: Record<string, never>,
 }
 

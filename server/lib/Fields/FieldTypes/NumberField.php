@@ -54,7 +54,7 @@ class NumberField extends Field {
         if ($string === null || $string === '') {
             return null;
         }
-        if (preg_match('/^[0-9\\.\\-]+$/', $string)) {
+        if (preg_match('/^[0-9\.\-]+$/', $string)) {
             return floatval($string);
         }
         throw new \Exception(Translator::__('fields.illegible_number', ['value' => $string]));

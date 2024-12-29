@@ -31,6 +31,7 @@ class TranslatorForTest extends Translator {
     }
 
     public static function testOnlyResetLangPath(): void {
+        assert(self::$previous_lang_path !== null);
         self::$lang_path = self::$previous_lang_path;
     }
 

@@ -20,7 +20,7 @@ class IntegerField extends NumberField {
         if ($string === null || $string === '') {
             return null;
         }
-        if (preg_match('/^[0-9\\-]+$/', $string)) {
+        if (preg_match('/^[0-9\-]+$/', $string)) {
             return intval($string);
         }
         throw new \Exception(Translator::__('fields.illegible_integer', ['value' => $string]));

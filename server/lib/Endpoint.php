@@ -5,7 +5,7 @@ namespace PhpTypeScriptApi;
 use PhpTypeScriptApi\Fields\FieldTypes\Field;
 use Symfony\Component\HttpFoundation\Request;
 
-abstract class Endpoint {
+abstract class Endpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
     private mixed $setupFunction = null;
@@ -54,7 +54,6 @@ abstract class Endpoint {
 
         try {
             $validated_input = $field_utils->validate($this->getRequestField(), $raw_input);
-            // "Valid user request"
             $this->logger?->info("Valid user request");
         } catch (Fields\ValidationError $verr) {
             $this->logger?->warning("Bad user request", $verr->getStructuredAnswer());
@@ -84,6 +83,22 @@ abstract class Endpoint {
         }
 
         return $validated_result;
+    }
+
+    /** @return array<string, string> */
+    public function getNamedTsTypes(): array {
+        return [
+            ...$this->getRequestField()->getExportedTypeScriptTypes(),
+            ...$this->getResponseField()->getExportedTypeScriptTypes(),
+        ];
+    }
+
+    public function getRequestTsType(): string {
+        return $this->getRequestField()->getTypeScriptType(['should_substitute' => true]);
+    }
+
+    public function getResponseTsType(): string {
+        return $this->getResponseField()->getTypeScriptType(['should_substitute' => true]);
     }
 
     abstract public function getRequestField(): Field;

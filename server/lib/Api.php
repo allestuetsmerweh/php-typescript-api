@@ -9,12 +9,12 @@ use Symfony\Component\HttpFoundation\Response;
 class Api {
     use \Psr\Log\LoggerAwareTrait;
 
-    /** @var array<string, Endpoint|callable> */
+    /** @var array<string, EndpointInterface|callable> */
     protected array $endpoints = [];
 
     public function registerEndpoint(
         string $name,
-        callable|Endpoint $endpoint_or_getter,
+        callable|EndpointInterface $endpoint_or_getter,
     ): void {
         $this->endpoints[$name] = $endpoint_or_getter;
     }
@@ -34,22 +34,18 @@ class Api {
             $endpoint = $this->maybeCreateEndpointInstance($endpoint_or_getter);
             $typescript_endpoint_symbols .= "    '{$endpoint_name}'|\n";
 
-            $typescript_request_types .= "    {$endpoint_name}: ";
-            $request_field = $endpoint->getRequestField();
-            foreach ($request_field->getExportedTypeScriptTypes() as $type_ident => $exported_type) {
+            foreach ($endpoint->getNamedTsTypes() as $type_ident => $exported_type) {
                 $typescript_exported_types[$type_ident] = "export type {$type_ident} = {$exported_type};\n";
             }
-            $request_type = $request_field->getTypeScriptType(['should_substitute' => true]);
+
+            $typescript_request_types .= "    {$endpoint_name}: ";
+            $request_type = $endpoint->getRequestTsType();
             $indented_request_type = str_replace("\n", "\n        ", $request_type);
             $typescript_request_types .= $indented_request_type;
             $typescript_request_types .= ",\n";
 
             $typescript_response_types .= "    {$endpoint_name}: ";
-            $response_field = $endpoint->getResponseField();
-            foreach ($response_field->getExportedTypeScriptTypes() as $type_ident => $exported_type) {
-                $typescript_exported_types[$type_ident] = "export type {$type_ident} = {$exported_type};\n";
-            }
-            $response_type = $response_field->getTypeScriptType(['should_substitute' => true]);
+            $response_type = $endpoint->getResponseTsType();
             $indented_response_type = str_replace("\n", "\n        ", $response_type);
             $typescript_response_types .= $indented_response_type;
             $typescript_response_types .= ",\n";
@@ -74,7 +70,7 @@ class Api {
         return array_keys($this->endpoints);
     }
 
-    public function getEndpointByName(string $name): ?Endpoint {
+    public function getEndpointByName(string $name): ?EndpointInterface {
         $endpoint_or_getter = $this->endpoints[$name] ?? null;
         if (!$endpoint_or_getter) {
             return null;
@@ -83,8 +79,8 @@ class Api {
     }
 
     protected function maybeCreateEndpointInstance(
-        callable|Endpoint $endpoint_or_getter
-    ): Endpoint {
+        callable|EndpointInterface $endpoint_or_getter
+    ): EndpointInterface {
         if (
             is_callable($endpoint_or_getter)
             && !($endpoint_or_getter instanceof Endpoint)
@@ -124,7 +120,9 @@ class Api {
             } else {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
-            $endpoint->setup();
+            if ($endpoint instanceof Endpoint) {
+                $endpoint->setup();
+            }
             $input = $endpoint->parseInput($request);
             $result = $endpoint->call($input);
             return new JsonResponse($result, Response::HTTP_OK);
