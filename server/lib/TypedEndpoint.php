@@ -27,12 +27,6 @@ abstract class TypedEndpoint implements EndpointInterface {
         $this->phpStanUtils = new PhpStanUtils();
         $class_name = get_called_class();
         $this->endpointClass = new \ReflectionClass($class_name);
-        if (
-            !$this->endpointClass->getParentClass()
-            || $this->endpointClass->getParentClass()->getName() !== TypedEndpoint::class
-        ) {
-            throw new \Exception('Only classes directly extending TypedEndpoint may be used.');
-        }
         $php_doc_node = $this->phpStanUtils->parseDocComment($this->endpointClass->getDocComment());
         $extends_type_node = $php_doc_node->getExtendsTagValues()[0]->type;
         if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_type_node->type}")) {
