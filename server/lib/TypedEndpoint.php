@@ -17,7 +17,8 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
-    private string $namespaceName;
+    /** @var \ReflectionClass<object> */
+    private \ReflectionClass $endpointClass;
     private TypeNode $requestTypeNode;
     private TypeNode $responseTypeNode;
     private PhpStanUtils $phpStanUtils;
@@ -25,15 +26,14 @@ abstract class TypedEndpoint implements EndpointInterface {
     public function __construct() {
         $this->phpStanUtils = new PhpStanUtils();
         $class_name = get_called_class();
-        $class_info = new \ReflectionClass($class_name);
-        $this->namespaceName = $class_info->getNamespaceName();
+        $this->endpointClass = new \ReflectionClass($class_name);
         if (
-            !$class_info->getParentClass()
-            || $class_info->getParentClass()->getName() !== TypedEndpoint::class
+            !$this->endpointClass->getParentClass()
+            || $this->endpointClass->getParentClass()->getName() !== TypedEndpoint::class
         ) {
             throw new \Exception('Only classes directly extending TypedEndpoint may be used.');
         }
-        $php_doc_node = $this->phpStanUtils->parseDocComment($class_info->getDocComment());
+        $php_doc_node = $this->phpStanUtils->parseDocComment($this->endpointClass->getDocComment());
         $extends_type_node = $php_doc_node->getExtendsTagValues()[0]->type;
         if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_type_node->type}")) {
             // @codeCoverageIgnoreStart
@@ -78,7 +78,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
 
         $result = ValidateVisitor::validate(
-            $this->namespaceName,
+            $this->endpointClass,
             $input,
             $this->requestTypeNode
         );
@@ -103,7 +103,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
 
         $result = ValidateVisitor::validate(
-            $this->namespaceName,
+            $this->endpointClass,
             $output,
             $this->responseTypeNode
         );
@@ -117,7 +117,7 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     /** @return array<string, string> */
     public function getNamedTsTypes(): array {
-        $visitor = new TypeScriptVisitor($this->namespaceName);
+        $visitor = new TypeScriptVisitor($this->endpointClass);
         $traverser = new NodeTraverser([$visitor]);
         $traverser->traverse([$this->requestTypeNode]);
         $traverser->traverse([$this->responseTypeNode]);
@@ -126,26 +126,25 @@ abstract class TypedEndpoint implements EndpointInterface {
         // An array in PHP is actually an ordered map, so this should work.
         for ($i = 0; $i < count($visitor->exported_classes); $i++) {
             $name = array_keys($visitor->exported_classes)[$i];
-            $class_info = $visitor->exported_classes[$name];
-            $php_type = $this->phpStanUtils->getNamedTypeNode($class_info);
-            [$ts_node] = $traverser->traverse([$php_type]);
-            $named_ts_types[$name] = "{$ts_node}";
+            $php_type_node = $visitor->exported_classes[$name];
+            [$ts_type_node] = $traverser->traverse([$php_type_node]);
+            $named_ts_types[$name] = "{$ts_type_node}";
         }
         return $named_ts_types;
     }
 
     public function getRequestTsType(): string {
-        $visitor = new TypeScriptVisitor($this->namespaceName);
+        $visitor = new TypeScriptVisitor($this->endpointClass);
         $traverser = new NodeTraverser([$visitor]);
-        [$ts_node] = $traverser->traverse([$this->requestTypeNode]);
-        return "{$ts_node}";
+        [$ts_type_node] = $traverser->traverse([$this->requestTypeNode]);
+        return "{$ts_type_node}";
     }
 
     public function getResponseTsType(): string {
-        $visitor = new TypeScriptVisitor($this->namespaceName);
+        $visitor = new TypeScriptVisitor($this->endpointClass);
         $traverser = new NodeTraverser([$visitor]);
-        [$ts_node] = $traverser->traverse([$this->responseTypeNode]);
-        return "{$ts_node}";
+        [$ts_type_node] = $traverser->traverse([$this->responseTypeNode]);
+        return "{$ts_type_node}";
     }
 
     /**

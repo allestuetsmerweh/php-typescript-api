@@ -21,15 +21,17 @@ use PhpTypeScriptApi\Translator;
 final class ValidateVisitor extends AbstractNodeVisitor {
     private PhpStanUtils $phpStanUtils;
 
+    /** @param \ReflectionClass<object> $endpointClass */
     public function __construct(
-        protected string $namespaceName,
+        protected \ReflectionClass $endpointClass,
         protected mixed $value,
     ) {
         $this->phpStanUtils = new PhpStanUtils();
     }
 
-    public static function validate(string $namespace, mixed $value, Node $type): ValidationResultNode {
-        $validator = new ValidateVisitor($namespace, $value);
+    /** @param \ReflectionClass<object> $endpointClass */
+    public static function validate(\ReflectionClass $endpointClass, mixed $value, Node $type): ValidationResultNode {
+        $validator = new ValidateVisitor($endpointClass, $value);
         return $validator->subValidate($value, $type);
     }
 
@@ -76,12 +78,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {
                 if (preg_match('/^[A-Z]/', $node->name)) {
-                    // @phpstan-ignore argument.type, phpstanApi.runtimeReflection
-                    $class_info = new \ReflectionClass("{$this->namespaceName}\\{$node->name}");
-                    if (!$this->phpStanUtils->extendsNamedType($class_info)) {
-                        throw new \Exception('Only classes extending NamedType may be used.');
-                    }
-                    $named_class_type = $this->phpStanUtils->getNamedTypeNode($class_info);
+                    $named_class_type = $this->phpStanUtils->getAliasTypeNode($node->name, $this->endpointClass);
                     return $this->subValidate($this->value, $named_class_type);
                 }
                 throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}");
@@ -238,7 +235,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     }
 
     public function subValidate(mixed $value, Node $type): ValidationResultNode {
-        $visitor = new ValidateVisitor($this->namespaceName, $value);
+        $visitor = new ValidateVisitor($this->endpointClass, $value);
         $traverser = new NodeTraverser([$visitor]);
         [$result_node] = $traverser->traverse([$type]);
         if (!($result_node instanceof ValidationResultNode)) {

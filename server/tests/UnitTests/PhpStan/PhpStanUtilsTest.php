@@ -8,6 +8,12 @@ use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
+ * @phpstan-type AliasedInt int
+ */
+class FakePhpStanUtilsTypedEndpoint {
+}
+
+/**
  * @internal
  *
  * @covers \PhpTypeScriptApi\PhpStan\PhpStanUtils
@@ -62,37 +68,24 @@ final class PhpStanUtilsTest extends UnitTestCase {
         }
     }
 
-    public function testGetNamedIntTypeNode(): void {
+    public function testGetAliasTypeNode(): void {
         $utils = new PhpStanUtils();
 
-        $typeNode = $utils->getNamedTypeNode(new \ReflectionClass(NamedInt::class));
+        $fake_endpoint = new \ReflectionClass(FakePhpStanUtilsTypedEndpoint::class);
+        $typeNode = $utils->getAliasTypeNode('AliasedInt', $fake_endpoint);
 
         $this->assertSame('int', "{$typeNode}");
     }
 
-    public function testGetNamedTypeNodeInvalidClass(): void {
+    public function testgetAliasTypeNodeInvalidClass(): void {
         $utils = new PhpStanUtils();
 
         try {
-            // @phpstan-ignore argument.type
-            $utils->getNamedTypeNode(new \ReflectionClass('invalid'));
+            $fake_endpoint = new \ReflectionClass(FakePhpStanUtilsTypedEndpoint::class);
+            $utils->getAliasTypeNode('Invalid', $fake_endpoint);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            $this->assertSame('Class "invalid" does not exist', $th->getMessage());
-        }
-    }
-
-    public function testGetNamedTypeNodeNotNamedType(): void {
-        $utils = new PhpStanUtils();
-
-        try {
-            $utils->getNamedTypeNode(new \ReflectionClass(self::class));
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Only classes directly extending NamedType may be used.',
-                $th->getMessage(),
-            );
+            $this->assertSame('Type alias not found: Invalid', $th->getMessage());
         }
     }
 }

@@ -12,6 +12,13 @@ use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
+ * @phpstan-type AliasedInt int
+ * @phpstan-type AliasedObject array{foo: int, bar?: string}
+ */
+class FakeTypeScriptVisitorTypedEndpoint {
+}
+
+/**
  * @internal
  *
  * @covers \PhpTypeScriptApi\PhpStan\TypeScriptVisitor
@@ -143,26 +150,18 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame("Record<string, never>", $this->getTypeScript("object{}"));
     }
 
-    public function testNamedIntNode(): void {
-        $this->assertSame('NamedInt', $this->getTypeScript('NamedInt'));
+    public function testAliasedIntNode(): void {
+        $this->assertSame('AliasedInt', $this->getTypeScript('AliasedInt'));
     }
 
-    public function testNamedObjectNode(): void {
-        $this->assertSame('NamedObject', $this->getTypeScript('NamedObject'));
+    public function testAliasedObjectNode(): void {
+        $this->assertSame('AliasedObject', $this->getTypeScript('AliasedObject'));
     }
 
     public function testUnsupportedNamedTypeNode(): void {
         $this->assertSame(
-            '🛑Class "PhpTypeScriptApi\Tests\UnitTests\PhpStan\Invalid" does not exist',
+            '🛑Type alias not found: Invalid',
             $this->getTypeScript('Invalid'),
-        );
-        $this->assertSame(
-            '🛑Only classes extending NamedType may be used.',
-            $this->getTypeScript('AllegedlyNamedSomething'),
-        );
-        $this->assertSame(
-            '🛑Only classes extending NamedType may be used.',
-            $this->getTypeScript('AllegedlyNamedAnotherThing'),
         );
     }
 
@@ -173,7 +172,7 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         );
     }
 
-    private function getTypeScript(string|TypeNode $type): ?string {
+    private function getTypeScript(string|TypeNode $type): string {
         if ($type instanceof TypeNode) {
             $type_node = $type;
         } else {
@@ -183,7 +182,8 @@ final class TypeScriptVisitorTest extends UnitTestCase {
             $type_node = $paramTags[0]->type;
         }
 
-        $visitor = new TypeScriptVisitor(__NAMESPACE__);
+        $fake_endpoint = new \ReflectionClass(FakeTypeScriptVisitorTypedEndpoint::class);
+        $visitor = new TypeScriptVisitor($fake_endpoint);
         $traverser = new NodeTraverser([$visitor]);
         try {
             [$ts_type_node] = $traverser->traverse([$type_node]);
