@@ -191,10 +191,7 @@ final class TypedEndpointTest extends UnitTestCase {
             new FakeTransitiveTypedEndpoint();
             $this->fail('Error expected');
         } catch (\Exception $exc) {
-            $this->assertSame(
-                'Only classes directly extending TypedEndpoint may be used.',
-                $exc->getMessage(),
-            );
+            $this->assertSame('Cannot parse doc comment.', $exc->getMessage());
             $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
         }
     }
