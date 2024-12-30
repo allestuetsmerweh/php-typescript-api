@@ -1,4 +1,6 @@
 /.github/
+/.php-cs-fixer.cache
+/.phpunit.cache/
 /client/src/
 /client/tests/
 /coverage/
@@ -16,5 +18,7 @@
 /composer.json
 /composer.lock
 /jest.config.js
+/phpstan.neon
 /phpunit.xml
+/phpunit.xml.bak
 /tsconfig.json

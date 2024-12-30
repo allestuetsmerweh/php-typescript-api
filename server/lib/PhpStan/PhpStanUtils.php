@@ -13,31 +13,19 @@ use PHPStan\PhpDocParser\ParserConfig;
 
 class PhpStanUtils {
     /** @param \ReflectionClass<object> $class_info */
-    public function getNamedTypeNode(\ReflectionClass $class_info): TypeNode {
-        if (!$this->extendsNamedType($class_info)) {
-            throw new \Exception('Only classes directly extending NamedType may be used.');
+    public function getAliasTypeNode(string $name, \ReflectionClass $class_info): TypeNode {
+        $php_doc_node = $this->parseDocComment($class_info->getDocComment());
+        // TODO: Use array_find (PHP 8.4)
+        $alias_node = null;
+        foreach ($php_doc_node->getTypeAliasTagValues() as $node) {
+            if ($node->alias === $name) {
+                $alias_node = $node;
+            }
         }
-        $phpDocNode = $this->parseDocComment($class_info->getDocComment());
-        $php_type_node = $phpDocNode->getExtendsTagValues()[0]->type;
-        if (!preg_match('/(^|\\\)NamedType$/', "{$php_type_node->type}")) {
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            throw new \Exception('Only classes directly extending NamedType (in doc comment) may be used.');
-            // @codeCoverageIgnoreEnd
+        if ($alias_node === null) {
+            throw new \Exception("Type alias not found: {$name}");
         }
-        if (count($php_type_node->genericTypes) !== 1) {
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            throw new \Exception('NamedType has exactly one generic parameter.');
-            // @codeCoverageIgnoreEnd
-        }
-        return $php_type_node->genericTypes[0];
-    }
-
-    /** @param \ReflectionClass<object> $class_info */
-    public function extendsNamedType(\ReflectionClass $class_info): bool {
-        return $class_info->getParentClass()
-            && $class_info->getParentClass()->getName() === NamedType::class;
+        return $alias_node->type;
     }
 
     public function parseDocComment(string|false|null $doc_comment): PhpDocNode {

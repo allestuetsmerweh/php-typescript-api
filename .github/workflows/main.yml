@@ -40,10 +40,20 @@ jobs:
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-
+    - name: Cache other caches
+      uses: actions/cache@v3
+      with:
+        path: |
+          *.cache
+        key: ${{ runner.os }}-other-${{ hashFiles('*.cache') }}
+        restore-keys: |
+          ${{ runner.os }}-other-
     - name: Install JavaScript dependencies
       run: npm install
-    - name: Code style check
+    - name: PHP Code style check
       run: composer fixdiff
+    - name: PHP Static Analysis
+      run: composer check
     - name: Lint JavaScript & TypeScript
       run: npm run lint
     - name: Compile TypeScript

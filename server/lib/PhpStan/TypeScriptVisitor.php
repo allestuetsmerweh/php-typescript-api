@@ -17,16 +17,18 @@ use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 final class TypeScriptVisitor extends AbstractNodeVisitor {
     private PhpStanUtils $phpStanUtils;
 
-    /** @var array<string, \ReflectionClass<object>> */
+    /** @var array<string, TypeNode> */
     public array $exported_classes = [];
 
+    /** @param \ReflectionClass<object> $endpointClass */
     public function __construct(
-        protected string $namespaceName,
+        protected \ReflectionClass $endpointClass,
     ) {
         $this->phpStanUtils = new PhpStanUtils();
     }
@@ -91,12 +93,11 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
             ];
             $new_name = $mapping[$node->name] ?? null;
             if ($new_name === null && preg_match('/^[A-Z]/', $node->name)) {
-                // @phpstan-ignore argument.type, phpstanApi.runtimeReflection
-                $class_info = new \ReflectionClass("{$this->namespaceName}\\{$node->name}");
-                if (!$this->phpStanUtils->extendsNamedType($class_info)) {
-                    throw new \Exception('Only classes extending NamedType may be used.');
-                }
-                $this->exported_classes[$node->name] = $class_info;
+                $resolved_node = $this->phpStanUtils->getAliasTypeNode(
+                    $node->name,
+                    $this->endpointClass
+                );
+                $this->exported_classes[$node->name] = $resolved_node;
                 $new_name = $node->name;
             }
             if ($new_name === null) {

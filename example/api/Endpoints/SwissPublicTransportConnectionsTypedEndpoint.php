@@ -1,33 +1,18 @@
 <?php
 
-use PhpTypeScriptApi\PhpStan\NamedType;
 use PhpTypeScriptApi\TypedEndpoint;
-
-/** @extends NamedType<array{type: string, x: string, y: string}> */
-class SptCoordinate extends NamedType {
-}
-
-/** @extends NamedType<array{id: string, name: string, coordinate: SptCoordinate}> */
-class SptLocation extends NamedType {
-}
-
-/** @extends NamedType<array{stationId: string, arrival: ?string, departure: ?string, delay: ?int, platform: ?string}> */
-class SptStop extends NamedType {
-}
-
-/** @extends NamedType<array{departure: SptStop, arrival: SptStop, passList: array<SptStop>}> */
-class SptSection extends NamedType {
-}
-
-/** @extends NamedType<array{sections: array<SptSection>}> */
-class SptConnection extends NamedType {
-}
 
 /**
  * Search for a swiss public transport connection.
  *
  * for further information on the backend used, see
  * https://transport.opendata.ch/docs.html#connections
+ *
+ * @phpstan-type SptCoordinate array{type: string, x: string, y: string}
+ * @phpstan-type SptLocation array{id: string, name: string, coordinate: SptCoordinate}
+ * @phpstan-type SptStop array{stationId: string, arrival: ?string, departure: ?string, delay: ?int, platform: ?string}
+ * @phpstan-type SptSection array{departure: SptStop, arrival: SptStop, passList: array<SptStop>}
+ * @phpstan-type SptConnection array{sections: array<SptSection>}
  *
  * @extends TypedEndpoint<
  *   array{'from': string, 'to': string, 'via': ?array<string>, 'date': string, 'time': string, 'isArrivalTime': ?bool},
@@ -84,22 +69,30 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
         return $station_by_id;
     }
 
-    /** @param array<string, mixed> $backend_station */
-    protected function convertStation(array $backend_station): SptLocation {
-        return new SptLocation([
+    /**
+     * @param array<string, mixed> $backend_station
+     *
+     * @return SptLocation
+     */
+    protected function convertStation(array $backend_station): array {
+        return [
             'id' => $backend_station['id'],
             'name' => $backend_station['name'],
             'coordinate' => $this->convertCoordinate($backend_station['coordinate']),
-        ]);
+        ];
     }
 
-    /** @param array<string, mixed> $args */
-    protected function convertCoordinate(array $args): SptCoordinate {
-        return new SptCoordinate([
+    /**
+     * @param array<string, mixed> $args
+     *
+     * @return SptCoordinate
+     */
+    protected function convertCoordinate(array $args): array {
+        return [
             'type' => $args['type'],
             'x' => $args['x'],
             'y' => $args['y'],
-        ]);
+        ];
     }
 
     /**
@@ -112,30 +105,34 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
         foreach ($backend_result['connections'] as $connection) {
             $new_sections = [];
             foreach ($connection['sections'] as $section) {
-                $new_section = new SptSection([
+                $new_section = [
                     'departure' => $this->convertStop($section['departure']),
                     'arrival' => $this->convertStop($section['arrival']),
                     'passList' => array_map(
                         fn ($stop) => $this->convertStop($stop),
                         $section['journey']['passList'],
                     ),
-                ]);
+                ];
                 $new_sections[] = $new_section;
             }
-            $new_connections[] = new SptConnection(['sections' => $new_sections]);
+            $new_connections[] = ['sections' => $new_sections];
         }
         return $new_connections;
     }
 
-    /** @param array<string, mixed> $backend_stop */
-    protected function convertStop(array $backend_stop): SptStop {
-        return new SptStop([
+    /**
+     * @param array<string, mixed> $backend_stop
+     *
+     * @return SptStop
+     */
+    protected function convertStop(array $backend_stop): array {
+        return [
             'stationId' => $backend_stop['station']['id'],
             'arrival' => $this->getTime($backend_stop['arrival'] ?? null),
             'departure' => $this->getTime($backend_stop['departure'] ?? null),
             'delay' => $backend_stop['delay'],
             'platform' => $backend_stop['platform'],
-        ]);
+        ];
     }
 
     protected function getTime(?string $backend_value): ?string {

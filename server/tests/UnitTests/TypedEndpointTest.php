@@ -6,20 +6,14 @@ namespace PhpTypeScriptApi\Tests\UnitTests;
 
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
-use PhpTypeScriptApi\PhpStan\NamedType;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Symfony\Component\HttpFoundation\Request;
 
-/** @extends NamedType<array{id: int}> */
-class FakeNestedThing extends NamedType {
-}
-
-/** @extends NamedType<array{id: int, name: string, nested: FakeNestedThing}> */
-class FakeNamedThing extends NamedType {
-}
-
 /**
+ * @phpstan-type FakeNestedThing array{id: int}
+ * @phpstan-type FakeNamedThing array{id: int, name: string, nested: FakeNestedThing}
+ *
  * @extends TypedEndpoint<
  *   array{
  *     mapping: array<string, number>,
@@ -43,9 +37,6 @@ class FakeTypedEndpoint extends TypedEndpoint {
     }
 }
 
-/**
- * @extends FakeTypedEndpoint
- */
 class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handle_with_output = null;
@@ -61,7 +52,11 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
     }
 }
 
+// TODO: Support @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
 /**
+ * @phpstan-type FakeNestedThing array{id: int}
+ * @phpstan-type FakeNamedThing array{id: int, name: string, nested: FakeNestedThing}
+ *
  * @extends \PhpTypeScriptApi\TypedEndpoint<
  *   array{
  *     mapping: array<string, number>,

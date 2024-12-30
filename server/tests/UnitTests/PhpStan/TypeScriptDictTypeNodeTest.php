@@ -14,7 +14,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
  * @covers \PhpTypeScriptApi\PhpStan\TypeScriptDictTypeNode
  */
 final class TypeScriptDictTypeNodeTest extends UnitTestCase {
-    public function testCannotInstantiate(): void {
+    public function testObjectToString(): void {
         $node = new TypeScriptDictTypeNode(
             new IdentifierTypeNode('int'),
             new IdentifierTypeNode('string'),

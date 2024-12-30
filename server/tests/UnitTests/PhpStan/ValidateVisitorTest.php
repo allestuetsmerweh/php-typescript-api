@@ -11,6 +11,13 @@ use PhpTypeScriptApi\PhpStan\ValidateVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
+ * @phpstan-type AliasedInt int
+ * @phpstan-type AliasedObject array{foo: int, bar?: string}
+ */
+class FakeValidateVisitorTypedEndpoint {
+}
+
+/**
  * @internal
  *
  * @covers \PhpTypeScriptApi\PhpStan\ValidateVisitor
@@ -902,40 +909,40 @@ final class ValidateVisitorTest extends UnitTestCase {
         }
     }
 
-    public function testNamedIntNode(): void {
-        $this->assertNotNull($this->validate('NamedInt', null));
-        $this->assertNotNull($this->validate('NamedInt', true));
-        $this->assertNull($this->validate('NamedInt', PHP_INT_MIN));
-        $this->assertNull($this->validate('NamedInt', -100));
-        $this->assertNull($this->validate('NamedInt', 0));
-        $this->assertNull($this->validate('NamedInt', 2));
-        $this->assertNull($this->validate('NamedInt', PHP_INT_MAX));
-        $this->assertNotNull($this->validate('NamedInt', '5'));
-        $this->assertNotNull($this->validate('NamedInt', 3.14));
-        $this->assertNotNull($this->validate('NamedInt', 7.64E+5));
-        $this->assertNotNull($this->validate('NamedInt', INF));
-        $this->assertNotNull($this->validate('NamedInt', NAN));
-        $this->assertNotNull($this->validate('NamedInt', 'text'));
-        $this->assertNotNull($this->validate('NamedInt', [1, 2, 3]));
-        $this->assertNotNull($this->validate('NamedInt', ['foo' => 'bar']));
+    public function testAliasedIntNode(): void {
+        $this->assertNotNull($this->validate('AliasedInt', null));
+        $this->assertNotNull($this->validate('AliasedInt', true));
+        $this->assertNull($this->validate('AliasedInt', PHP_INT_MIN));
+        $this->assertNull($this->validate('AliasedInt', -100));
+        $this->assertNull($this->validate('AliasedInt', 0));
+        $this->assertNull($this->validate('AliasedInt', 2));
+        $this->assertNull($this->validate('AliasedInt', PHP_INT_MAX));
+        $this->assertNotNull($this->validate('AliasedInt', '5'));
+        $this->assertNotNull($this->validate('AliasedInt', 3.14));
+        $this->assertNotNull($this->validate('AliasedInt', 7.64E+5));
+        $this->assertNotNull($this->validate('AliasedInt', INF));
+        $this->assertNotNull($this->validate('AliasedInt', NAN));
+        $this->assertNotNull($this->validate('AliasedInt', 'text'));
+        $this->assertNotNull($this->validate('AliasedInt', [1, 2, 3]));
+        $this->assertNotNull($this->validate('AliasedInt', ['foo' => 'bar']));
     }
 
-    public function testNamedObjectNode(): void {
-        $this->assertNotNull($this->validate("NamedObject", null));
-        $this->assertNotNull($this->validate("NamedObject", true));
-        $this->assertNotNull($this->validate("NamedObject", false));
-        $this->assertNotNull($this->validate("NamedObject", 2));
-        $this->assertNotNull($this->validate("NamedObject", 'text'));
-        $this->assertNotNull($this->validate("NamedObject", []));
-        $this->assertNull($this->validate("NamedObject", ['foo' => 3, 'bar' => 'test']));
-        $this->assertNull($this->validate("NamedObject", ['foo' => 3]));
-        $this->assertNotNull($this->validate("NamedObject", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("NamedObject", [null => 3, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("NamedObject", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("NamedObject", ['foo' => 3, null => 'test']));
-        $this->assertNotNull($this->validate("NamedObject", ['foo' => 3, 'bar' => null]));
-        $this->assertNotNull($this->validate("NamedObject", [1, 2, 3]));
-        $this->assertNotNull($this->validate("NamedObject", ['foo' => 'bar']));
+    public function testAliasedObjectNode(): void {
+        $this->assertNotNull($this->validate("AliasedObject", null));
+        $this->assertNotNull($this->validate("AliasedObject", true));
+        $this->assertNotNull($this->validate("AliasedObject", false));
+        $this->assertNotNull($this->validate("AliasedObject", 2));
+        $this->assertNotNull($this->validate("AliasedObject", 'text'));
+        $this->assertNotNull($this->validate("AliasedObject", []));
+        $this->assertNull($this->validate("AliasedObject", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNull($this->validate("AliasedObject", ['foo' => 3]));
+        $this->assertNotNull($this->validate("AliasedObject", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("AliasedObject", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("AliasedObject", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("AliasedObject", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("AliasedObject", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("AliasedObject", [1, 2, 3]));
+        $this->assertNotNull($this->validate("AliasedObject", ['foo' => 'bar']));
     }
 
     public function testUnsupportedNamedTypeNode(): void {
@@ -944,25 +951,7 @@ final class ValidateVisitorTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
-                'Class "PhpTypeScriptApi\Tests\UnitTests\PhpStan\Invalid" does not exist',
-                $th->getMessage(),
-            );
-        }
-        try {
-            $this->validate('AllegedlyNamedSomething', null);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Only classes extending NamedType may be used.',
-                $th->getMessage(),
-            );
-        }
-        try {
-            $this->validate('AllegedlyNamedAnotherThing', null);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Only classes extending NamedType may be used.',
+                'Type alias not found: Invalid',
                 $th->getMessage(),
             );
         }
@@ -990,7 +979,8 @@ final class ValidateVisitorTest extends UnitTestCase {
             $type_node = $paramTags[0]->type;
         }
 
-        $result_node = ValidateVisitor::validate(__NAMESPACE__, $value, $type_node);
+        $fake_endpoint = new \ReflectionClass(FakeValidateVisitorTypedEndpoint::class);
+        $result_node = ValidateVisitor::validate($fake_endpoint, $value, $type_node);
         return $result_node->isValid() ? null : "{$result_node}";
     }
 }
