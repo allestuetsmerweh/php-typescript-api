@@ -810,6 +810,24 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 'bar']));
     }
 
+    public function testOptionalIdentifierKeyObjectNode(): void {
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", null));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", true));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", false));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", 2));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", 'text'));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", []));
+        $this->assertNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3]));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [1, 2, 3]));
+        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 'bar']));
+    }
+
     public function testTupleNode(): void {
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", null));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", true));

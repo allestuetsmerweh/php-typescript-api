@@ -37,12 +37,26 @@ class FakeTypedEndpoint extends TypedEndpoint {
     }
 }
 
-class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
+/**
+ * @template In
+ * @template Out
+ *
+ * @phpstan-type Input array{in: In}
+ *
+ * @extends TypedEndpoint<Input, Out>
+ */
+abstract class FakeIntermediateGenericTypedEndpoint extends TypedEndpoint {
+}
+
+/**
+ * @extends FakeIntermediateGenericTypedEndpoint<int, string>
+ */
+class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handle_with_output = null;
 
     public static function getIdent(): string {
-        return 'FakeTransitiveTypedEndpoint';
+        return 'FakeLeafGenericTypedEndpoint';
     }
 
     protected function handle(mixed $input): mixed {
@@ -50,6 +64,9 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
         $this->handled_with_input = $input;
         return $this->handle_with_output;
     }
+}
+
+class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
 }
 
 // TODO: Support @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
@@ -187,13 +204,37 @@ final class TypedEndpointTest extends UnitTestCase {
     }
 
     public function testFakeTransitiveTypedEndpoint(): void {
+        $endpoint = new FakeTransitiveTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing}",
+            $endpoint->getRequestTsType()
+        );
+        $this->assertSame('string', $endpoint->getResponseTsType());
+        $this->assertSame([
+            'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+            'FakeNestedThing' => "{'id': number}",
+        ], $endpoint->getNamedTsTypes());
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeLeafGenericTypedEndpoint(): void {
+        $endpoint = new FakeLeafGenericTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame('Input', $endpoint->getRequestTsType());
         try {
-            new FakeTransitiveTypedEndpoint();
+            $endpoint->getResponseTsType();
             $this->fail('Error expected');
-        } catch (\Exception $exc) {
-            $this->assertSame('Cannot parse doc comment.', $exc->getMessage());
-            $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+        } catch (\Throwable $th) {
+            $this->assertSame('Type alias not found: Out', $th->getMessage());
         }
+        try {
+            $endpoint->getNamedTsTypes();
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame('Type alias not found: Out', $th->getMessage());
+        }
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeEndpointWithThrottling(): void {
