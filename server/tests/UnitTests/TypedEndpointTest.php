@@ -25,9 +25,15 @@ use Symfony\Component\HttpFoundation\Request;
 class FakeTypedEndpoint extends TypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handle_with_output = null;
+    public bool $ran_runtime_setup = false;
 
     public static function getIdent(): string {
         return 'FakeTypedEndpoint';
+    }
+
+    public function runtimeSetup(): void {
+        $this->logger?->info("Runtime setup...");
+        $this->ran_runtime_setup = true;
     }
 
     protected function handle(mixed $input): mixed {
@@ -144,7 +150,7 @@ final class TypedEndpointTest extends UnitTestCase {
         ], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointParseInputJson(): void {
+    public function testFakeTypedEndpointParseInputJson(): void {
         $content_json = '{"json":"input"}';
         $request = new Request([], [], [], [], [], [], $content_json);
         $endpoint = new FakeTypedEndpoint();
@@ -154,7 +160,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointParseInputGet(): void {
+    public function testFakeTypedEndpointParseInputGet(): void {
         $get_params = ['request' => json_encode(['got' => 'input'])];
         $request = new Request($get_params);
         $endpoint = new FakeTypedEndpoint();
@@ -164,7 +170,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointParseInputEmpty(): void {
+    public function testFakeTypedEndpointParseInputEmpty(): void {
         $request = new Request();
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
@@ -173,7 +179,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointGetNamedTsTypes(): void {
+    public function testFakeTypedEndpointGetNamedTsTypes(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
@@ -186,7 +192,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointGetRequestTsType(): void {
+    public function testFakeTypedEndpointGetRequestTsType(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
@@ -196,7 +202,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointGetResponseTsType(): void {
+    public function testFakeTypedEndpointGetResponseTsType(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame('string', $endpoint->getResponseTsType());
@@ -237,7 +243,18 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeEndpointWithThrottling(): void {
+    public function testFakeTypedEndpointRuntimeSetup(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $endpoint->setup();
+        $this->assertSame(true, $endpoint->ran_runtime_setup);
+        $this->assertSame([
+            "INFO Runtime setup...",
+        ], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointWithThrottling(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_throttling = true;
@@ -257,7 +274,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithInvalidInput(): void {
+    public function testFakeTypedEndpointWithInvalidInput(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         try {
@@ -279,7 +296,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithExecutionError(): void {
+    public function testFakeTypedEndpointWithExecutionError(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = true;
@@ -304,7 +321,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithExecutionHttpError(): void {
+    public function testFakeTypedEndpointWithExecutionHttpError(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_http_error = true;
@@ -326,7 +343,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithExecutionValidationError(): void {
+    public function testFakeTypedEndpointWithExecutionValidationError(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_validation_error = true;
@@ -351,7 +368,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithInvalidOutput(): void {
+    public function testFakeTypedEndpointWithInvalidOutput(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = false;
@@ -380,7 +397,7 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakeEndpointWithoutAnyErrors(): void {
+    public function testFakeTypedEndpointWithoutAnyErrors(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = false;

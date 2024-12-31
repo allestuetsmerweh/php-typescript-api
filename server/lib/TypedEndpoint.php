@@ -51,6 +51,17 @@ abstract class TypedEndpoint implements EndpointInterface {
         $this->responseTypeNode = $extends_type_node->genericTypes[1];
     }
 
+    public function setup(): void {
+        $this->runtimeSetup();
+    }
+
+    public function runtimeSetup(): void {
+        $this->logger?->critical("Setup function must be set!");
+        throw new \Exception("Setup function must be set");
+    }
+
+    abstract public static function getIdent(): string;
+
     /** Override to enjoy throttling! */
     public function shouldFailThrottling(): bool {
         return false;
