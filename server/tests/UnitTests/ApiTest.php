@@ -8,6 +8,7 @@ use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
+use PhpTypeScriptApi\TypedEndpoint;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -84,6 +85,75 @@ class FakeApiTestEndpoint2 extends Endpoint {
     }
 }
 
+/**
+ * @phpstan-type SampleTypedExport1 array{}
+ *
+ * @extends TypedEndpoint<?array{}, SampleTypedExport1>
+ */
+class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
+    public mixed $handled_with_input = null;
+    public mixed $handled_with_resource = null;
+    public ?\Exception $handle_with_error = null;
+    public mixed $handle_with_output = null;
+
+    public mixed $resource = null;
+    public bool $runtimeSetupCompleted = false;
+
+    public function __construct(mixed $resource) {
+        parent::__construct();
+        $this->resource = $resource;
+    }
+
+    public static function getIdent(): string {
+        return 'FakeTypedEndpoint1';
+    }
+
+    public function runtimeSetup(): void {
+        $this->runtimeSetupCompleted = true;
+    }
+
+    protected function handle(mixed $input): mixed {
+        $this->handled_with_input = $input;
+        $this->handled_with_resource = $this->resource;
+        if ($this->handle_with_error) {
+            throw $this->handle_with_error;
+        }
+        return $this->handle_with_output;
+    }
+
+    public function testOnlyGetLogger(): ?LoggerInterface {
+        return $this->logger;
+    }
+}
+
+/**
+ * @phpstan-type SampleTypedExport2 array{}
+ *
+ * @extends TypedEndpoint<SampleTypedExport2, array{}>
+ */
+class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
+    public mixed $handled_with_input;
+    public mixed $handled_with_resource;
+    public mixed $handle_with_output;
+
+    public mixed $resource;
+
+    public function __construct(mixed $resource) {
+        parent::__construct();
+        $this->resource = $resource;
+    }
+
+    public static function getIdent(): string {
+        return 'FakeTypedEndpoint2';
+    }
+
+    protected function handle(mixed $input): mixed {
+        $this->handled_with_input = $input;
+        $this->handled_with_resource = $this->resource;
+        return $this->handle_with_output;
+    }
+}
+
 class FakeApiTestApi extends Api {
     public function testOnlyGetLogger(): ?LoggerInterface {
         return $this->logger;
@@ -110,21 +180,31 @@ final class ApiTest extends UnitTestCase {
 
             export type SampleExport2 = unknown;
 
+            export type SampleTypedExport1 = Record<string, never>;
+
+            export type SampleTypedExport2 = Record<string, never>;
+
             // eslint-disable-next-line no-shadow
             export type FakeApiEndpoint =
                 'fakeEndpoint1'|
-                'fakeEndpoint2';
+                'fakeEndpoint2'|
+                'fakeTypedEndpoint1'|
+                'fakeTypedEndpoint2';
 
             type FakeApiEndpointMapping = {[key in FakeApiEndpoint]: unknown};
 
             export interface FakeApiRequests extends FakeApiEndpointMapping {
                 fakeEndpoint1: unknown,
                 fakeEndpoint2: SampleExport2,
+                fakeTypedEndpoint1: (Record<string, never> | null),
+                fakeTypedEndpoint2: SampleTypedExport2,
             }
 
             export interface FakeApiResponses extends FakeApiEndpointMapping {
                 fakeEndpoint1: SampleExport1,
                 fakeEndpoint2: unknown,
+                fakeTypedEndpoint1: SampleTypedExport1,
+                fakeTypedEndpoint2: Record<string, never>,
             }
 
 
@@ -185,7 +265,7 @@ final class ApiTest extends UnitTestCase {
     public function testApiGetEndpointNames(): void {
         $fake_api = $this->getFakeApi();
         $this->assertSame(
-            ['fakeEndpoint1', 'fakeEndpoint2'],
+            ['fakeEndpoint1', 'fakeEndpoint2', 'fakeTypedEndpoint1', 'fakeTypedEndpoint2'],
             $fake_api->getEndpointNames()
         );
     }
@@ -441,6 +521,15 @@ final class ApiTest extends UnitTestCase {
         // Register endpoint getter
         $fake_api->registerEndpoint('fakeEndpoint2', function () {
             return new FakeApiTestEndpoint2('fake-resource');
+        });
+        // Directly register typed endpoint
+        $fake_api->registerEndpoint(
+            'fakeTypedEndpoint1',
+            new FakeApiTestTypedEndpoint1('fake-resource'),
+        );
+        // Register typed endpoint getter
+        $fake_api->registerEndpoint('fakeTypedEndpoint2', function () {
+            return new FakeApiTestTypedEndpoint2('fake-resource');
         });
         return $fake_api;
     }

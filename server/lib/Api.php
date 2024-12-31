@@ -120,9 +120,7 @@ class Api {
             } else {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
-            if ($endpoint instanceof Endpoint) {
-                $endpoint->setup();
-            }
+            $endpoint->setup();
             $input = $endpoint->parseInput($request);
             $result = $endpoint->call($input);
             return new JsonResponse($result, Response::HTTP_OK);

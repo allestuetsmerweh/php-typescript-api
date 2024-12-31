@@ -20,6 +20,10 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
+    public function runtimeSetup(): void {
+        // no runtime setup required.
+    }
+
     public static function getIdent(): string {
         return 'SwissPublicTransportConnectionsTypedEndpoint';
     }

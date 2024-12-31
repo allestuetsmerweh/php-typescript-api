@@ -10,6 +10,10 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class DivideNumbersTypedEndpoint extends TypedEndpoint {
+    public function runtimeSetup(): void {
+        // no runtime setup required.
+    }
+
     public static function getIdent(): string {
         return 'DivideNumbersTypedEndpoint';
     }
