@@ -38,6 +38,11 @@ $example_api->registerEndpoint('squareRootTyped', function () {
     return new SquareRootTypedEndpoint();
 });
 
+$example_api->registerEndpoint('combineDateTimeTyped', function () {
+    require_once __DIR__.'/Endpoints/CombineDateTimeTypedEndpoint.php';
+    return new CombineDateTimeTypedEndpoint();
+});
+
 $example_api->registerEndpoint('searchSwissPublicTransportConnectionTyped', function () {
     require_once __DIR__.'/Endpoints/SwissPublicTransportConnectionsTypedEndpoint.php';
     return new SwissPublicTransportConnectionsTypedEndpoint();

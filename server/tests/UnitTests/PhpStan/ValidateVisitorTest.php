@@ -6,16 +6,11 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
-
-/**
- * @phpstan-type AliasedInt int
- * @phpstan-type AliasedObject array{foo: int, bar?: string}
- */
-class FakeValidateVisitorTypedEndpoint {
-}
 
 /**
  * @internal
@@ -61,25 +56,24 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('boolean', ['foo' => 'bar']));
     }
 
-    public function testUnsupportedBooleanNodes(): void {
-        try {
-            $this->validate('false', false);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: false',
-                $th->getMessage(),
-            );
-        }
-        try {
-            $this->validate('true', true);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: true',
-                $th->getMessage(),
-            );
-        }
+    public function testFalseNode(): void {
+        $this->assertNotNull($this->validate('false', null));
+        $this->assertNotNull($this->validate('false', true));
+        $this->assertNull($this->validate('false', false));
+        $this->assertNotNull($this->validate('false', 2));
+        $this->assertNotNull($this->validate('false', 'text'));
+        $this->assertNotNull($this->validate('false', [1, 2, 3]));
+        $this->assertNotNull($this->validate('false', ['foo' => 'bar']));
+    }
+
+    public function testTrueNode(): void {
+        $this->assertNotNull($this->validate('true', null));
+        $this->assertNull($this->validate('true', true));
+        $this->assertNotNull($this->validate('true', false));
+        $this->assertNotNull($this->validate('true', 2));
+        $this->assertNotNull($this->validate('true', 'text'));
+        $this->assertNotNull($this->validate('true', [1, 2, 3]));
+        $this->assertNotNull($this->validate('true', ['foo' => 'bar']));
     }
 
     public function testIntNode(): void {
@@ -963,13 +957,122 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("AliasedObject", ['foo' => 'bar']));
     }
 
+    public function testAliasNamespaceNode(): void {
+        $this->assertNotNull($this->validate("Aliased_4", null));
+        $this->assertNotNull($this->validate("Aliased_4", true));
+        $this->assertNull($this->validate("Aliased_4", false));
+        $this->assertNotNull($this->validate("Aliased_4", 2));
+        $this->assertNotNull($this->validate("Aliased_4", 'text'));
+        $this->assertNotNull($this->validate("Aliased_4", []));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3]));
+        $this->assertNotNull($this->validate("Aliased_4", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("Aliased_4", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("Aliased_4", [1, 2, 3]));
+        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 'bar']));
+    }
+
+    public function testIsoDateNode(): void {
+        $this->assertNotNull($this->validate("IsoDate", null));
+        $this->assertNotNull($this->validate("IsoDate", true));
+        $this->assertNotNull($this->validate("IsoDate", false));
+        $this->assertNotNull($this->validate("IsoDate", 2));
+        $this->assertNotNull($this->validate("IsoDate", 'text'));
+        $this->assertNull($this->validate("IsoDate", '2024-12-24'));
+        $this->assertNull($this->validate("IsoDate", new IsoDate('2024-12-24')));
+        $this->assertNotNull($this->validate("IsoDate", new IsoTime('13:27:35')));
+        $this->assertNotNull($this->validate("IsoDate", []));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3]));
+        $this->assertNotNull($this->validate("IsoDate", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("IsoDate", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("IsoDate", [1, 2, 3]));
+        $this->assertNotNull($this->validate("IsoDate", ['foo' => 'bar']));
+    }
+
+    public function testIsoDateFullNode(): void {
+        $class = IsoDate::class;
+        $this->assertNotNull($this->validate("{$class}", null));
+        $this->assertNotNull($this->validate("{$class}", true));
+        $this->assertNotNull($this->validate("{$class}", false));
+        $this->assertNotNull($this->validate("{$class}", 2));
+        $this->assertNotNull($this->validate("{$class}", 'text'));
+        $this->assertNull($this->validate("{$class}", '2024-12-24'));
+        $this->assertNull($this->validate("{$class}", new IsoDate('2024-12-24')));
+        $this->assertNotNull($this->validate("{$class}", new IsoTime('13:27:35')));
+        $this->assertNotNull($this->validate("{$class}", []));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => 3]));
+        $this->assertNotNull($this->validate("{$class}", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("{$class}", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("{$class}", [1, 2, 3]));
+        $this->assertNotNull($this->validate("{$class}", ['foo' => 'bar']));
+    }
+
+    public function testIsoDateFullyQualifiedNode(): void {
+        $class = IsoDate::class;
+        $this->assertNotNull($this->validate("\\{$class}", null));
+        $this->assertNotNull($this->validate("\\{$class}", true));
+        $this->assertNotNull($this->validate("\\{$class}", false));
+        $this->assertNotNull($this->validate("\\{$class}", 2));
+        $this->assertNotNull($this->validate("\\{$class}", 'text'));
+        $this->assertNull($this->validate("\\{$class}", '2024-12-24'));
+        $this->assertNull($this->validate("\\{$class}", new IsoDate('2024-12-24')));
+        $this->assertNotNull($this->validate("\\{$class}", new IsoTime('13:27:35')));
+        $this->assertNotNull($this->validate("\\{$class}", []));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3]));
+        $this->assertNotNull($this->validate("\\{$class}", [3 => 'foo', 'test' => 'bar']));
+        $this->assertNotNull($this->validate("\\{$class}", [null => 3, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => null, 'bar' => 'test']));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, null => 'test']));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, 'bar' => null]));
+        $this->assertNotNull($this->validate("\\{$class}", [1, 2, 3]));
+        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 'bar']));
+    }
+
+    public function testIsoDateSerialize(): void {
+        $type_node = $this->getTypeNode("IsoDate");
+
+        $this->assertSame(
+            '2024-12-24',
+            ValidateVisitor::validateSerialize('2024-12-24', $type_node)->getValue(),
+        );
+        $this->assertSame(
+            '2024-12-24',
+            ValidateVisitor::validateSerialize(new IsoDate('2024-12-24'), $type_node)->getValue(),
+        );
+    }
+
+    public function testIsoDateDeserialize(): void {
+        $type_node = $this->getTypeNode("IsoDate");
+
+        $this->assertEquals(
+            new IsoDate('2024-12-24'),
+            ValidateVisitor::validateDeserialize('2024-12-24', $type_node)->getValue(),
+        );
+        $this->assertEquals(
+            new IsoDate('2024-12-24'),
+            ValidateVisitor::validateDeserialize(new IsoDate('2024-12-24'), $type_node)->getValue(),
+        );
+    }
+
     public function testUnsupportedNamedTypeNode(): void {
         try {
             $this->validate('Invalid', null);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
-                'Type alias not found: Invalid',
+                'Unknown IdentifierTypeNode name: Invalid',
                 $th->getMessage(),
             );
         }
@@ -991,14 +1094,22 @@ final class ValidateVisitorTest extends UnitTestCase {
         if ($type instanceof TypeNode) {
             $type_node = $type;
         } else {
-            $phpStanUtils = new PhpStanUtils();
-            $phpDocNode = $phpStanUtils->parseDocComment("/** @return {$type} */");
-            $paramTags = $phpDocNode->getReturnTagValues();
-            $type_node = $paramTags[0]->type;
+            $type_node = $this->getTypeNode($type);
         }
 
-        $fake_endpoint = new \ReflectionClass(FakeValidateVisitorTypedEndpoint::class);
-        $result_node = ValidateVisitor::validate($fake_endpoint, $value, $type_node);
+        $aliases = [
+            'AliasedInt' => $this->getTypeNode('int'),
+            'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
+            'Aliased_4' => $this->getTypeNode('false'),
+        ];
+
+        $result_node = ValidateVisitor::validateDeserialize($value, $type_node, $aliases);
         return $result_node->isValid() ? null : "{$result_node}";
+    }
+
+    private function getTypeNode(string $type_str): TypeNode {
+        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
+        $paramTags = $phpDocNode->getReturnTagValues();
+        return $paramTags[0]->type;
     }
 }

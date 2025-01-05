@@ -12,23 +12,57 @@ use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
 
 class PhpStanUtils {
-    /** @param \ReflectionClass<object> $class_info */
-    public function getAliasTypeNode(string $name, \ReflectionClass $class_info): TypeNode {
-        $php_doc_node = $this->parseDocComment($class_info->getDocComment());
-        // TODO: Use array_find (PHP 8.4)
-        $alias_node = null;
-        foreach ($php_doc_node->getTypeAliasTagValues() as $node) {
-            if ($node->alias === $name) {
-                $alias_node = $node;
+    /** @var ?array<string, string> */
+    protected static ?array $registry = [];
+
+    public static function getApiObjectTypeNode(string $name): ?TypeNode {
+        $class_info = self::resolveApiObjectClass($name);
+        if ($class_info === null) {
+            return null;
+        }
+        $php_doc_node = self::parseDocComment($class_info->getDocComment());
+        $implements_node = null;
+        foreach ($php_doc_node->getImplementsTagValues() as $node) {
+            $generic_node = $node->type;
+            if ("{$generic_node->type}" === 'ApiObjectInterface') {
+                $implements_node = $generic_node->genericTypes[0];
             }
         }
-        if ($alias_node === null) {
-            throw new \Exception("Type alias not found: {$name}");
-        }
-        return $alias_node->type;
+        return $implements_node;
     }
 
-    public function parseDocComment(string|false|null $doc_comment): PhpDocNode {
+    /** @return \ReflectionClass<ApiObjectInterface<mixed>> */
+    public static function resolveApiObjectClass(string $name): ?\ReflectionClass {
+        try {
+            // @phpstan-ignore argument.type
+            $class_info = new \ReflectionClass($name);
+        } catch (\ReflectionException) {
+            $full_name = PhpStanUtils::$registry[$name] ?? '';
+            try {
+                // @phpstan-ignore argument.type
+                $class_info = new \ReflectionClass($full_name);
+            } catch (\ReflectionException) {
+                return null;
+            }
+        }
+        if (!$class_info->implementsInterface(ApiObjectInterface::class)) {
+            return null;
+        }
+        // @phpstan-ignore return.type
+        return $class_info;
+    }
+
+    /** @param class-string<ApiObjectInterface<mixed>> $class */
+    public static function registerApiObject(string $class): void {
+        $class_info = new \ReflectionClass($class);
+        if ($class_info->implementsInterface(ApiObjectInterface::class)) {
+            $components = explode('\\', $class);
+            $short_name = end($components);
+            PhpStanUtils::$registry[$short_name] = $class;
+        }
+    }
+
+    public static function parseDocComment(string|false|null $doc_comment): PhpDocNode {
         if (!$doc_comment) {
             throw new \Exception("Cannot parse doc comment.");
         }

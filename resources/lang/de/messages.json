@@ -15,6 +15,7 @@
         "must_be_allowed_value": "Wert muss unter den erlaubten Werten sein.",
         "must_be_array": "Wert muss eine Liste sein.",
         "must_be_boolean": "Wert muss Ja oder Nein sein.",
+        "must_be_dict": "Wert muss ein Mapping sein.",
         "must_be_integer": "Wert muss eine Ganzzahl sein.",
         "must_be_number": "Wert muss eine Zahl sein.",
         "must_be_object": "Wert muss ein Objekt sein.",

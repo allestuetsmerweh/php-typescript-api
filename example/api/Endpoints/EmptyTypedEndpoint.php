@@ -9,6 +9,10 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class EmptyTypedEndpoint extends TypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
     public function runtimeSetup(): void {
         // no runtime setup required.
     }

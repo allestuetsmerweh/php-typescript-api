@@ -21,16 +21,13 @@ use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 final class TypeScriptVisitor extends AbstractNodeVisitor {
-    private PhpStanUtils $phpStanUtils;
-
     /** @var array<string, TypeNode> */
     public array $exported_classes = [];
 
-    /** @param \ReflectionClass<object> $endpointClass */
+    /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
-        protected \ReflectionClass $endpointClass,
+        protected array $aliasNodes = [],
     ) {
-        $this->phpStanUtils = new PhpStanUtils();
     }
 
     public function enterNode(Node $originalNode): Node {
@@ -70,6 +67,8 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
                 // Boolean
                 'bool' => 'boolean',
                 'boolean' => 'boolean',
+                'true' => 'true',
+                'false' => 'false',
                 // Numeric
                 'int' => 'number',
                 'integer' => 'number',
@@ -92,13 +91,14 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
                 'object' => 'Array',
             ];
             $new_name = $mapping[$node->name] ?? null;
-            if ($new_name === null && preg_match('/^[A-Z]/', $node->name)) {
-                $resolved_node = $this->phpStanUtils->getAliasTypeNode(
-                    $node->name,
-                    $this->endpointClass
-                );
-                $this->exported_classes[$node->name] = $resolved_node;
-                $new_name = $node->name;
+            if ($new_name === null) {
+                $resolved_node = $this->aliasNodes[$node->name] ??
+                    PhpStanUtils::getApiObjectTypeNode($node->name);
+                if ($resolved_node) {
+                    $sane_node = preg_replace('/[^A-Za-z0-9_]/', '_', $node->name);
+                    $this->exported_classes[$sane_node] = $resolved_node;
+                    $new_name = $sane_node;
+                }
             }
             if ($new_name === null) {
                 throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}");

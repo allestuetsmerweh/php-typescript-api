@@ -15,23 +15,28 @@ use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 use PhpTypeScriptApi\Translator;
 
 final class ValidateVisitor extends AbstractNodeVisitor {
-    private PhpStanUtils $phpStanUtils;
-
-    /** @param \ReflectionClass<object> $endpointClass */
+    /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
-        protected \ReflectionClass $endpointClass,
         protected mixed $value,
+        protected array $aliasNodes = [],
+        protected bool $serialize = false,
     ) {
-        $this->phpStanUtils = new PhpStanUtils();
     }
 
-    /** @param \ReflectionClass<object> $endpointClass */
-    public static function validate(\ReflectionClass $endpointClass, mixed $value, Node $type): ValidationResultNode {
-        $validator = new ValidateVisitor($endpointClass, $value);
+    /** @param array<string, TypeNode> $aliasNodes */
+    public static function validateSerialize(mixed $value, Node $type, array $aliasNodes = []): ValidationResultNode {
+        $validator = new ValidateVisitor($value, $aliasNodes, true);
+        return $validator->subValidate($value, $type);
+    }
+
+    /** @param array<string, TypeNode> $aliasNodes */
+    public static function validateDeserialize(mixed $value, Node $type, array $aliasNodes = []): ValidationResultNode {
+        $validator = new ValidateVisitor($value, $aliasNodes, false);
         return $validator->subValidate($value, $type);
     }
 
@@ -41,13 +46,13 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 if (!is_int($this->value) || $this->value !== intval($node->constExpr->value)) {
                     return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
                 }
-                return ValidationResultNode::valid();
+                return ValidationResultNode::valid($this->value);
             }
             if ($node->constExpr instanceof ConstExprStringNode) {
                 if (!is_string($this->value) || $this->value !== strval($node->constExpr->value)) {
                     return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
                 }
-                return ValidationResultNode::valid();
+                return ValidationResultNode::valid($this->value);
             }
             throw new \Exception("Unknown ConstTypeNode->constExpr {$this->prettyNode($node->constExpr)}");
         }
@@ -58,6 +63,8 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 // Boolean
                 'bool' => fn ($value): bool => is_bool($value),
                 'boolean' => fn ($value): bool => is_bool($value),
+                'true' => fn ($value): bool => is_bool($value) && $value === true,
+                'false' => fn ($value): bool => is_bool($value) && $value === false,
                 // Numeric
                 'int' => fn ($value): bool => is_int($value),
                 'integer' => fn ($value): bool => is_int($value),
@@ -77,16 +84,40 @@ final class ValidateVisitor extends AbstractNodeVisitor {
             ];
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {
-                if (preg_match('/^[A-Z]/', $node->name)) {
-                    $named_class_type = $this->phpStanUtils->getAliasTypeNode($node->name, $this->endpointClass);
-                    return $this->subValidate($this->value, $named_class_type);
+                $aliased_node = $this->aliasNodes[$node->name] ?? null;
+                if ($aliased_node) {
+                    return $this->subValidate($this->value, $aliased_node);
+                }
+                $serialized_node = PhpStanUtils::getApiObjectTypeNode($node->name);
+                if ($serialized_node) {
+                    $class_info = PhpStanUtils::resolveApiObjectClass($node->name);
+                    $class = $class_info?->getName();
+                    if ($this->value instanceof $class) {
+                        // @phpstan-ignore method.notFound
+                        $data = $this->value->data();
+                        $result = $this->subValidate($data, $serialized_node);
+                        if ($this->serialize) {
+                            $result->setValue($data);
+                        }
+                        return $result;
+                    }
+                    $result = $this->subValidate($this->value, $serialized_node);
+                    if (!$this->serialize) {
+                        try {
+                            // @phpstan-ignore staticMethod.nonObject
+                            $result->setValue($class::fromData($this->value));
+                        } catch (\Throwable $th) {
+                            return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
+                        }
+                    }
+                    return $result;
                 }
                 throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}");
             }
             if (!$fn($this->value)) {
                 return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
             }
-            return ValidationResultNode::valid();
+            return ValidationResultNode::valid($this->value);
         }
         if ($node instanceof GenericTypeNode) {
             if ("{$node->type}" === 'int') {
@@ -126,31 +157,42 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 } else {
                     throw new \Exception("Unsupported upper type {$this->prettyNode($upper)}");
                 }
-                return ValidationResultNode::valid();
+                return ValidationResultNode::valid($this->value);
             }
             if ("{$node->type}" === 'array' || "{$node->type}" === 'non-empty-array') {
-                if (!is_array($this->value)) {
-                    return ValidationResultNode::error(Translator::__('fields.must_be_array', []));
-                }
-                if ("{$node->type}" === 'non-empty-array' && empty($this->value)) {
-                    return ValidationResultNode::error(Translator::__('fields.must_not_be_empty', []));
-                }
                 if (count($node->genericTypes) === 1) {
+                    if (!is_array($this->value)) {
+                        return ValidationResultNode::error(Translator::__('fields.must_be_array', []));
+                    }
+                    if ("{$node->type}" === 'non-empty-array' && empty($this->value)) {
+                        return ValidationResultNode::error(Translator::__('fields.must_not_be_empty', []));
+                    }
                     if (!array_is_list($this->value)) {
                         return ValidationResultNode::error(Translator::__('fields.must_be_array', []));
                     }
                     $result_node = new ValidationResultNode();
+                    $validated_value = [];
                     $item_type = $node->genericTypes[0];
                     foreach ($this->value as $key => $item) {
                         $item_node = $this->subValidate($item, $item_type);
                         if (!$item_node->isValid()) {
                             $result_node->recordErrorInKey("{$key}", $item_node->getErrors());
+                        } else {
+                            $validated_value[$key] = $item_node->getValue();
                         }
                     }
+                    $result_node->setValue($validated_value);
                     return $result_node;
                 }
                 if (count($node->genericTypes) === 2) {
+                    if (!is_array($this->value)) {
+                        return ValidationResultNode::error(Translator::__('fields.must_be_dict', []));
+                    }
+                    if ("{$node->type}" === 'non-empty-array' && empty($this->value)) {
+                        return ValidationResultNode::error(Translator::__('fields.must_not_be_empty', []));
+                    }
                     $result_node = new ValidationResultNode();
+                    $validated_value = [];
                     $key_type = $node->genericTypes[0];
                     $value_type = $node->genericTypes[1];
                     foreach ($this->value as $key => $value) {
@@ -162,8 +204,11 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                         $value_node = $this->subValidate($value, $value_type);
                         if (!$value_node->isValid()) {
                             $result_node->recordErrorInKey("{$key}", $value_node->getErrors());
+                        } else {
+                            $validated_value[$key_node->getValue()] = $value_node->getValue();
                         }
                     }
+                    $result_node->setValue($validated_value);
                     return $result_node;
                 }
                 throw new \Exception("{$this->prettyNode($node)} must have one or two generic types");
@@ -172,9 +217,10 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         }
         if ($node instanceof ObjectShapeNode || $node instanceof ArrayShapeNode) {
             if (!is_array($this->value)) {
-                return ValidationResultNode::error(Translator::__('fields.must_be_array', []));
+                return ValidationResultNode::error(Translator::__('fields.must_be_object', []));
             }
             $result_node = new ValidationResultNode();
+            $validated_value = [];
             $is_valid_key = [];
             foreach ($node->items as $item) {
                 if (
@@ -200,10 +246,12 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                     if (!$value_node->isValid()) {
                         $result_node->recordErrorInKey("{$key}", $value_node->getErrors());
                     }
+                    $validated_value[$key] = $value_node->getValue();
                 } else {
                     throw new \Exception("Object key must be ConstExprStringNode, not {$this->prettyNode($item->keyName)}");
                 }
             }
+            $result_node->setValue($validated_value);
             foreach ($this->value as $key => $value) {
                 if (!($is_valid_key[$key] ?? false)) {
                     $result_node->recordErrorInKey("{$key}", Translator::__(
@@ -219,7 +267,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
             foreach ($node->types as $node) {
                 $option_node = $this->subValidate($this->value, $node);
                 if ($option_node->isValid()) {
-                    return ValidationResultNode::valid();
+                    return ValidationResultNode::valid($this->value);
                 }
                 $result_node->recordError($option_node->getErrors());
             }
@@ -227,7 +275,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         }
         if ($node instanceof NullableTypeNode) {
             if ($this->value === null) {
-                return ValidationResultNode::valid();
+                return ValidationResultNode::valid($this->value);
             }
             return $this->subValidate($this->value, $node->type);
         }
@@ -235,7 +283,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     }
 
     public function subValidate(mixed $value, Node $type): ValidationResultNode {
-        $visitor = new ValidateVisitor($this->endpointClass, $value);
+        $visitor = new ValidateVisitor($value, $this->aliasNodes, $this->serialize);
         $traverser = new NodeTraverser([$visitor]);
         [$result_node] = $traverser->traverse([$type]);
         if (!($result_node instanceof ValidationResultNode)) {

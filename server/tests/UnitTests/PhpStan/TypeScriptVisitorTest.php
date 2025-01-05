@@ -7,16 +7,10 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
-
-/**
- * @phpstan-type AliasedInt int
- * @phpstan-type AliasedObject array{foo: int, bar?: string}
- */
-class FakeTypeScriptVisitorTypedEndpoint {
-}
 
 /**
  * @internal
@@ -35,14 +29,8 @@ final class TypeScriptVisitorTest extends UnitTestCase {
     public function testBooleanNode(): void {
         $this->assertSame('boolean', $this->getTypeScript('bool'));
         $this->assertSame('boolean', $this->getTypeScript('boolean'));
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: true',
-            $this->getTypeScript('true'),
-        );
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: false',
-            $this->getTypeScript('false'),
-        );
+        $this->assertSame('true', $this->getTypeScript('true'));
+        $this->assertSame('false', $this->getTypeScript('false'));
     }
 
     public function testIntNode(): void {
@@ -158,9 +146,33 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame('AliasedObject', $this->getTypeScript('AliasedObject'));
     }
 
+    public function testAliasNamespace(): void {
+        $this->assertSame('Aliased_4', $this->getTypeScript('Aliased_4'));
+    }
+
+    public function testIsoDateNode(): void {
+        $this->assertSame('IsoDate', $this->getTypeScript('IsoDate'));
+    }
+
+    public function testIsoDateFullNode(): void {
+        $class = IsoDate::class;
+        $this->assertSame(
+            'PhpTypeScriptApi_PhpStan_IsoDate',
+            $this->getTypeScript("{$class}")
+        );
+    }
+
+    public function testIsoDateFullyQualifiedNode(): void {
+        $class = IsoDate::class;
+        $this->assertSame(
+            '_PhpTypeScriptApi_PhpStan_IsoDate',
+            $this->getTypeScript("\\{$class}"),
+        );
+    }
+
     public function testUnsupportedNamedTypeNode(): void {
         $this->assertSame(
-            '🛑Type alias not found: Invalid',
+            '🛑Unknown IdentifierTypeNode name: Invalid',
             $this->getTypeScript('Invalid'),
         );
     }
@@ -176,14 +188,16 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         if ($type instanceof TypeNode) {
             $type_node = $type;
         } else {
-            $phpStanUtils = new PhpStanUtils();
-            $phpDocNode = $phpStanUtils->parseDocComment("/** @return {$type} */");
-            $paramTags = $phpDocNode->getReturnTagValues();
-            $type_node = $paramTags[0]->type;
+            $type_node = $this->getTypeNode($type);
         }
 
-        $fake_endpoint = new \ReflectionClass(FakeTypeScriptVisitorTypedEndpoint::class);
-        $visitor = new TypeScriptVisitor($fake_endpoint);
+        $aliases = [
+            'AliasedInt' => $this->getTypeNode('int'),
+            'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
+            'Aliased_4' => $this->getTypeNode('null'),
+        ];
+
+        $visitor = new TypeScriptVisitor($aliases);
         $traverser = new NodeTraverser([$visitor]);
         try {
             [$ts_type_node] = $traverser->traverse([$type_node]);
@@ -191,5 +205,11 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         } catch (\Throwable $th) {
             return "🛑{$th->getMessage()}";
         }
+    }
+
+    private function getTypeNode(string $type_str): TypeNode {
+        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
+        $paramTags = $phpDocNode->getReturnTagValues();
+        return $paramTags[0]->type;
     }
 }

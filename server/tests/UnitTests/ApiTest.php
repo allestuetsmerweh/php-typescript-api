@@ -7,6 +7,8 @@ namespace PhpTypeScriptApi\Tests\UnitTests;
 use PhpTypeScriptApi\Api;
 use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
+use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Psr\Log\LoggerInterface;
@@ -88,7 +90,7 @@ class FakeApiTestEndpoint2 extends Endpoint {
 /**
  * @phpstan-type SampleTypedExport1 array{}
  *
- * @extends TypedEndpoint<?array{}, SampleTypedExport1>
+ * @extends TypedEndpoint<?array{date: IsoDate}, SampleTypedExport1>
  */
 class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
     public mixed $handled_with_input = null;
@@ -102,6 +104,10 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
     public function __construct(mixed $resource) {
         parent::__construct();
         $this->resource = $resource;
+    }
+
+    public static function getApiObjectClasses(): array {
+        return [IsoDate::class];
     }
 
     public static function getIdent(): string {
@@ -129,7 +135,7 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
 /**
  * @phpstan-type SampleTypedExport2 array{}
  *
- * @extends TypedEndpoint<SampleTypedExport2, array{}>
+ * @extends TypedEndpoint<SampleTypedExport2, array{time: \PhpTypeScriptApi\PhpStan\IsoTime}>
  */
 class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
     public mixed $handled_with_input;
@@ -141,6 +147,10 @@ class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
     public function __construct(mixed $resource) {
         parent::__construct();
         $this->resource = $resource;
+    }
+
+    public static function getApiObjectClasses(): array {
+        return [IsoTime::class];
     }
 
     public static function getIdent(): string {
@@ -180,9 +190,13 @@ final class ApiTest extends UnitTestCase {
 
             export type SampleExport2 = unknown;
 
+            export type IsoDate = string;
+
             export type SampleTypedExport1 = Record<string, never>;
 
             export type SampleTypedExport2 = Record<string, never>;
+
+            export type _PhpTypeScriptApi_PhpStan_IsoTime = string;
 
             // eslint-disable-next-line no-shadow
             export type FakeApiEndpoint =
@@ -196,7 +210,7 @@ final class ApiTest extends UnitTestCase {
             export interface FakeApiRequests extends FakeApiEndpointMapping {
                 fakeEndpoint1: unknown,
                 fakeEndpoint2: SampleExport2,
-                fakeTypedEndpoint1: (Record<string, never> | null),
+                fakeTypedEndpoint1: ({'date': IsoDate} | null),
                 fakeTypedEndpoint2: SampleTypedExport2,
             }
 
@@ -204,7 +218,7 @@ final class ApiTest extends UnitTestCase {
                 fakeEndpoint1: SampleExport1,
                 fakeEndpoint2: unknown,
                 fakeTypedEndpoint1: SampleTypedExport1,
-                fakeTypedEndpoint2: Record<string, never>,
+                fakeTypedEndpoint2: {'time': _PhpTypeScriptApi_PhpStan_IsoTime},
             }
 
 

@@ -14,6 +14,8 @@ class ValidationResultNode implements TypeNode, ConstExprNode {
     /** @var array<string, array<array<mixed>|string>> */
     protected array $errors = [];
 
+    protected mixed $value = null;
+
     /** @param string|array<string, array<array<mixed>|string>> $message */
     public function recordError(array|string $message): void {
         $this->recordErrorInKey('.', $message);
@@ -31,17 +33,30 @@ class ValidationResultNode implements TypeNode, ConstExprNode {
         return $this->errors;
     }
 
+    public function getValue(): mixed {
+        return $this->value;
+    }
+
+    public function setValue(mixed $new_value): void {
+        $this->value = $new_value;
+    }
+
     public function isValid(): bool {
         return empty($this->errors);
     }
 
     public function __toString(): string {
-        $json = json_encode($this->getErrors());
-        return $this->isValid() ? '✅' : (is_bool($json) ? '🛑' : $json);
+        $json_value = json_encode($this->value);
+        $json_errors = json_encode($this->getErrors());
+        return $this->isValid()
+            ? (is_bool($json_value) ? '🛑' : "✅ {$json_value}")
+            : (is_bool($json_errors) ? '🛑' : "🚫 {$json_errors}");
     }
 
-    public static function valid(): self {
-        return new self();
+    public static function valid(mixed $value): self {
+        $instance = new self();
+        $instance->value = $value;
+        return $instance;
     }
 
     public static function error(string $error): self {

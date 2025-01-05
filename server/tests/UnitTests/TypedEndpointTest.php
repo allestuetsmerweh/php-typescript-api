@@ -6,6 +6,7 @@ namespace PhpTypeScriptApi\Tests\UnitTests;
 
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
+use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,15 +18,24 @@ use Symfony\Component\HttpFoundation\Request;
  * @extends TypedEndpoint<
  *   array{
  *     mapping: array<string, number>,
- *     named: FakeNamedThing
+ *     named: FakeNamedThing,
+ *     date: IsoDate,
  *   },
- *   string,
+ *   array{
+ *     mapping: array<string, number>,
+ *     named: FakeNamedThing,
+ *     date: IsoDate,
+ *   }
  * >
  */
 class FakeTypedEndpoint extends TypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handle_with_output = null;
     public bool $ran_runtime_setup = false;
+
+    public static function getApiObjectClasses(): array {
+        return [IsoDate::class];
+    }
 
     public static function getIdent(): string {
         return 'FakeTypedEndpoint';
@@ -61,6 +71,10 @@ class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint 
     public mixed $handled_with_input = null;
     public mixed $handle_with_output = null;
 
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
     public static function getIdent(): string {
         return 'FakeLeafGenericTypedEndpoint';
     }
@@ -83,9 +97,14 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
  * @extends \PhpTypeScriptApi\TypedEndpoint<
  *   array{
  *     mapping: array<string, number>,
- *     named: FakeNamedThing
+ *     named: FakeNamedThing,
+ *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
  *   },
- *   string,
+ *   array{
+ *     mapping: array<string, number>,
+ *     named: FakeNamedThing,
+ *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
+ *   },
  * >
  */
 class FakeTypedEndpointWithErrors extends TypedEndpoint {
@@ -94,6 +113,10 @@ class FakeTypedEndpointWithErrors extends TypedEndpoint {
     public bool $handle_with_http_error = false;
     public bool $handle_with_validation_error = false;
     public mixed $handle_with_output = null;
+
+    public static function getApiObjectClasses(): array {
+        return [IsoDate::class];
+    }
 
     public static function getIdent(): string {
         return 'FakeTypedEndpointWithErrors';
@@ -126,23 +149,61 @@ class FakeTypedEndpointWithErrors extends TypedEndpoint {
  *
  * @covers \PhpTypeScriptApi\TypedEndpoint
  */
-final class TypedEndpointTest extends UnitTestCase {
-    public const VALID_INPUT = [
-        'mapping' => [],
-        'named' => [
-            'id' => 1,
-            'name' => 'Fake Name',
-            'nested' => ['id' => 11],
-        ],
-    ];
+class TypedEndpointTest extends UnitTestCase {
+    /**
+     * @var array{
+     *     mapping: array<string, number>,
+     *     named: array{id: int, name: string, nested: array{id: int}},
+     *     date: string,
+     *   }
+     */
+    protected static array $raw_input;
+    /**
+     * @var array{
+     *     mapping: array<string, number>,
+     *     named: array{id: int, name: string, nested: array{id: int}},
+     *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
+     *   }
+     */
+    protected static array $input;
+
+    public static function setUpBeforeClass(): void {
+        self::$raw_input = [
+            'mapping' => [],
+            'named' => [
+                'id' => 1,
+                'name' => 'Fake Name',
+                'nested' => ['id' => 11],
+            ],
+            'date' => '2024-12-31',
+        ];
+        self::$input = [
+            ...self::$raw_input,
+            'date' => new IsoDate('2024-12-31'),
+        ];
+    }
 
     public function testFakeTypedEndpoint(): void {
         $endpoint = new FakeTypedEndpoint();
-        $endpoint->handle_with_output = 'test_output';
+        $endpoint->handle_with_output = self::$raw_input;
         $endpoint->setLogger($this->fakeLogger);
-        $result = $endpoint->call($this::VALID_INPUT);
-        $this->assertSame($this::VALID_INPUT, $endpoint->handled_with_input);
-        $this->assertSame('test_output', $result);
+        $result = $endpoint->call(self::$raw_input);
+        $this->assertEquals(self::$input, $endpoint->handled_with_input);
+        $this->assertEquals(self::$input, $result);
+        $this->assertSame([
+            "INFO Valid user request",
+            "INFO Handling...",
+            "INFO Valid user response",
+        ], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointWithApiObject(): void {
+        $endpoint = new FakeTypedEndpoint();
+        $endpoint->handle_with_output = self::$input;
+        $endpoint->setLogger($this->fakeLogger);
+        $result = $endpoint->call(self::$input);
+        $this->assertEquals(self::$input, $endpoint->handled_with_input);
+        $this->assertEquals(self::$input, $result);
         $this->assertSame([
             "INFO Valid user request",
             "INFO Handling...",
@@ -185,6 +246,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame(
             [
                 'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+                'IsoDate' => "string",
                 'FakeNestedThing' => "{'id': number}",
             ],
             $endpoint->getNamedTsTypes(),
@@ -196,7 +258,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing}",
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             $endpoint->getRequestTsType(),
         );
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
@@ -205,7 +267,10 @@ final class TypedEndpointTest extends UnitTestCase {
     public function testFakeTypedEndpointGetResponseTsType(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame('string', $endpoint->getResponseTsType());
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getResponseTsType(),
+        );
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
@@ -213,12 +278,16 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTransitiveTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing}",
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             $endpoint->getRequestTsType()
         );
-        $this->assertSame('string', $endpoint->getResponseTsType());
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getResponseTsType()
+        );
         $this->assertSame([
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+            'IsoDate' => "string",
             'FakeNestedThing' => "{'id': number}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
@@ -232,13 +301,13 @@ final class TypedEndpointTest extends UnitTestCase {
             $endpoint->getResponseTsType();
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            $this->assertSame('Type alias not found: Out', $th->getMessage());
+            $this->assertSame('Unknown IdentifierTypeNode name: Out', $th->getMessage());
         }
         try {
             $endpoint->getNamedTsTypes();
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            $this->assertSame('Type alias not found: Out', $th->getMessage());
+            $this->assertSame('Unknown IdentifierTypeNode name: Out', $th->getMessage());
         }
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -252,6 +321,21 @@ final class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([
             "INFO Runtime setup...",
         ], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointNoSetupImplemented(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        try {
+            $endpoint->setup();
+            $this->fail('Error expected');
+        } catch (\Exception $exc) {
+            $this->assertSame('Setup function must be set', $exc->getMessage());
+            $this->assertSame([
+                "CRITICAL Setup function must be set!",
+            ], $this->fakeLogHandler->getPrettyRecords());
+        }
     }
 
     public function testFakeTypedEndpointWithThrottling(): void {
@@ -274,6 +358,40 @@ final class TypedEndpointTest extends UnitTestCase {
         }
     }
 
+    public function testFakeTypedEndpointWithErrorsGetNamedTsTypes(): void {
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            [
+                'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+                '_PhpTypeScriptApi_PhpStan_IsoDate' => "string",
+                'FakeNestedThing' => "{'id': number}",
+            ],
+            $endpoint->getNamedTsTypes(),
+        );
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointWithErrorsGetRequestTsType(): void {
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
+            $endpoint->getRequestTsType(),
+        );
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointWithErrorsGetResponseTsType(): void {
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
+            $endpoint->getResponseTsType(),
+        );
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
     public function testFakeTypedEndpointWithInvalidInput(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
@@ -287,7 +405,7 @@ final class TypedEndpointTest extends UnitTestCase {
                 'message' => 'Bad input',
                 'error' => [
                     'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Value must be a list.']],
+                    'validationErrors' => ['.' => ['Value must be an object.']],
                 ],
             ], $err->getStructuredAnswer());
             $this->assertSame([
@@ -301,7 +419,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = true;
         try {
-            $endpoint->call($this::VALID_INPUT);
+            $endpoint->call(self::$raw_input);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
@@ -326,7 +444,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_http_error = true;
         try {
-            $endpoint->call($this::VALID_INPUT);
+            $endpoint->call(self::$raw_input);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(418, $err->getCode());
@@ -348,7 +466,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_validation_error = true;
         try {
-            $endpoint->call($this::VALID_INPUT);
+            $endpoint->call(self::$raw_input);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
@@ -374,7 +492,7 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint->handle_with_error = false;
         $endpoint->handle_with_output = null;
         try {
-            $endpoint->call($this::VALID_INPUT);
+            $endpoint->call(self::$raw_input);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
@@ -386,7 +504,7 @@ final class TypedEndpointTest extends UnitTestCase {
                 'message' => 'An error occurred. Please try again later.',
                 'error' => [
                     'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Value must be of type string.']],
+                    'validationErrors' => ['.' => ['Value must be an object.']],
                 ],
             ], $err->getStructuredAnswer());
             $this->assertSame([
@@ -401,9 +519,9 @@ final class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = false;
-        $endpoint->handle_with_output = 'test';
-        $result = $endpoint->call($this::VALID_INPUT);
-        $this->assertSame('test', $result);
+        $endpoint->handle_with_output = self::$raw_input;
+        $result = $endpoint->call(self::$raw_input);
+        $this->assertEquals(self::$input, $result);
         $this->assertSame([
             "INFO Valid user request",
             "INFO Handling with output...",
