@@ -15,6 +15,7 @@
         "must_be_allowed_value": "Value must be among the allowed values.",
         "must_be_array": "Value must be a list.",
         "must_be_boolean": "Value must be yes or no.",
+        "must_be_dict": "Value must be a mapping.",
         "must_be_integer": "Value must be an integer.",
         "must_be_number": "Value must be a number.",
         "must_be_object": "Value must be an object.",

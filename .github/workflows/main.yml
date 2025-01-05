@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         # see https://www.php.net/supported-versions.php
-        php-version: ['8.2']
+        php-version: ['8.3', '8.2', '8.1']
     name: Tests (PHP ${{ matrix.php-version }})
     runs-on: ubuntu-latest
     steps:

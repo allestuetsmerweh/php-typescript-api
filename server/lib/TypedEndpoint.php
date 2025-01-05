@@ -5,6 +5,7 @@ namespace PhpTypeScriptApi;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
+use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
@@ -17,23 +18,21 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
-    /** @var \ReflectionClass<object> */
-    private \ReflectionClass $endpointClass;
     private TypeNode $requestTypeNode;
     private TypeNode $responseTypeNode;
-    private PhpStanUtils $phpStanUtils;
+    /** @var array<string, TypeNode> */
+    private array $aliasNodes;
 
     public function __construct() {
-        $this->phpStanUtils = new PhpStanUtils();
         $class_name = get_called_class();
-        $this->endpointClass = new \ReflectionClass($class_name);
+        $class_info = new \ReflectionClass($class_name);
         while (
-            $this->endpointClass->getParentClass()
-            && $this->endpointClass->getParentClass()->getName() !== TypedEndpoint::class
+            $class_info->getParentClass()
+            && $class_info->getParentClass()->getName() !== TypedEndpoint::class
         ) {
-            $this->endpointClass = $this->endpointClass->getParentClass();
+            $class_info = $class_info->getParentClass();
         }
-        $php_doc_node = $this->phpStanUtils->parseDocComment($this->endpointClass->getDocComment());
+        $php_doc_node = PhpStanUtils::parseDocComment($class_info->getDocComment());
         $extends_type_node = $php_doc_node->getExtendsTagValues()[0]->type;
         if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_type_node->type}")) {
             // @codeCoverageIgnoreStart
@@ -49,7 +48,17 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
         $this->requestTypeNode = $extends_type_node->genericTypes[0];
         $this->responseTypeNode = $extends_type_node->genericTypes[1];
+        $this->aliasNodes = [];
+        foreach ($php_doc_node->getTypeAliasTagValues() as $node) {
+            $this->aliasNodes[$node->alias] = $node->type;
+        }
+        foreach ($this->getApiObjectClasses() as $class) {
+            PhpStanUtils::registerApiObject($class);
+        }
     }
+
+    /** @return array<class-string<ApiObjectInterface<mixed>>> */
+    abstract public static function getApiObjectClasses(): array;
 
     public function setup(): void {
         $this->runtimeSetup();
@@ -82,25 +91,26 @@ abstract class TypedEndpoint implements EndpointInterface {
      *
      * @return Response
      */
-    public function call(mixed $input): mixed {
+    public function call(mixed $raw_input): mixed {
         if ($this->shouldFailThrottling()) {
             $this->logger?->error("Throttled user request");
             throw new HttpError(429, Translator::__('endpoint.too_many_requests'));
         }
 
-        $result = ValidateVisitor::validate(
-            $this->endpointClass,
-            $input,
-            $this->requestTypeNode
+        $result = ValidateVisitor::validateDeserialize(
+            $raw_input,
+            $this->requestTypeNode,
+            $this->aliasNodes,
         );
         if (!$result->isValid()) {
             $this->logger?->warning("Bad user request", [$result->getErrors()]);
             throw new HttpError(400, Translator::__('endpoint.bad_input'), new ValidationError($result->getErrors()));
         }
         $this->logger?->info("Valid user request");
+        $input = $result->getValue();
 
         try {
-            $output = $this->handle($input);
+            $raw_output = $this->handle($input);
         } catch (ValidationError $verr) {
             $this->logger?->warning("Bad user request", $verr->getStructuredAnswer());
             throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
@@ -113,22 +123,22 @@ abstract class TypedEndpoint implements EndpointInterface {
             throw new HttpError(500, Translator::__('endpoint.internal_server_error'), $exc);
         }
 
-        $result = ValidateVisitor::validate(
-            $this->endpointClass,
-            $output,
-            $this->responseTypeNode
+        $result = ValidateVisitor::validateSerialize(
+            $raw_output,
+            $this->responseTypeNode,
+            $this->aliasNodes,
         );
         if (!$result->isValid()) {
             $this->logger?->critical("Bad output prohibited", [$result->getErrors()]);
             throw new HttpError(500, Translator::__('endpoint.internal_server_error'), new ValidationError($result->getErrors()));
         }
         $this->logger?->info("Valid user response");
-        return $output;
+        return $result->getValue();
     }
 
     /** @return array<string, string> */
     public function getNamedTsTypes(): array {
-        $visitor = new TypeScriptVisitor($this->endpointClass);
+        $visitor = new TypeScriptVisitor($this->aliasNodes);
         $traverser = new NodeTraverser([$visitor]);
         $traverser->traverse([$this->requestTypeNode]);
         $traverser->traverse([$this->responseTypeNode]);
@@ -145,14 +155,14 @@ abstract class TypedEndpoint implements EndpointInterface {
     }
 
     public function getRequestTsType(): string {
-        $visitor = new TypeScriptVisitor($this->endpointClass);
+        $visitor = new TypeScriptVisitor($this->aliasNodes);
         $traverser = new NodeTraverser([$visitor]);
         [$ts_type_node] = $traverser->traverse([$this->requestTypeNode]);
         return "{$ts_type_node}";
     }
 
     public function getResponseTsType(): string {
-        $visitor = new TypeScriptVisitor($this->endpointClass);
+        $visitor = new TypeScriptVisitor($this->aliasNodes);
         $traverser = new NodeTraverser([$visitor]);
         [$ts_type_node] = $traverser->traverse([$this->responseTypeNode]);
         return "{$ts_type_node}";

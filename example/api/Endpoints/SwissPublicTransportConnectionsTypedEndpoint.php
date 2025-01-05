@@ -15,11 +15,15 @@ use PhpTypeScriptApi\TypedEndpoint;
  * @phpstan-type SptConnection array{sections: array<SptSection>}
  *
  * @extends TypedEndpoint<
- *   array{'from': string, 'to': string, 'via': ?array<string>, 'date': string, 'time': string, 'isArrivalTime': ?bool},
+ *   array{'from': string, 'to': string, 'via': ?array<string>, 'date': \PhpTypeScriptApi\PhpStan\IsoDate, 'time': string, 'isArrivalTime': ?bool},
  *   array{stationById: array<string, SptLocation>, connections: array<SptConnection>},
  * >
  */
 class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
     public function runtimeSetup(): void {
         // no runtime setup required.
     }
@@ -34,7 +38,7 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
             'from' => $input['from'],
             'to' => $input['to'],
             'via' => $input['via'],
-            'date' => $input['date'],
+            'date' => $input['date']->data(),
             'time' => $input['time'],
             'isArrivalTime' => $input['isArrivalTime'],
         ]);
