@@ -81,6 +81,11 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 'numeric-string' => fn ($value): bool => is_string($value) && is_numeric($value),
                 'non-empty-string' => fn ($value): bool => is_string($value) && !empty($value),
                 'lowercase-string' => fn ($value): bool => is_string($value) && preg_match('/^[a-z]+$/', $value),
+                // Never
+                'never' => fn (): bool => false,
+                'never-return' => fn (): bool => false,
+                'never-returns' => fn (): bool => false,
+                'no-return' => fn (): bool => false,
             ];
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {

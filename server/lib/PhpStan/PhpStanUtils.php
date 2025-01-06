@@ -68,11 +68,32 @@ class PhpStanUtils {
         foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
             $aliases[$alias_node->alias] = $alias_node->type;
         }
-        // TODO: Support @phpstan-import-type
-        // foreach ($php_doc_node->getTypeAliasImportTagValues() as $import_node) {
-        //     $alias = $import_node->importedAs ?? $import_node->importedAlias;
-        //     $aliases[$alias] = $alias_node->type;
-        // }
+        foreach ($php_doc_node?->getTypeAliasImportTagValues() ?? [] as $import_node) {
+            $alias = $import_node->importedAs ?? $import_node->importedAlias;
+            $from = $import_node->importedFrom->name;
+            $full_class_name = '';
+            foreach (\get_declared_classes() as $class_name) {
+                $components = explode('\\', $class_name);
+                $short_name = end($components);
+                if ($from === $class_name || $from === $short_name) {
+                    $full_class_name = $class_name;
+                }
+            }
+            // Too dynamic for phpstan...
+            // @phpstan-ignore argument.type
+            $class_info = new \ReflectionClass($full_class_name);
+            $import_php_doc_node = self::parseDocComment($class_info->getDocComment());
+            $found_alias = null;
+            foreach ($import_php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
+                if ($alias_node->alias === $import_node->importedAlias) {
+                    $found_alias = $alias_node;
+                }
+            }
+            if ($found_alias === null) {
+                throw new \Exception("Failed importing {$import_node->importedAlias} from {$from}");
+            }
+            $aliases[$alias] = $found_alias->type;
+        }
         return $aliases;
     }
 

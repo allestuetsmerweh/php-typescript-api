@@ -80,18 +80,29 @@ abstract class TypedEndpoint implements EndpointInterface {
         if (!$php_doc_node) {
             return [];
         }
-        $template_aliases = [];
-        $previous_generic_types = $previous_extends_node?->type->genericTypes ?? [];
-        $template_type_nodes = $php_doc_node->getTemplateTagValues();
-        if (count($previous_generic_types) !== count($template_type_nodes)) {
-            $num_template_type_nodes = count($template_type_nodes);
-            $pretty_generics = implode(', ', $previous_generic_types);
-            throw new \Exception("Expected {$num_template_type_nodes} generic arguments, but got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
+        $aliases = [];
+        $args = $previous_extends_node?->type->genericTypes ?? [];
+        $template_nodes = $php_doc_node->getTemplateTagValues();
+        $min_args = 0;
+        $max_args = count($template_nodes);
+        foreach ($template_nodes as $template_node) {
+            $min_args += $template_node->default === null ? 1 : 0;
         }
-        for ($i = 0; $i < count($template_type_nodes); $i++) {
-            $template_aliases[$template_type_nodes[$i]->name] = $previous_generic_types[$i];
+        $pretty_range = $min_args === $max_args ? $min_args : "{$min_args}-{$max_args}";
+        if (count($args) < $min_args || count($args) > $max_args) {
+            $pretty_generics = implode(', ', $args);
+            throw new \Exception("Expected {$pretty_range} generic arguments, but got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
         }
-        return $template_aliases;
+        for ($i = 0; $i < count($template_nodes); $i++) {
+            $node = $template_nodes[$i];
+            $value = $args[$i] ?? $node->default;
+            if ($value === null) {
+                $pretty_generics = implode(', ', $args);
+                throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
+            }
+            $aliases[$node->name] = $value;
+        }
+        return $aliases;
     }
 
     /**
