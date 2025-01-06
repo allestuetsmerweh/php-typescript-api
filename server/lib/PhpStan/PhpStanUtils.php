@@ -22,7 +22,7 @@ class PhpStanUtils {
         }
         $php_doc_node = self::parseDocComment($class_info->getDocComment());
         $implements_node = null;
-        foreach ($php_doc_node->getImplementsTagValues() as $node) {
+        foreach ($php_doc_node?->getImplementsTagValues() ?? [] as $node) {
             $generic_node = $node->type;
             if ("{$generic_node->type}" === 'ApiObjectInterface') {
                 $implements_node = $generic_node->genericTypes[0];
@@ -62,9 +62,23 @@ class PhpStanUtils {
         }
     }
 
-    public static function parseDocComment(string|false|null $doc_comment): PhpDocNode {
+    /** @return array<string, TypeNode> */
+    public static function getAliases(?PhpDocNode $php_doc_node): array {
+        $aliases = [];
+        foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
+            $aliases[$alias_node->alias] = $alias_node->type;
+        }
+        // TODO: Support @phpstan-import-type
+        // foreach ($php_doc_node->getTypeAliasImportTagValues() as $import_node) {
+        //     $alias = $import_node->importedAs ?? $import_node->importedAlias;
+        //     $aliases[$alias] = $alias_node->type;
+        // }
+        return $aliases;
+    }
+
+    public static function parseDocComment(string|false|null $doc_comment): ?PhpDocNode {
         if (!$doc_comment) {
-            throw new \Exception("Cannot parse doc comment.");
+            return null;
         }
         $config = new ParserConfig(usedAttributes: []);
         $lexer = new Lexer($config);

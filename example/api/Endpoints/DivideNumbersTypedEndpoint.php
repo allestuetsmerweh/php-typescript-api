@@ -4,12 +4,14 @@ use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
+ * @template T of int|float|double|number
+ *
  * @extends TypedEndpoint<
- *   array{dividend: number, divisor: number},
- *   number,
+ *   array{dividend: T, divisor: T},
+ *   T,
  * >
  */
-class DivideNumbersTypedEndpoint extends TypedEndpoint {
+abstract class DivideTypedEndpoint extends TypedEndpoint {
     public static function getApiObjectClasses(): array {
         return [];
     }
@@ -23,11 +25,18 @@ class DivideNumbersTypedEndpoint extends TypedEndpoint {
     }
 
     protected function handle(mixed $input): mixed {
-        $dividend = floatval($input['dividend']);
-        $divisor = floatval($input['divisor']);
-        if ($divisor === 0.0) {
+        $dividend = $input['dividend'];
+        $divisor = $input['divisor'];
+        if (floatval($divisor) === 0.0) {
             throw new ValidationError(['divisor' => ["Cannot divide by zero."]]);
         }
+        // @phpstan-ignore return.type
         return $dividend / $divisor;
     }
+}
+
+/**
+ * @extends DivideTypedEndpoint<number>
+ */
+class DivideNumbersTypedEndpoint extends DivideTypedEndpoint {
 }

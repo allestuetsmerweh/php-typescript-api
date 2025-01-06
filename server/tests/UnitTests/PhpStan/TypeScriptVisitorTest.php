@@ -8,6 +8,8 @@ use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\IsoDateTime;
+use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
@@ -196,6 +198,9 @@ final class TypeScriptVisitorTest extends UnitTestCase {
             'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
             'Aliased_4' => $this->getTypeNode('null'),
         ];
+        PhpStanUtils::registerApiObject(IsoDate::class);
+        PhpStanUtils::registerApiObject(IsoDateTime::class);
+        PhpStanUtils::registerApiObject(IsoTime::class);
 
         $visitor = new TypeScriptVisitor($aliases);
         $traverser = new NodeTraverser([$visitor]);
@@ -205,11 +210,5 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         } catch (\Throwable $th) {
             return "🛑{$th->getMessage()}";
         }
-    }
-
-    private function getTypeNode(string $type_str): TypeNode {
-        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
-        $paramTags = $phpDocNode->getReturnTagValues();
-        return $paramTags[0]->type;
     }
 }

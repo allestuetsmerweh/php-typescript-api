@@ -221,7 +221,7 @@ final class ApiTest extends UnitTestCase {
                 fakeTypedEndpoint2: {'time': _PhpTypeScriptApi_PhpStan_IsoTime},
             }
 
-
+            
             ZZZZZZZZZZ;
         $this->assertSame(
             $expected_output,

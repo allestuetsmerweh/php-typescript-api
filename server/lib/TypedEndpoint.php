@@ -3,10 +3,13 @@
 namespace PhpTypeScriptApi;
 
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
+use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
+use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,35 +29,93 @@ abstract class TypedEndpoint implements EndpointInterface {
     public function __construct() {
         $class_name = get_called_class();
         $class_info = new \ReflectionClass($class_name);
-        while (
-            $class_info->getParentClass()
-            && $class_info->getParentClass()->getName() !== TypedEndpoint::class
-        ) {
-            $class_info = $class_info->getParentClass();
-        }
-        $php_doc_node = PhpStanUtils::parseDocComment($class_info->getDocComment());
-        $extends_type_node = $php_doc_node->getExtendsTagValues()[0]->type;
-        if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_type_node->type}")) {
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            throw new \Exception('Only classes extending TypedEndpoint (in doc comment) may be used.');
-            // @codeCoverageIgnoreEnd
-        }
-        if (count($extends_type_node->genericTypes) !== 2) {
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            throw new \Exception('TypedEndpoint has exactly two generic parameter.');
-            // @codeCoverageIgnoreEnd
-        }
-        $this->requestTypeNode = $extends_type_node->genericTypes[0];
-        $this->responseTypeNode = $extends_type_node->genericTypes[1];
         $this->aliasNodes = [];
-        foreach ($php_doc_node->getTypeAliasTagValues() as $node) {
-            $this->aliasNodes[$node->alias] = $node->type;
+        $template_aliases = [];
+        $extends_node = null;
+        while ($class_info->getParentClass()) {
+            $php_doc_node = PhpStanUtils::parseDocComment($class_info->getDocComment());
+            $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
+            $this->aliasNodes = [
+                ...$this->aliasNodes,
+                ...PhpStanUtils::getAliases($php_doc_node),
+            ];
+            $extends_node = $this->getResolvedExtendsNode($php_doc_node, $template_aliases);
+            $parent_class_info = $class_info->getParentClass();
+            if ($parent_class_info->getName() === TypedEndpoint::class) {
+                break;
+            }
+            $class_info = $parent_class_info;
         }
+        $this->aliasNodes = [
+            ...$this->aliasNodes,
+            ...$template_aliases,
+        ];
+        if (!$extends_node) {
+            throw new \Exception("Could not parse type for {$class_name}");
+        }
+        if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_node->type->type}")) {
+            throw new \Exception("{$class_name} does not extend TypedEndpoint");
+        }
+        if (count($extends_node->type->genericTypes) !== 2) {
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            $pretty_generics = implode(', ', $extends_node->type->genericTypes);
+            throw new \Exception("{$class_name} must provide two generics to TypedEndpoint, provided TypedEndpoint<{$pretty_generics}>");
+            // @codeCoverageIgnoreEnd
+        }
+        $this->requestTypeNode = $extends_node->type->genericTypes[0];
+        $this->responseTypeNode = $extends_node->type->genericTypes[1];
         foreach ($this->getApiObjectClasses() as $class) {
             PhpStanUtils::registerApiObject($class);
         }
+    }
+
+    /**
+     * @return array<string, TypeNode>
+     */
+    protected function getTemplateAliases(
+        ?PhpDocNode $php_doc_node,
+        ?ExtendsTagValueNode $previous_extends_node,
+    ): array {
+        if (!$php_doc_node) {
+            return [];
+        }
+        $template_aliases = [];
+        $previous_generic_types = $previous_extends_node?->type->genericTypes ?? [];
+        $template_type_nodes = $php_doc_node->getTemplateTagValues();
+        if (count($previous_generic_types) !== count($template_type_nodes)) {
+            $num_template_type_nodes = count($template_type_nodes);
+            $pretty_generics = implode(', ', $previous_generic_types);
+            throw new \Exception("Expected {$num_template_type_nodes} generic arguments, but got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
+        }
+        for ($i = 0; $i < count($template_type_nodes); $i++) {
+            $template_aliases[$template_type_nodes[$i]->name] = $previous_generic_types[$i];
+        }
+        return $template_aliases;
+    }
+
+    /**
+     * @param array<string, TypeNode> $template_aliases
+     */
+    protected function getResolvedExtendsNode(
+        ?PhpDocNode $php_doc_node,
+        array $template_aliases,
+    ): ?ExtendsTagValueNode {
+        $extends_type_node = $php_doc_node?->getExtendsTagValues()[0];
+        if (!$extends_type_node) {
+            return null;
+        }
+
+        $visitor = new ResolveAliasesVisitor($template_aliases);
+        $traverser = new NodeTraverser([$visitor]);
+        [$resolved_extends_node] = $traverser->traverse([$extends_type_node]);
+        if (!($resolved_extends_node instanceof ExtendsTagValueNode)) {
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            throw new \Exception("Expected ExtendsTagValueNode, but got {$resolved_extends_node}");
+            // @codeCoverageIgnoreEnd
+        }
+        return $resolved_extends_node;
     }
 
     /** @return array<class-string<ApiObjectInterface<mixed>>> */
@@ -88,8 +149,7 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     /**
      * Note: The input is not required to be validated yet. We accept mixed.
-     *
-     * @return Response
+     * Note: The output is serialized, i.e. not necessarily of type `Response`.
      */
     public function call(mixed $raw_input): mixed {
         if ($this->shouldFailThrottling()) {

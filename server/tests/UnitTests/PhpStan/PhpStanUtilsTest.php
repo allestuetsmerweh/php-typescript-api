@@ -94,6 +94,23 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertNull(PhpStanUtils::getApiObjectTypeNode(PhpStanUtilsTest::class));
     }
 
+    public function testGetAliases(): void {
+        $comment = <<<'ZZZZZZZZZZ'
+            /**
+             * @phpstan-type AliasedInt int
+             * @phpstan-type AliasedArray array<string, int>
+             * @phpstan-type AliasedRecursive array{recursive: AliasedRecursive|int}
+             */
+            ZZZZZZZZZZ;
+        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+
+        $this->assertEquals([
+            'AliasedInt' => $this->getTypeNode("int"),
+            'AliasedArray' => $this->getTypeNode("array<string, int>"),
+            'AliasedRecursive' => $this->getTypeNode("array{recursive: AliasedRecursive|int}"),
+        ], PhpStanUtils::getAliases($phpDocNode));
+    }
+
     public function testParseValidDocComment(): void {
         $comment = <<<'ZZZZZZZZZZ'
             /**
@@ -104,24 +121,19 @@ final class PhpStanUtilsTest extends UnitTestCase {
 
         $phpDocNode = PhpStanUtils::parseDocComment($comment);
 
-        $this->assertSame('string', "{$phpDocNode->getParamTagValues()[0]->type}");
-        $this->assertSame('int', "{$phpDocNode->getReturnTagValues()[0]->type}");
+        $this->assertSame('string', "{$phpDocNode?->getParamTagValues()[0]->type}");
+        $this->assertSame('int', "{$phpDocNode?->getReturnTagValues()[0]->type}");
     }
 
     public function testParseEmptyDocComment(): void {
         $phpDocNode = PhpStanUtils::parseDocComment('/** Empty */');
 
-        $this->assertCount(0, $phpDocNode->getParamTagValues());
-        $this->assertCount(0, $phpDocNode->getReturnTagValues());
+        $this->assertSame([], $phpDocNode?->getParamTagValues());
+        $this->assertSame([], $phpDocNode->getReturnTagValues());
     }
 
     public function testParseInexistentDocComment(): void {
-        try {
-            PhpStanUtils::parseDocComment(false);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame('Cannot parse doc comment.', $th->getMessage());
-        }
+        $this->assertNull(PhpStanUtils::parseDocComment(false));
     }
 
     public function testParseInvalidDocComment(): void {
