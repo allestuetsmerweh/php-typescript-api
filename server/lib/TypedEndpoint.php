@@ -94,8 +94,11 @@ abstract class TypedEndpoint implements EndpointInterface {
             $node = $template_nodes[$i];
             $value = $args[$i] ?? $node->default;
             if ($value === null) {
+                // @codeCoverageIgnoreStart
+                // Reason: phpstan does not allow testing this!
                 $pretty_generics = implode(', ', $args);
                 throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
+                // @codeCoverageIgnoreEnd
             }
             $aliases[$node->name] = $value;
         }
@@ -109,7 +112,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         ?PhpDocNode $php_doc_node,
         array $template_aliases,
     ): ?ExtendsTagValueNode {
-        $extends_type_node = $php_doc_node?->getExtendsTagValues()[0];
+        $extends_type_node = $php_doc_node?->getExtendsTagValues()[0] ?? null;
         if (!$extends_type_node) {
             return null;
         }

@@ -113,6 +113,14 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
 }
 
 /**
+ * @internal
+ *
+ * @coversNothing
+ */
+class FakeTransitiveBogusTypedEndpoint extends FakeTypedEndpoint {
+}
+
+/**
  * @phpstan-type AliasedTypedEndpoint TypedEndpoint<mixed, mixed>
  *
  * @extends AliasedTypedEndpoint<int, string>
@@ -337,6 +345,25 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
+    public function testFakeTransitiveBogusTypedEndpointMetadata(): void {
+        $endpoint = new FakeTransitiveBogusTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getRequestTsType()
+        );
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getResponseTsType()
+        );
+        $this->assertEquals([
+            'FakeNestedThing' => "{'id': number}",
+            'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+            'IsoDate' => "string",
+        ], $endpoint->getNamedTsTypes());
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
     public function testFakeLeafGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
@@ -415,6 +442,14 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([
             "INFO Runtime setup...",
         ], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTypedEndpointRuntimeSetupFallback(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $endpoint->setup();
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeTypedEndpointWithThrottling(): void {
