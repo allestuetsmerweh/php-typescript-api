@@ -8,10 +8,6 @@ class EmptyEndpoint extends Endpoint {
         // no runtime setup required.
     }
 
-    public static function getIdent(): string {
-        return 'EmptyEndpoint';
-    }
-
     public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\ObjectField([
             'field_structure' => [],

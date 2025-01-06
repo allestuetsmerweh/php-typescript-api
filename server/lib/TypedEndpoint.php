@@ -7,7 +7,6 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
-use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
@@ -27,6 +26,7 @@ abstract class TypedEndpoint implements EndpointInterface {
     private array $aliasNodes;
 
     public function __construct() {
+        $this->configure();
         $class_name = get_called_class();
         $class_info = new \ReflectionClass($class_name);
         $this->aliasNodes = [];
@@ -65,9 +65,6 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
         $this->requestTypeNode = $extends_node->type->genericTypes[0];
         $this->responseTypeNode = $extends_node->type->genericTypes[1];
-        foreach ($this->getApiObjectClasses() as $class) {
-            PhpStanUtils::registerApiObject($class);
-        }
     }
 
     /**
@@ -129,19 +126,17 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $resolved_extends_node;
     }
 
-    /** @return array<class-string<ApiObjectInterface<mixed>>> */
-    abstract public static function getApiObjectClasses(): array;
+    public function configure(): void {
+        // Do nothing by default
+    }
 
     public function setup(): void {
         $this->runtimeSetup();
     }
 
     public function runtimeSetup(): void {
-        $this->logger?->critical("Setup function must be set!");
-        throw new \Exception("Setup function must be set");
+        // Do nothing by default
     }
-
-    abstract public static function getIdent(): string;
 
     /** Override to enjoy throttling! */
     public function shouldFailThrottling(): bool {

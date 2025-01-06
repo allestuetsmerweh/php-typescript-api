@@ -3,6 +3,7 @@
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\IsoDateTime;
 use PhpTypeScriptApi\PhpStan\IsoTime;
+use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -12,16 +13,10 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class CombineDateTimeTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [IsoDate::class, IsoTime::class, IsoDateTime::class];
-    }
-
-    public function runtimeSetup(): void {
-        // no runtime setup required
-    }
-
-    public static function getIdent(): string {
-        return 'CombineDateTimeTypedEndpoint';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoDate::class);
+        PhpStanUtils::registerApiObject(IsoTime::class);
+        PhpStanUtils::registerApiObject(IsoDateTime::class);
     }
 
     protected function handle(mixed $input): mixed {

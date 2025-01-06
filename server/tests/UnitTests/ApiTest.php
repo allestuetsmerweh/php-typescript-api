@@ -9,6 +9,7 @@ use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\IsoTime;
+use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Psr\Log\LoggerInterface;
@@ -25,10 +26,6 @@ class FakeApiTestEndpoint1 extends Endpoint {
 
     public function __construct(mixed $resource) {
         $this->resource = $resource;
-    }
-
-    public static function getIdent(): string {
-        return 'FakeEndpoint1';
     }
 
     public function runtimeSetup(): void {
@@ -68,10 +65,6 @@ class FakeApiTestEndpoint2 extends Endpoint {
         $this->resource = $resource;
     }
 
-    public static function getIdent(): string {
-        return 'FakeEndpoint2';
-    }
-
     public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\Field(['allow_null' => false]);
     }
@@ -106,12 +99,8 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
         $this->resource = $resource;
     }
 
-    public static function getApiObjectClasses(): array {
-        return [IsoDate::class];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeTypedEndpoint1';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoDate::class);
     }
 
     public function runtimeSetup(): void {
@@ -149,12 +138,8 @@ class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
         $this->resource = $resource;
     }
 
-    public static function getApiObjectClasses(): array {
-        return [IsoTime::class];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeTypedEndpoint2';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoTime::class);
     }
 
     protected function handle(mixed $input): mixed {

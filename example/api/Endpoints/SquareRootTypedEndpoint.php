@@ -10,18 +10,6 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class SquareRootTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public function runtimeSetup(): void {
-        // no runtime setup required.
-    }
-
-    public static function getIdent(): string {
-        return 'SquareRootTypedEndpoint';
-    }
-
     protected function handle(mixed $input): mixed {
         if ($input < 0.0) {
             throw new ValidationError(['.' => ['Value must not be negative']]);

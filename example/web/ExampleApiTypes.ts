@@ -30,6 +30,8 @@ export type SPTransportStop = {
     'platform': string|null,
 };
 
+export type DefaultNumberType = number;
+
 export type IsoDate = string;
 
 export type _PhpTypeScriptApi_PhpStan_IsoTime = string;
@@ -77,7 +79,7 @@ export interface ExampleApiRequests extends ExampleApiEndpointMapping {
             'isArrivalTime': boolean|null,
         },
     empty: Record<string, never>,
-    divideNumbersTyped: {'dividend': number, 'divisor': number},
+    divideNumbersTyped: {'dividend': DefaultNumberType, 'divisor': DefaultNumberType},
     squareRootTyped: (number | number),
     combineDateTimeTyped: {'date': IsoDate, 'time': _PhpTypeScriptApi_PhpStan_IsoTime},
     searchSwissPublicTransportConnectionTyped: {'from': string, 'to': string, 'via': (Array<string> | null), 'date': _PhpTypeScriptApi_PhpStan_IsoDate, 'time': string, 'isArrivalTime': (boolean | null)},
@@ -92,7 +94,7 @@ export interface ExampleApiResponses extends ExampleApiEndpointMapping {
             'connections': Array<SPTransportConnection>,
         },
     empty: Record<string, never>,
-    divideNumbersTyped: number,
+    divideNumbersTyped: DefaultNumberType,
     squareRootTyped: number,
     combineDateTimeTyped: {'dateTime': IsoDateTime},
     searchSwissPublicTransportConnectionTyped: {'stationById': {[key: string]: SptLocation}, 'connections': Array<SptConnection>},

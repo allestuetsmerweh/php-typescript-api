@@ -1,5 +1,7 @@
 <?php
 
+use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -20,16 +22,8 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public function runtimeSetup(): void {
-        // no runtime setup required.
-    }
-
-    public static function getIdent(): string {
-        return 'SwissPublicTransportConnectionsTypedEndpoint';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoDate::class);
     }
 
     protected function handle(mixed $input): mixed {

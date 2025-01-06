@@ -9,8 +9,6 @@ interface EndpointInterface extends \Psr\Log\LoggerAwareInterface {
 
     public function runtimeSetup(): void;
 
-    public static function getIdent(): string;
-
     public function parseInput(Request $request): mixed;
 
     public function call(mixed $raw_input): mixed;

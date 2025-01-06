@@ -8,10 +8,6 @@ class SquareRootEndpoint extends Endpoint {
         // no runtime setup required.
     }
 
-    public static function getIdent(): string {
-        return 'SquareRootEndpoint';
-    }
-
     public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\NumberField([]);
     }
