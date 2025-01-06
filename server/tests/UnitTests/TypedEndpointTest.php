@@ -444,6 +444,14 @@ class TypedEndpointTest extends UnitTestCase {
         ], $this->fakeLogHandler->getPrettyRecords());
     }
 
+    public function testFakeTypedEndpointRuntimeSetupFallback(): void {
+        global $_GET, $_POST;
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $endpoint->setup();
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
     public function testFakeTypedEndpointWithThrottling(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);

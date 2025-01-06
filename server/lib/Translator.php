@@ -15,7 +15,8 @@ class Translator {
     protected array $fallback_chain = ['en'];
 
     public function readProjectLangs(): void {
-        $entries = scandir($this::$lang_path);
+        $entries = is_dir($this::$lang_path)
+            ? scandir($this::$lang_path) : false;
         if (!$entries) {
             return;
         }
@@ -120,7 +121,8 @@ class Translator {
     protected function readMessagesJson(string $lang): array {
         $lang_path = $this::$lang_path;
         $messages_json_path = "{$lang_path}{$lang}/messages.json";
-        $messages_json_content = file_get_contents($messages_json_path);
+        $messages_json_content = is_file($messages_json_path)
+            ? file_get_contents($messages_json_path) : false;
         if (!$messages_json_content) {
             return [];
         }
