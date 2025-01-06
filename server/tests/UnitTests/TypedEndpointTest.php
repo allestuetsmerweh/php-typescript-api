@@ -113,6 +113,14 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
 }
 
 /**
+ * @internal
+ *
+ * @coversNothing
+ */
+class FakeTransitiveBogusTypedEndpoint extends FakeTypedEndpoint {
+}
+
+/**
  * @phpstan-type AliasedTypedEndpoint TypedEndpoint<mixed, mixed>
  *
  * @extends AliasedTypedEndpoint<int, string>
@@ -320,6 +328,25 @@ class TypedEndpointTest extends UnitTestCase {
 
     public function testFakeTransitiveTypedEndpointMetadata(): void {
         $endpoint = new FakeTransitiveTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getRequestTsType()
+        );
+        $this->assertSame(
+            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            $endpoint->getResponseTsType()
+        );
+        $this->assertEquals([
+            'FakeNestedThing' => "{'id': number}",
+            'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+            'IsoDate' => "string",
+        ], $endpoint->getNamedTsTypes());
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeTransitiveBogusTypedEndpointMetadata(): void {
+        $endpoint = new FakeTransitiveBogusTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
             "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
