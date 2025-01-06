@@ -9,10 +9,6 @@ class DivideNumbersEndpoint extends Endpoint {
         // no runtime setup required.
     }
 
-    public static function getIdent(): string {
-        return 'DivideNumbersEndpoint';
-    }
-
     public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\NumberField([]);
     }

@@ -39,12 +39,8 @@ class FakeTypedEndpoint extends TypedEndpoint {
     public mixed $handle_with_output = null;
     public bool $ran_runtime_setup = false;
 
-    public static function getApiObjectClasses(): array {
-        return [IsoDate::class];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeTypedEndpoint';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoDate::class);
     }
 
     public function runtimeSetup(): void {
@@ -97,14 +93,6 @@ abstract class FakeIntermediateGenericTypedEndpoint extends TypedEndpoint {
  * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString, int>
  */
 class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeLeafGenericTypedEndpoint';
-    }
-
     protected function handle(mixed $input): mixed {
         return 'test';
     }
@@ -116,14 +104,6 @@ class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint 
  * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString>
  */
 class FakeLeafPartialGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeLeafPartialGenericTypedEndpoint';
-    }
-
     protected function handle(mixed $input): mixed {
         return 'test';
     }
@@ -138,14 +118,6 @@ class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
  * @extends AliasedTypedEndpoint<int, string>
  */
 class FakeAliasedTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeAliasedTypedEndpoint';
-    }
-
     protected function handle(mixed $input): mixed {
         return 'test';
     }
@@ -155,14 +127,6 @@ class FakeAliasedTypedEndpoint extends TypedEndpoint {
  * @phpstan-extends TypedEndpoint<int, string>
  */
 class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public static function getIdent(): string {
-        return 'FakePhpstanExtendsTypedEndpoint';
-    }
-
     protected function handle(mixed $input): mixed {
         return 'test';
     }
@@ -174,12 +138,8 @@ class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
  * @extends TypedEndpoint<FakeNamedThing, string>
  */
 class FakeMissingHiddenImportTypedEndpoint extends TypedEndpoint {
-    public static function getApiObjectClasses(): array {
-        return [];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeMissingHiddenImportTypedEndpoint';
+    public function configure(): void {
+        PhpStanUtils::registerTypeImport(FakeTypedEndpoint::class);
     }
 
     protected function handle(mixed $input): mixed {
@@ -213,12 +173,9 @@ class FakeTypedEndpointWithErrors extends TypedEndpoint {
     public bool $handle_with_validation_error = false;
     public mixed $handle_with_output = null;
 
-    public static function getApiObjectClasses(): array {
-        return [IsoDate::class];
-    }
-
-    public static function getIdent(): string {
-        return 'FakeTypedEndpointWithErrors';
+    public function configure(): void {
+        PhpStanUtils::registerApiObject(IsoDate::class);
+        PhpStanUtils::registerTypeImport(FakeTypedEndpoint::class);
     }
 
     public function shouldFailThrottling(): bool {
@@ -458,21 +415,6 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([
             "INFO Runtime setup...",
         ], $this->fakeLogHandler->getPrettyRecords());
-    }
-
-    public function testFakeTypedEndpointNoSetupImplemented(): void {
-        global $_GET, $_POST;
-        $endpoint = new FakeTypedEndpointWithErrors();
-        $endpoint->setLogger($this->fakeLogger);
-        try {
-            $endpoint->setup();
-            $this->fail('Error expected');
-        } catch (\Exception $exc) {
-            $this->assertSame('Setup function must be set', $exc->getMessage());
-            $this->assertSame([
-                "CRITICAL Setup function must be set!",
-            ], $this->fakeLogHandler->getPrettyRecords());
-        }
     }
 
     public function testFakeTypedEndpointWithThrottling(): void {

@@ -24,8 +24,6 @@ abstract class Endpoint implements EndpointInterface {
         throw new \Exception("Setup function must be set");
     }
 
-    abstract public static function getIdent(): string;
-
     /** Override to enjoy throttling! */
     public function shouldFailThrottling(): bool {
         return false;

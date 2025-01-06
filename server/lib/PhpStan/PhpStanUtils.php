@@ -12,8 +12,11 @@ use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
 
 class PhpStanUtils {
-    /** @var ?array<string, string> */
-    protected static ?array $registry = [];
+    /** @var array<string, string> */
+    protected static array $apiObjectRegistry = [];
+
+    /** @var array<string, string> */
+    protected static array $typeImportRegistry = [];
 
     public static function getApiObjectTypeNode(string $name): ?TypeNode {
         $class_info = self::resolveApiObjectClass($name);
@@ -33,23 +36,32 @@ class PhpStanUtils {
 
     /** @return \ReflectionClass<ApiObjectInterface<mixed>> */
     public static function resolveApiObjectClass(string $name): ?\ReflectionClass {
-        try {
-            // @phpstan-ignore argument.type
-            $class_info = new \ReflectionClass($name);
-        } catch (\ReflectionException) {
-            $full_name = PhpStanUtils::$registry[$name] ?? '';
-            try {
-                // @phpstan-ignore argument.type
-                $class_info = new \ReflectionClass($full_name);
-            } catch (\ReflectionException) {
-                return null;
-            }
-        }
-        if (!$class_info->implementsInterface(ApiObjectInterface::class)) {
+        $class_info = self::resolveClass($name, PhpStanUtils::$apiObjectRegistry);
+        if (!$class_info || !$class_info->implementsInterface(ApiObjectInterface::class)) {
             return null;
         }
         // @phpstan-ignore return.type
         return $class_info;
+    }
+
+    /**
+     * @param array<string, string> $registry
+     *
+     * @return ?\ReflectionClass<object>
+     */
+    public static function resolveClass(string $name, array $registry): ?\ReflectionClass {
+        try {
+            // @phpstan-ignore argument.type
+            return new \ReflectionClass($name);
+        } catch (\ReflectionException) {
+            $full_name = $registry[$name] ?? '';
+            try {
+                // @phpstan-ignore argument.type
+                return new \ReflectionClass($full_name);
+            } catch (\ReflectionException) {
+                return null;
+            }
+        }
     }
 
     /** @param class-string<ApiObjectInterface<mixed>> $class */
@@ -58,8 +70,15 @@ class PhpStanUtils {
         if ($class_info->implementsInterface(ApiObjectInterface::class)) {
             $components = explode('\\', $class);
             $short_name = end($components);
-            PhpStanUtils::$registry[$short_name] = $class;
+            PhpStanUtils::$apiObjectRegistry[$short_name] = $class;
         }
+    }
+
+    /** @param class-string<mixed> $class */
+    public static function registerTypeImport(string $class): void {
+        $components = explode('\\', $class);
+        $short_name = end($components);
+        PhpStanUtils::$typeImportRegistry[$short_name] = $class;
     }
 
     /** @return array<string, TypeNode> */
@@ -71,18 +90,8 @@ class PhpStanUtils {
         foreach ($php_doc_node?->getTypeAliasImportTagValues() ?? [] as $import_node) {
             $alias = $import_node->importedAs ?? $import_node->importedAlias;
             $from = $import_node->importedFrom->name;
-            $full_class_name = '';
-            foreach (\get_declared_classes() as $class_name) {
-                $components = explode('\\', $class_name);
-                $short_name = end($components);
-                if ($from === $class_name || $from === $short_name) {
-                    $full_class_name = $class_name;
-                }
-            }
-            // Too dynamic for phpstan...
-            // @phpstan-ignore argument.type
-            $class_info = new \ReflectionClass($full_class_name);
-            $import_php_doc_node = self::parseDocComment($class_info->getDocComment());
+            $class_info = self::resolveClass($from, PhpStanUtils::$typeImportRegistry);
+            $import_php_doc_node = self::parseDocComment($class_info?->getDocComment());
             $found_alias = null;
             foreach ($import_php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
                 if ($alias_node->alias === $import_node->importedAlias) {

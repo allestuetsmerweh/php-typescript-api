@@ -14,10 +14,6 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         // no runtime setup required.
     }
 
-    public static function getIdent(): string {
-        return 'SwissPublicTransportConnectionsEndpoint';
-    }
-
     public function getResponseField(): FieldTypes\Field {
         /** A geographic location. */
         $coordinates_field = new FieldTypes\ObjectField([

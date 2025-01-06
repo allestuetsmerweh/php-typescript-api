@@ -23,10 +23,6 @@ class FakeEndpoint extends Endpoint {
         $this->resource = $resource;
     }
 
-    public static function getIdent(): string {
-        return 'FakeEndpoint';
-    }
-
     public function runtimeSetup(): void {
         $this->logger?->info("Runtime setup...");
         $this->ran_runtime_setup = true;
@@ -54,10 +50,6 @@ class FakeEndpointWithErrors extends Endpoint {
     public bool $handle_with_http_error = false;
     public bool $handle_with_validation_error = false;
     public mixed $handle_with_output = null;
-
-    public static function getIdent(): string {
-        return 'FakeEndpointWithErrors';
-    }
 
     public function getResponseField(): FieldTypes\Field {
         return new FieldTypes\Field(['allow_null' => false]);
