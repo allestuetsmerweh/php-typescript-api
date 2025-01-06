@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\Tests\UnitTests;
 
+use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
+use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
 use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Symfony\Component\HttpFoundation\Request;
@@ -51,6 +57,26 @@ class FakeTypedEndpoint extends TypedEndpoint {
         $this->handled_with_input = $input;
         return $this->handle_with_output;
     }
+
+    /**
+     * @return array<string, TypeNode>
+     */
+    public function testOnlyGetTemplateAliases(
+        ?PhpDocNode $php_doc_node,
+        ?ExtendsTagValueNode $previous_extends_node,
+    ): array {
+        return parent::getTemplateAliases($php_doc_node, $previous_extends_node);
+    }
+
+    /**
+     * @param array<string, TypeNode> $template_aliases
+     */
+    public function testOnlyGetResolvedExtendsNode(
+        ?PhpDocNode $php_doc_node,
+        array $template_aliases,
+    ): ?ExtendsTagValueNode {
+        return parent::getResolvedExtendsNode($php_doc_node, $template_aliases);
+    }
 }
 
 /**
@@ -65,7 +91,9 @@ abstract class FakeIntermediateGenericTypedEndpoint extends TypedEndpoint {
 }
 
 /**
- * @extends FakeIntermediateGenericTypedEndpoint<int, string>
+ * @phpstan-type AliasedString string
+ *
+ * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString>
  */
 class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
     public mixed $handled_with_input = null;
@@ -87,6 +115,42 @@ class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint 
 }
 
 class FakeTransitiveTypedEndpoint extends FakeTypedEndpoint {
+}
+
+/**
+ * @phpstan-type AliasedTypedEndpoint TypedEndpoint<mixed, mixed>
+ *
+ * @extends AliasedTypedEndpoint<int, string>
+ */
+class FakeAliasedTypedEndpoint extends TypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
+    public static function getIdent(): string {
+        return 'FakeAliasedTypedEndpoint';
+    }
+
+    protected function handle(mixed $input): mixed {
+        return 'test';
+    }
+}
+
+/**
+ * @phpstan-extends TypedEndpoint<int, string>
+ */
+class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
+    public static function getIdent(): string {
+        return 'FakePhpstanExtendsTypedEndpoint';
+    }
+
+    protected function handle(mixed $input): mixed {
+        return 'test';
+    }
 }
 
 // TODO: Support @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
@@ -243,11 +307,11 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeTypedEndpointGetNamedTsTypes(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
+        $this->assertEquals(
             [
+                'FakeNestedThing' => "{'id': number}",
                 'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
                 'IsoDate' => "string",
-                'FakeNestedThing' => "{'id': number}",
             ],
             $endpoint->getNamedTsTypes(),
         );
@@ -285,10 +349,10 @@ class TypedEndpointTest extends UnitTestCase {
             "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             $endpoint->getResponseTsType()
         );
-        $this->assertSame([
+        $this->assertEquals([
+            'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
             'IsoDate' => "string",
-            'FakeNestedThing' => "{'id': number}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -296,20 +360,40 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeLeafGenericTypedEndpoint(): void {
         $endpoint = new FakeLeafGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame('Input', $endpoint->getRequestTsType());
-        try {
-            $endpoint->getResponseTsType();
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame('Unknown IdentifierTypeNode name: Out', $th->getMessage());
-        }
-        try {
-            $endpoint->getNamedTsTypes();
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame('Unknown IdentifierTypeNode name: Out', $th->getMessage());
-        }
+        $this->assertEquals([
+            'Input' => "{'in': In}",
+            'AliasedString' => "string",
+            'In' => "number",
+        ], $endpoint->getNamedTsTypes());
+        $this->assertSame("Input", $endpoint->getRequestTsType());
+        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeAliasedTypedEndpoint(): void {
+        try {
+            new FakeAliasedTypedEndpoint();
+            $this->fail('Error expected');
+        } catch (\Exception $exc) {
+            $this->assertSame(
+                'PhpTypeScriptApi\Tests\UnitTests\FakeAliasedTypedEndpoint does not extend TypedEndpoint',
+                $exc->getMessage(),
+            );
+            $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+        }
+    }
+
+    public function testFakePhpstanExtendsTypedEndpoint(): void {
+        try {
+            new FakePhpstanExtendsTypedEndpoint();
+            $this->fail('Error expected');
+        } catch (\Exception $exc) {
+            $this->assertSame(
+                'Could not parse type for PhpTypeScriptApi\Tests\UnitTests\FakePhpstanExtendsTypedEndpoint',
+                $exc->getMessage(),
+            );
+            $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+        }
     }
 
     public function testFakeTypedEndpointRuntimeSetup(): void {
@@ -361,11 +445,11 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeTypedEndpointWithErrorsGetNamedTsTypes(): void {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
+        $this->assertEquals(
             [
+                'FakeNestedThing' => "{'id': number}",
                 'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
                 '_PhpTypeScriptApi_PhpStan_IsoDate' => "string",
-                'FakeNestedThing' => "{'id': number}",
             ],
             $endpoint->getNamedTsTypes(),
         );
@@ -527,5 +611,155 @@ class TypedEndpointTest extends UnitTestCase {
             "INFO Handling with output...",
             "INFO Valid user response",
         ], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testGetTemplateAliases(): void {
+        $endpoint = new FakeTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $php_doc_node_0 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /** */
+            ZZZZZZZZZZ);
+        $php_doc_node_1 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @template T
+             */
+            ZZZZZZZZZZ);
+        $php_doc_node_2 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @template T
+             * @template U
+             */
+            ZZZZZZZZZZ);
+        $extends_1 = $this->getExtendsNode(['int']);
+        $extends_2 = $this->getExtendsNode(['int', 'string']);
+        $extends_3 = $this->getExtendsNode(['int', 'null', 'bool']);
+
+        $this->assertSame([], $endpoint->testOnlyGetTemplateAliases(null, $extends_1));
+        $this->assertSame([], $endpoint->testOnlyGetTemplateAliases(null, $extends_2));
+        $this->assertSame([], $endpoint->testOnlyGetTemplateAliases(null, $extends_3));
+
+        $this->assertSame([], $endpoint->testOnlyGetTemplateAliases($php_doc_node_0, null));
+
+        $this->assertEquals([
+            'T' => $this->getTypeNode('int'),
+        ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1, $extends_1));
+        $this->assertEquals([
+            'T' => $this->getTypeNode('int'),
+            'U' => $this->getTypeNode('string'),
+        ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_2, $extends_2));
+
+        try {
+            $endpoint->testOnlyGetTemplateAliases($php_doc_node_0, $extends_1);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 0 generic arguments, but got 'FakeGeneric<int>'",
+                $th->getMessage()
+            );
+        }
+
+        try {
+            $endpoint->testOnlyGetTemplateAliases($php_doc_node_1, $extends_2);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 1 generic arguments, but got 'FakeGeneric<int, string>'",
+                $th->getMessage()
+            );
+        }
+
+        try {
+            $endpoint->testOnlyGetTemplateAliases($php_doc_node_2, $extends_3);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 2 generic arguments, but got 'FakeGeneric<int, null, bool>'",
+                $th->getMessage()
+            );
+        }
+
+        try {
+            $endpoint->testOnlyGetTemplateAliases($php_doc_node_2, $extends_1);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 2 generic arguments, but got 'FakeGeneric<int>'",
+                $th->getMessage()
+            );
+        }
+
+        try {
+            $endpoint->testOnlyGetTemplateAliases($php_doc_node_1, null);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 1 generic arguments, but got '<>'",
+                $th->getMessage()
+            );
+        }
+    }
+
+    public function testGetResolvedExtendsNode(): void {
+        $endpoint = new FakeTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $php_doc_node_1 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @extends FakeGeneric<T>
+             */
+            ZZZZZZZZZZ);
+        $php_doc_node_2 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @extends FakeGeneric<T, U>
+             */
+            ZZZZZZZZZZ);
+        $php_doc_node_3 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @extends FakeGeneric<bool, array<T>, U>
+             */
+            ZZZZZZZZZZ);
+        $aliases_0 = [];
+        $aliases_1 = ['T' => $this->getTypeNode('float')];
+        $aliases_2 = [
+            'U' => $this->getTypeNode('string'),
+            'T' => $this->getTypeNode('int'),
+        ];
+        $extends_1_1 = $this->getExtendsNode(['float']);
+        $extends_2_2 = $this->getExtendsNode(['int', 'string']);
+        $extends_3_2 = $this->getExtendsNode(['bool', 'array<int>', 'string']);
+        $extends_1_0 = $this->getExtendsNode(['T']);
+        $extends_2_1 = $this->getExtendsNode(['float', 'U']);
+        $extends_3_1 = $this->getExtendsNode(['bool', 'array<float>', 'U']);
+        $extends_2_0 = $this->getExtendsNode(['T', 'U']);
+        $extends_3_0 = $this->getExtendsNode(['bool', 'array<T>', 'U']);
+
+        $this->assertSame(null, $endpoint->testOnlyGetResolvedExtendsNode(null, $aliases_0));
+        $this->assertSame(null, $endpoint->testOnlyGetResolvedExtendsNode(null, $aliases_1));
+        $this->assertSame(null, $endpoint->testOnlyGetResolvedExtendsNode(null, $aliases_2));
+
+        $this->assertEquals($extends_1_1, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_1(), $aliases_1));
+        $this->assertEquals($extends_2_2, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_2(), $aliases_2));
+        $this->assertEquals($extends_3_2, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_3(), $aliases_2));
+
+        $this->assertEquals($extends_1_0, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_1(), $aliases_0));
+        $this->assertEquals($extends_2_1, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_2(), $aliases_1));
+        $this->assertEquals($extends_3_1, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_3(), $aliases_1));
+        $this->assertEquals($extends_2_0, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_2(), $aliases_0));
+        $this->assertEquals($extends_3_0, $endpoint->testOnlyGetResolvedExtendsNode($php_doc_node_3(), $aliases_0));
+    }
+
+    /** @param array<string> $type_strings */
+    protected function getExtendsNode(array $type_strings): ExtendsTagValueNode {
+        $generic_node = new GenericTypeNode(
+            new IdentifierTypeNode('FakeGeneric'),
+            array_map(
+                fn ($type_string) => $this->getTypeNode($type_string),
+                $type_strings,
+            ),
+            array_map(
+                fn () => GenericTypeNode::VARIANCE_INVARIANT,
+                $type_strings,
+            ),
+        );
+        return new ExtendsTagValueNode($generic_node, '');
     }
 }

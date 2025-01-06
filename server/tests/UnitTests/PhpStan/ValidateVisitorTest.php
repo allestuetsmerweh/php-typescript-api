@@ -7,6 +7,7 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
+use PhpTypeScriptApi\PhpStan\IsoDateTime;
 use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
@@ -1102,14 +1103,11 @@ final class ValidateVisitorTest extends UnitTestCase {
             'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
             'Aliased_4' => $this->getTypeNode('false'),
         ];
+        PhpStanUtils::registerApiObject(IsoDate::class);
+        PhpStanUtils::registerApiObject(IsoDateTime::class);
+        PhpStanUtils::registerApiObject(IsoTime::class);
 
         $result_node = ValidateVisitor::validateDeserialize($value, $type_node, $aliases);
         return $result_node->isValid() ? null : "{$result_node}";
-    }
-
-    private function getTypeNode(string $type_str): TypeNode {
-        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
-        $paramTags = $phpDocNode->getReturnTagValues();
-        return $paramTags[0]->type;
     }
 }

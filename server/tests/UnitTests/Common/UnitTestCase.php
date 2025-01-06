@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\Tests\UnitTests\Common;
 
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\Fake\FakeLogHandler;
 use PhpTypeScriptApi\Translator;
 use PHPUnit\Framework\TestCase;
@@ -27,5 +29,14 @@ class UnitTestCase extends TestCase {
         $this->fakeLogger = new \Monolog\Logger('Fake');
         $this->fakeLogHandler = new FakeLogHandler();
         $this->fakeLogger->pushHandler($this->fakeLogHandler);
+    }
+
+    protected function getTypeNode(string $type_str): TypeNode {
+        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
+        if (!$phpDocNode) {
+            throw new \Exception("Could not parse: {$type_str}");
+        }
+        $paramTags = $phpDocNode->getReturnTagValues();
+        return $paramTags[0]->type;
     }
 }
