@@ -82,8 +82,9 @@ class FakeTypedEndpoint extends TypedEndpoint {
 /**
  * @template In
  * @template Out
+ * @template CustomIn = never
  *
- * @phpstan-type Input array{in: In}
+ * @phpstan-type Input array{in: In, custom?: CustomIn}
  *
  * @extends TypedEndpoint<Input, Out>
  */
@@ -93,12 +94,9 @@ abstract class FakeIntermediateGenericTypedEndpoint extends TypedEndpoint {
 /**
  * @phpstan-type AliasedString string
  *
- * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString>
+ * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString, int>
  */
 class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
-    public mixed $handled_with_input = null;
-    public mixed $handle_with_output = null;
-
     public static function getApiObjectClasses(): array {
         return [];
     }
@@ -108,9 +106,26 @@ class FakeLeafGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint 
     }
 
     protected function handle(mixed $input): mixed {
-        $this->logger?->info("Handling...");
-        $this->handled_with_input = $input;
-        return $this->handle_with_output;
+        return 'test';
+    }
+}
+
+/**
+ * @phpstan-type AliasedString string
+ *
+ * @extends FakeIntermediateGenericTypedEndpoint<int, AliasedString>
+ */
+class FakeLeafPartialGenericTypedEndpoint extends FakeIntermediateGenericTypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
+    public static function getIdent(): string {
+        return 'FakeLeafPartialGenericTypedEndpoint';
+    }
+
+    protected function handle(mixed $input): mixed {
+        return 'test';
     }
 }
 
@@ -153,10 +168,30 @@ class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
     }
 }
 
-// TODO: Support @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
 /**
- * @phpstan-type FakeNestedThing array{id: int}
- * @phpstan-type FakeNamedThing array{id: int, name: string, nested: FakeNestedThing}
+ * @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
+ *
+ * @extends TypedEndpoint<FakeNamedThing, string>
+ */
+class FakeMissingHiddenImportTypedEndpoint extends TypedEndpoint {
+    public static function getApiObjectClasses(): array {
+        return [];
+    }
+
+    public static function getIdent(): string {
+        return 'FakeMissingHiddenImportTypedEndpoint';
+    }
+
+    protected function handle(mixed $input): mixed {
+        return 'test';
+    }
+}
+
+/**
+ * Note: At the moment, FakeNestedThing must be manually imported as well.
+ *
+ * @phpstan-import-type FakeNestedThing from FakeTypedEndpoint
+ * @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
  *
  * @extends \PhpTypeScriptApi\TypedEndpoint<
  *   array{
@@ -304,7 +339,7 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeTypedEndpointGetNamedTsTypes(): void {
+    public function testFakeTypedEndpointMetadata(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertEquals(
@@ -315,22 +350,10 @@ class TypedEndpointTest extends UnitTestCase {
             ],
             $endpoint->getNamedTsTypes(),
         );
-        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
-    }
-
-    public function testFakeTypedEndpointGetRequestTsType(): void {
-        $endpoint = new FakeTypedEndpoint();
-        $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
             "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             $endpoint->getRequestTsType(),
         );
-        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
-    }
-
-    public function testFakeTypedEndpointGetResponseTsType(): void {
-        $endpoint = new FakeTypedEndpoint();
-        $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
             "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             $endpoint->getResponseTsType(),
@@ -338,7 +361,7 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeTransitiveTypedEndpoint(): void {
+    public function testFakeTransitiveTypedEndpointMetadata(): void {
         $endpoint = new FakeTransitiveTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame(
@@ -357,20 +380,35 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeLeafGenericTypedEndpoint(): void {
+    public function testFakeLeafGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertEquals([
-            'Input' => "{'in': In}",
+            'Input' => "{'in': In, 'custom'?: CustomIn}",
             'AliasedString' => "string",
             'In' => "number",
+            'CustomIn' => "number",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame("Input", $endpoint->getRequestTsType());
         $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
-    public function testFakeAliasedTypedEndpoint(): void {
+    public function testFakeLeafPartialGenericTypedEndpointMetadata(): void {
+        $endpoint = new FakeLeafPartialGenericTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertEquals([
+            'Input' => "{'in': In, 'custom'?: CustomIn}",
+            'AliasedString' => "string",
+            'In' => "number",
+            'CustomIn' => "never",
+        ], $endpoint->getNamedTsTypes());
+        $this->assertSame("Input", $endpoint->getRequestTsType());
+        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+    }
+
+    public function testFakeAliasedTypedEndpointMetadata(): void {
         try {
             new FakeAliasedTypedEndpoint();
             $this->fail('Error expected');
@@ -383,13 +421,28 @@ class TypedEndpointTest extends UnitTestCase {
         }
     }
 
-    public function testFakePhpstanExtendsTypedEndpoint(): void {
+    public function testFakePhpstanExtendsTypedEndpointMetadata(): void {
         try {
             new FakePhpstanExtendsTypedEndpoint();
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame(
                 'Could not parse type for PhpTypeScriptApi\Tests\UnitTests\FakePhpstanExtendsTypedEndpoint',
+                $exc->getMessage(),
+            );
+            $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
+        }
+    }
+
+    public function testFakeMissingHiddenImportTypedEndpointMetadata(): void {
+        $endpoint = new FakeMissingHiddenImportTypedEndpoint();
+        $endpoint->setLogger($this->fakeLogger);
+        try {
+            $endpoint->getNamedTsTypes();
+            $this->fail('Error expected');
+        } catch (\Exception $exc) {
+            $this->assertSame(
+                'Unknown IdentifierTypeNode name: FakeNestedThing',
                 $exc->getMessage(),
             );
             $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
@@ -630,6 +683,12 @@ class TypedEndpointTest extends UnitTestCase {
              * @template U
              */
             ZZZZZZZZZZ);
+        $php_doc_node_1_or_2 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @template T
+             * @template U = null
+             */
+            ZZZZZZZZZZ);
         $extends_1 = $this->getExtendsNode(['int']);
         $extends_2 = $this->getExtendsNode(['int', 'string']);
         $extends_3 = $this->getExtendsNode(['int', 'null', 'bool']);
@@ -647,6 +706,14 @@ class TypedEndpointTest extends UnitTestCase {
             'T' => $this->getTypeNode('int'),
             'U' => $this->getTypeNode('string'),
         ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_2, $extends_2));
+        $this->assertEquals([
+            'T' => $this->getTypeNode('int'),
+            'U' => $this->getTypeNode('null'),
+        ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1_or_2, $extends_1));
+        $this->assertEquals([
+            'T' => $this->getTypeNode('int'),
+            'U' => $this->getTypeNode('string'),
+        ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1_or_2, $extends_2));
 
         try {
             $endpoint->testOnlyGetTemplateAliases($php_doc_node_0, $extends_1);

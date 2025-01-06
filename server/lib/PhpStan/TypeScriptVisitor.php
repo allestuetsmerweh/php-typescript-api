@@ -89,6 +89,11 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
                 'array' => 'Array',
                 'non-empty-array' => 'Array',
                 'object' => 'Array',
+                // Never
+                'never' => 'never',
+                'never-return' => 'never',
+                'never-returns' => 'never',
+                'no-return' => 'never',
             ];
             $new_name = $mapping[$node->name] ?? null;
             if ($new_name === null) {

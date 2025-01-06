@@ -922,6 +922,30 @@ final class ValidateVisitorTest extends UnitTestCase {
         }
     }
 
+    public function testNeverNode(): void {
+        $this->assertNotNull($this->validate("never", null));
+        $this->assertNotNull($this->validate("never", true));
+        $this->assertNotNull($this->validate("never", false));
+        $this->assertNotNull($this->validate("never", 0));
+        $this->assertNotNull($this->validate("never", 2));
+        $this->assertNotNull($this->validate("never", ''));
+        $this->assertNotNull($this->validate("never", 'never'));
+        $this->assertNotNull($this->validate("never", []));
+        $this->assertNull($this->validate("array{foo?: never}", []));
+        $this->assertNotNull($this->validate("array{foo?: never}", ['foo' => null]));
+        $this->assertNull($this->validate("'now'|never", 'now'));
+        $this->assertNull($this->validate("?never", null));
+
+        $this->assertNotNull($this->validate("never-return", null));
+        $this->assertNull($this->validate("?never-return", null));
+
+        $this->assertNotNull($this->validate("never-returns", null));
+        $this->assertNull($this->validate("?never-returns", null));
+
+        $this->assertNotNull($this->validate("no-return", null));
+        $this->assertNull($this->validate("?no-return", null));
+    }
+
     public function testAliasedIntNode(): void {
         $this->assertNotNull($this->validate('AliasedInt', null));
         $this->assertNotNull($this->validate('AliasedInt', true));

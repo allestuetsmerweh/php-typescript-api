@@ -140,6 +140,13 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame("Record<string, never>", $this->getTypeScript("object{}"));
     }
 
+    public function testNeverNode(): void {
+        $this->assertSame('never', $this->getTypeScript('never'));
+        $this->assertSame('never', $this->getTypeScript('never-return'));
+        $this->assertSame('never', $this->getTypeScript('never-returns'));
+        $this->assertSame('never', $this->getTypeScript('no-return'));
+    }
+
     public function testAliasedIntNode(): void {
         $this->assertSame('AliasedInt', $this->getTypeScript('AliasedInt'));
     }
