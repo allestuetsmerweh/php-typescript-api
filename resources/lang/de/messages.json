@@ -21,6 +21,7 @@
         "must_be_object": "Wert muss ein Objekt sein.",
         "must_be_scalar_value": "Wert muss simpel sein.",
         "must_be_string": "Wert muss eine Zeichenkette sein.",
+        "must_be_type": "Wert muss vom Typ {type} sein.",
         "must_have_one_key": "Wert muss ein Objekt mit genau einem Schlüssel sein.",
         "must_match_regex": "Wert muss im Format {regex} sein.",
         "must_not_be_empty": "Feld darf nicht leer sein.",
