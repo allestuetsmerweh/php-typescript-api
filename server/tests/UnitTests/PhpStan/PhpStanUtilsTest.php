@@ -36,35 +36,52 @@ class FakeApiObject implements ApiObjectInterface {
  * @covers \PhpTypeScriptApi\PhpStan\PhpStanUtils
  */
 final class PhpStanUtilsTest extends UnitTestCase {
-    public function testApiObjectResolveFull(): void {
+    public function testResolveFull(): void {
+        $this->assertSame(
+            FakeApiObject::class,
+            PhpStanUtils::resolveClass(FakeApiObject::class, [])?->getName(),
+        );
         $this->assertSame(
             FakeApiObject::class,
             PhpStanUtils::resolveApiObjectClass(FakeApiObject::class)?->getName(),
         );
     }
 
-    public function testApiObjectResolveFullyQualified(): void {
+    public function testResolveFullyQualified(): void {
         $class_name = FakeApiObject::class;
+        $this->assertSame(
+            FakeApiObject::class,
+            PhpStanUtils::resolveClass("\\{$class_name}", [])?->getName(),
+        );
         $this->assertSame(
             FakeApiObject::class,
             PhpStanUtils::resolveApiObjectClass("\\{$class_name}")?->getName(),
         );
     }
 
-    public function testApiObjectResolveShort(): void {
+    public function testResolveShort(): void {
+        $registry = ['FakeApiObject' => FakeApiObject::class];
+        $this->assertSame(
+            FakeApiObject::class,
+            PhpStanUtils::resolveClass('FakeApiObject', $registry)?->getName(),
+        );
         PhpStanUtils::registerApiObject(FakeApiObject::class);
-
         $this->assertSame(
             FakeApiObject::class,
             PhpStanUtils::resolveApiObjectClass('FakeApiObject')?->getName(),
         );
     }
 
-    public function testApiObjectResolveInvalid(): void {
+    public function testResolveInvalid(): void {
+        $this->assertNull(PhpStanUtils::resolveClass('Invalid', []));
         $this->assertNull(PhpStanUtils::resolveApiObjectClass('Invalid'));
     }
 
-    public function testApiObjectResolveNonApiObject(): void {
+    public function testResolveNonApiObject(): void {
+        $this->assertSame(
+            PhpStanUtilsTest::class,
+            PhpStanUtils::resolveClass(PhpStanUtilsTest::class, [])?->getName(),
+        );
         $this->assertNull(PhpStanUtils::resolveApiObjectClass(PhpStanUtilsTest::class));
     }
 
@@ -109,6 +126,38 @@ final class PhpStanUtilsTest extends UnitTestCase {
             'AliasedArray' => $this->getTypeNode("array<string, int>"),
             'AliasedRecursive' => $this->getTypeNode("array{recursive: AliasedRecursive|int}"),
         ], PhpStanUtils::getAliases($phpDocNode));
+    }
+
+    public function testGetImportedAliases(): void {
+        PhpStanUtils::registerTypeImport(FakePhpStanUtilsTypedEndpoint::class);
+        $comment = <<<'ZZZZZZZZZZ'
+            /**
+             * @phpstan-import-type AliasedInt from FakePhpStanUtilsTypedEndpoint
+             */
+            ZZZZZZZZZZ;
+        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+
+        $this->assertEquals([
+            'AliasedInt' => $this->getTypeNode("int"),
+        ], PhpStanUtils::getAliases($phpDocNode));
+    }
+
+    public function testGetImportedAliasesError(): void {
+        $comment = <<<'ZZZZZZZZZZ'
+            /**
+             * @phpstan-import-type AliasedInt from Invalid
+             */
+            ZZZZZZZZZZ;
+        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+        try {
+            PhpStanUtils::getAliases($phpDocNode);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                'Failed importing AliasedInt from Invalid',
+                $th->getMessage(),
+            );
+        }
     }
 
     public function testParseValidDocComment(): void {

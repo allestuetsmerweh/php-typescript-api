@@ -56,6 +56,16 @@ final class IsoDateTest extends UnitTestCase {
         }
     }
 
+    public function testFromDateTime(): void {
+        $iso_date = IsoDate::fromDateTime(new \DateTime('2024-12-31'));
+
+        $this->assertSame('2024-12-31', $iso_date?->format('Y-m-d'));
+    }
+
+    public function testFromDateTimeNull(): void {
+        $this->assertNull(IsoDate::fromDateTime(null));
+    }
+
     public function testIsoDateToString(): void {
         $iso_date = new IsoDate('2025-01-01');
 

@@ -20,6 +20,13 @@ class IsoTime extends \DateTime implements ApiObjectInterface {
         return new IsoTime($data);
     }
 
+    public static function fromDateTime(?\DateTimeInterface $date_time): ?IsoTime {
+        if ($date_time === null) {
+            return null;
+        }
+        return new IsoTime($date_time->format('H:i:s'));
+    }
+
     public function __toString(): string {
         return "{$this->data()}";
     }

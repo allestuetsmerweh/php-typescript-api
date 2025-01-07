@@ -56,6 +56,16 @@ final class IsoTimeTest extends UnitTestCase {
         }
     }
 
+    public function testFromDateTime(): void {
+        $iso_date = IsoTime::fromDateTime(new \DateTime('13:27:35'));
+
+        $this->assertSame('13:27:35', $iso_date?->format('H:i:s'));
+    }
+
+    public function testFromDateTimeNull(): void {
+        $this->assertNull(IsoTime::fromDateTime(null));
+    }
+
     public function testIsoTimeToString(): void {
         $iso_date = new IsoTime('13:27:35');
 
