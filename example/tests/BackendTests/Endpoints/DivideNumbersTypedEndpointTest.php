@@ -12,7 +12,7 @@ use PhpTypeScriptApi\BackendTests\Common\ExampleBackendTestCase;
  * @coversNothing
  */
 final class DivideNumbersTypedEndpointTest extends ExampleBackendTestCase {
-    public function testDivideTypedPositiveNumbersInvalid(): void {
+    public function testDivideTypedNumbersInvalid(): void {
         $result = $this->callBackend('divideNumbersTyped', []);
         $this->assertSame(400, $result['http_code']);
         $this->assertSame(

@@ -1,7 +1,6 @@
 <?php
 
 use PhpTypeScriptApi\PhpStan\IsoDate;
-use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -23,7 +22,7 @@ use PhpTypeScriptApi\TypedEndpoint;
  */
 class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoDate::class);
+        $this->phpStanUtils->registerApiObject(IsoDate::class);
     }
 
     protected function handle(mixed $input): mixed {

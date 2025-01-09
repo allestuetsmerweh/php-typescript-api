@@ -20,27 +20,28 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * @phpstan-type FakeNestedThing array{id: int}
  * @phpstan-type FakeNamedThing array{id: int, name: string, nested: FakeNestedThing}
+ * @phpstan-type FakeInput array{
+ *   mapping: array<string, number>,
+ *   named: FakeNamedThing,
+ *   date: IsoDate,
+ * }
+ * @phpstan-type FakeOutput array{
+ *   mapping: array<string, number>,
+ *   named: FakeNamedThing,
+ *   date: IsoDate,
+ * }
  *
- * @extends TypedEndpoint<
- *   array{
- *     mapping: array<string, number>,
- *     named: FakeNamedThing,
- *     date: IsoDate,
- *   },
- *   array{
- *     mapping: array<string, number>,
- *     named: FakeNamedThing,
- *     date: IsoDate,
- *   }
- * >
+ * @extends TypedEndpoint<FakeInput, FakeOutput>
  */
 class FakeTypedEndpoint extends TypedEndpoint {
+    /** @var FakeInput */
     public mixed $handled_with_input = null;
+    /** @var FakeOutput */
     public mixed $handle_with_output = null;
     public bool $ran_runtime_setup = false;
 
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoDate::class);
+        $this->phpStanUtils->registerApiObject(IsoDate::class);
     }
 
     public function runtimeSetup(): void {
@@ -147,7 +148,7 @@ class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
  */
 class FakeMissingHiddenImportTypedEndpoint extends TypedEndpoint {
     public function configure(): void {
-        PhpStanUtils::registerTypeImport(FakeTypedEndpoint::class);
+        $this->phpStanUtils->registerTypeImport(FakeTypedEndpoint::class);
     }
 
     protected function handle(mixed $input): mixed {
@@ -161,29 +162,30 @@ class FakeMissingHiddenImportTypedEndpoint extends TypedEndpoint {
  * @phpstan-import-type FakeNestedThing from FakeTypedEndpoint
  * @phpstan-import-type FakeNamedThing from FakeTypedEndpoint
  *
- * @extends \PhpTypeScriptApi\TypedEndpoint<
- *   array{
- *     mapping: array<string, number>,
- *     named: FakeNamedThing,
- *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
- *   },
- *   array{
- *     mapping: array<string, number>,
- *     named: FakeNamedThing,
- *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
- *   },
- * >
+ * @phpstan-type FakeInputAbsolute array{
+ *   mapping: array<string, number>,
+ *   named: FakeNamedThing,
+ *   date: \PhpTypeScriptApi\PhpStan\IsoDate,
+ * }
+ * @phpstan-type FakeOutputAbsolute array{
+ *   mapping: array<string, number>,
+ *   named: FakeNamedThing,
+ *   date: \PhpTypeScriptApi\PhpStan\IsoDate,
+ * }
+ *
+ * @extends \PhpTypeScriptApi\TypedEndpoint<FakeInputAbsolute, FakeOutputAbsolute>
  */
 class FakeTypedEndpointWithErrors extends TypedEndpoint {
     public bool $handle_with_throttling = false;
     public bool $handle_with_error = false;
     public bool $handle_with_http_error = false;
     public bool $handle_with_validation_error = false;
+    /** @var ?FakeOutputAbsolute */
     public mixed $handle_with_output = null;
 
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoDate::class);
-        PhpStanUtils::registerTypeImport(FakeTypedEndpoint::class);
+        $this->phpStanUtils->registerApiObject(IsoDate::class);
+        $this->phpStanUtils->registerTypeImport(FakeTypedEndpoint::class);
     }
 
     public function shouldFailThrottling(): bool {
@@ -204,6 +206,8 @@ class FakeTypedEndpointWithErrors extends TypedEndpoint {
             throw new ValidationError(['.' => ['Fundamental error']]);
         }
         $this->logger?->info("Handling with output...");
+        // We want to be able to return invalid values here to provoke errors.
+        // @phpstan-ignore return.type
         return $this->handle_with_output;
     }
 }
@@ -249,7 +253,7 @@ class TypedEndpointTest extends UnitTestCase {
 
     public function testFakeTypedEndpoint(): void {
         $endpoint = new FakeTypedEndpoint();
-        $endpoint->handle_with_output = self::$raw_input;
+        $endpoint->handle_with_output = self::$input;
         $endpoint->setLogger($this->fakeLogger);
         $result = $endpoint->call(self::$raw_input);
         $this->assertEquals(self::$input, $endpoint->handled_with_input);
@@ -307,21 +311,17 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeTypedEndpointMetadata(): void {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame("FakeInput", $endpoint->getRequestTsType());
+        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
         $this->assertEquals(
             [
                 'FakeNestedThing' => "{'id': number}",
                 'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
                 'IsoDate' => "string",
+                'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+                'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
             ],
             $endpoint->getNamedTsTypes(),
-        );
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getRequestTsType(),
-        );
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getResponseTsType(),
         );
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -329,18 +329,14 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeTransitiveTypedEndpointMetadata(): void {
         $endpoint = new FakeTransitiveTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getRequestTsType()
-        );
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getResponseTsType()
-        );
+        $this->assertSame("FakeInput", $endpoint->getRequestTsType());
+        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
             'IsoDate' => "string",
+            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -348,18 +344,14 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeTransitiveBogusTypedEndpointMetadata(): void {
         $endpoint = new FakeTransitiveBogusTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getRequestTsType()
-        );
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            $endpoint->getResponseTsType()
-        );
+        $this->assertSame("FakeInput", $endpoint->getRequestTsType());
+        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
             'IsoDate' => "string",
+            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -367,34 +359,35 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeLeafGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame("Input", $endpoint->getRequestTsType());
+        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertEquals([
             'Input' => "{'in': In, 'custom'?: CustomIn}",
             'AliasedString' => "string",
             'In' => "number",
             'CustomIn' => "number",
         ], $endpoint->getNamedTsTypes());
-        $this->assertSame("Input", $endpoint->getRequestTsType());
-        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeLeafPartialGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafPartialGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame("Input", $endpoint->getRequestTsType());
+        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertEquals([
             'Input' => "{'in': In, 'custom'?: CustomIn}",
             'AliasedString' => "string",
             'In' => "number",
             'CustomIn' => "never",
         ], $endpoint->getNamedTsTypes());
-        $this->assertSame("Input", $endpoint->getRequestTsType());
-        $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeAliasedTypedEndpointMetadata(): void {
+        $endpoint = new FakeAliasedTypedEndpoint();
         try {
-            new FakeAliasedTypedEndpoint();
+            $endpoint->parseType();
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame(
@@ -406,8 +399,9 @@ class TypedEndpointTest extends UnitTestCase {
     }
 
     public function testFakePhpstanExtendsTypedEndpointMetadata(): void {
+        $endpoint = new FakePhpstanExtendsTypedEndpoint();
         try {
-            new FakePhpstanExtendsTypedEndpoint();
+            $endpoint->parseType();
             $this->fail('Error expected');
         } catch (\Exception $exc) {
             $this->assertSame(
@@ -431,6 +425,24 @@ class TypedEndpointTest extends UnitTestCase {
             );
             $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
         }
+    }
+
+    public function testFakeTypedEndpointWithErrorsMetadata(): void {
+        $endpoint = new FakeTypedEndpointWithErrors();
+        $endpoint->setLogger($this->fakeLogger);
+        $this->assertSame("FakeInputAbsolute", $endpoint->getRequestTsType());
+        $this->assertSame("FakeOutputAbsolute", $endpoint->getResponseTsType());
+        $this->assertEquals(
+            [
+                'FakeNestedThing' => "{'id': number}",
+                'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
+                '_PhpTypeScriptApi_PhpStan_IsoDate' => "string",
+                'FakeInputAbsolute' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
+                'FakeOutputAbsolute' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
+            ],
+            $endpoint->getNamedTsTypes(),
+        );
+        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeTypedEndpointRuntimeSetup(): void {
@@ -470,40 +482,6 @@ class TypedEndpointTest extends UnitTestCase {
                 "ERROR Throttled user request",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
-    }
-
-    public function testFakeTypedEndpointWithErrorsGetNamedTsTypes(): void {
-        $endpoint = new FakeTypedEndpointWithErrors();
-        $endpoint->setLogger($this->fakeLogger);
-        $this->assertEquals(
-            [
-                'FakeNestedThing' => "{'id': number}",
-                'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
-                '_PhpTypeScriptApi_PhpStan_IsoDate' => "string",
-            ],
-            $endpoint->getNamedTsTypes(),
-        );
-        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
-    }
-
-    public function testFakeTypedEndpointWithErrorsGetRequestTsType(): void {
-        $endpoint = new FakeTypedEndpointWithErrors();
-        $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
-            $endpoint->getRequestTsType(),
-        );
-        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
-    }
-
-    public function testFakeTypedEndpointWithErrorsGetResponseTsType(): void {
-        $endpoint = new FakeTypedEndpointWithErrors();
-        $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame(
-            "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': _PhpTypeScriptApi_PhpStan_IsoDate}",
-            $endpoint->getResponseTsType(),
-        );
-        $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
 
     public function testFakeTypedEndpointWithInvalidInput(): void {
@@ -633,7 +611,7 @@ class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTypedEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = false;
-        $endpoint->handle_with_output = self::$raw_input;
+        $endpoint->handle_with_output = self::$input;
         $result = $endpoint->call(self::$raw_input);
         $this->assertEquals(self::$input, $result);
         $this->assertSame([
@@ -644,23 +622,24 @@ class TypedEndpointTest extends UnitTestCase {
     }
 
     public function testGetTemplateAliases(): void {
+        $php_stan_utils = new PhpStanUtils();
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $php_doc_node_0 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_0 = $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /** */
             ZZZZZZZZZZ);
-        $php_doc_node_1 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_1 = $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @template T
              */
             ZZZZZZZZZZ);
-        $php_doc_node_2 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_2 = $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @template T
              * @template U
              */
             ZZZZZZZZZZ);
-        $php_doc_node_1_or_2 = PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_1_or_2 = $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @template T
              * @template U = null
@@ -744,19 +723,20 @@ class TypedEndpointTest extends UnitTestCase {
     }
 
     public function testGetResolvedExtendsNode(): void {
+        $php_stan_utils = new PhpStanUtils();
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $php_doc_node_1 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_1 = fn () => $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @extends FakeGeneric<T>
              */
             ZZZZZZZZZZ);
-        $php_doc_node_2 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_2 = fn () => $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @extends FakeGeneric<T, U>
              */
             ZZZZZZZZZZ);
-        $php_doc_node_3 = fn () => PhpStanUtils::parseDocComment(<<<'ZZZZZZZZZZ'
+        $php_doc_node_3 = fn () => $php_stan_utils->parseDocComment(<<<'ZZZZZZZZZZ'
             /**
              * @extends FakeGeneric<bool, array<T>, U>
              */

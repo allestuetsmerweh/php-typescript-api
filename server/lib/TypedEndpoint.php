@@ -20,12 +20,17 @@ use Symfony\Component\HttpFoundation\Request;
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
-    private TypeNode $requestTypeNode;
-    private TypeNode $responseTypeNode;
-    /** @var array<string, TypeNode> */
-    private array $aliasNodes;
+    protected PhpStanUtils $phpStanUtils;
+    private ?TypeNode $requestTypeNode = null;
+    private ?TypeNode $responseTypeNode = null;
+    /** @var ?array<string, TypeNode> */
+    private ?array $aliasNodes = null;
 
     public function __construct() {
+        $this->phpStanUtils = new PhpStanUtils();
+    }
+
+    public function parseType(): void {
         $this->configure();
         $class_name = get_called_class();
         $class_info = new \ReflectionClass($class_name);
@@ -33,11 +38,11 @@ abstract class TypedEndpoint implements EndpointInterface {
         $template_aliases = [];
         $extends_node = null;
         while ($class_info->getParentClass()) {
-            $php_doc_node = PhpStanUtils::parseDocComment($class_info->getDocComment());
+            $php_doc_node = $this->phpStanUtils->parseDocComment($class_info->getDocComment());
             $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
             $this->aliasNodes = [
                 ...$this->aliasNodes,
-                ...PhpStanUtils::getAliases($php_doc_node),
+                ...$this->phpStanUtils->getAliases($php_doc_node),
             ];
             $extends_node = $this->getResolvedExtendsNode($php_doc_node, $template_aliases);
             $parent_class_info = $class_info->getParentClass();
@@ -65,6 +70,10 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
         $this->requestTypeNode = $extends_node->type->genericTypes[0];
         $this->responseTypeNode = $extends_node->type->genericTypes[1];
+    }
+
+    public function configure(): void {
+        // Do nothing by default
     }
 
     /**
@@ -129,11 +138,8 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $resolved_extends_node;
     }
 
-    public function configure(): void {
-        // Do nothing by default
-    }
-
     public function setup(): void {
+        $this->parseType();
         $this->runtimeSetup();
     }
 
@@ -149,11 +155,15 @@ abstract class TypedEndpoint implements EndpointInterface {
     /** Override to handle custom requests. */
     public function parseInput(Request $request): mixed {
         $input = json_decode($request->getContent(), true);
-        // GET param `request`.
-        if (!$input && $request->query->has('request')) {
-            $input = json_decode($request->get('request'), true);
+        if (!json_last_error()) {
+            return $input;
         }
-        return $input;
+        // GET param `request`.
+        $request_param = $request->get('request');
+        if (!is_string($request_param)) {
+            return null;
+        }
+        return json_decode($request_param, true);
     }
 
     /**
@@ -167,9 +177,10 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
 
         $result = ValidateVisitor::validateDeserialize(
+            $this->phpStanUtils,
             $raw_input,
-            $this->requestTypeNode,
-            $this->aliasNodes,
+            $this->getRequestTypeNode(),
+            $this->getAliasNodes(),
         );
         if (!$result->isValid()) {
             $this->logger?->warning("Bad user request", [$result->getErrors()]);
@@ -193,9 +204,10 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
 
         $result = ValidateVisitor::validateSerialize(
+            $this->phpStanUtils,
             $raw_output,
-            $this->responseTypeNode,
-            $this->aliasNodes,
+            $this->getResponseTypeNode(),
+            $this->getAliasNodes(),
         );
         if (!$result->isValid()) {
             $this->logger?->critical("Bad output prohibited", [$result->getErrors()]);
@@ -207,10 +219,10 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     /** @return array<string, string> */
     public function getNamedTsTypes(): array {
-        $visitor = new TypeScriptVisitor($this->aliasNodes);
+        $visitor = new TypeScriptVisitor($this->phpStanUtils, $this->getAliasNodes());
         $traverser = new NodeTraverser([$visitor]);
-        $traverser->traverse([$this->requestTypeNode]);
-        $traverser->traverse([$this->responseTypeNode]);
+        $traverser->traverse([$this->getRequestTypeNode()]);
+        $traverser->traverse([$this->getResponseTypeNode()]);
         $named_ts_types = [];
         // We're recursively adding exported classes.
         // An array in PHP is actually an ordered map, so this should work.
@@ -224,17 +236,57 @@ abstract class TypedEndpoint implements EndpointInterface {
     }
 
     public function getRequestTsType(): string {
-        $visitor = new TypeScriptVisitor($this->aliasNodes);
+        $visitor = new TypeScriptVisitor($this->phpStanUtils, $this->getAliasNodes());
         $traverser = new NodeTraverser([$visitor]);
-        [$ts_type_node] = $traverser->traverse([$this->requestTypeNode]);
+        [$ts_type_node] = $traverser->traverse([$this->getRequestTypeNode()]);
         return "{$ts_type_node}";
     }
 
     public function getResponseTsType(): string {
-        $visitor = new TypeScriptVisitor($this->aliasNodes);
+        $visitor = new TypeScriptVisitor($this->phpStanUtils, $this->getAliasNodes());
         $traverser = new NodeTraverser([$visitor]);
-        [$ts_type_node] = $traverser->traverse([$this->responseTypeNode]);
+        [$ts_type_node] = $traverser->traverse([$this->getResponseTypeNode()]);
         return "{$ts_type_node}";
+    }
+
+    /** @return array<string, TypeNode> */
+    protected function getAliasNodes(): array {
+        if ($this->aliasNodes === null) {
+            $this->parseType();
+        }
+        if ($this->aliasNodes === null) {
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            throw new \Exception('Must be set now');
+            // @codeCoverageIgnoreEnd
+        }
+        return $this->aliasNodes;
+    }
+
+    protected function getRequestTypeNode(): TypeNode {
+        if ($this->requestTypeNode === null) {
+            $this->parseType();
+        }
+        if ($this->requestTypeNode === null) {
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            throw new \Exception('Must be set now');
+            // @codeCoverageIgnoreEnd
+        }
+        return $this->requestTypeNode;
+    }
+
+    protected function getResponseTypeNode(): TypeNode {
+        if ($this->responseTypeNode === null) {
+            $this->parseType();
+        }
+        if ($this->responseTypeNode === null) {
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            throw new \Exception('Must be set now');
+            // @codeCoverageIgnoreEnd
+        }
+        return $this->responseTypeNode;
     }
 
     /**

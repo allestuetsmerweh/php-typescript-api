@@ -3,7 +3,6 @@
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\IsoDateTime;
 use PhpTypeScriptApi\PhpStan\IsoTime;
-use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -14,9 +13,9 @@ use PhpTypeScriptApi\TypedEndpoint;
  */
 class CombineDateTimeTypedEndpoint extends TypedEndpoint {
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoDate::class);
-        PhpStanUtils::registerApiObject(IsoTime::class);
-        PhpStanUtils::registerApiObject(IsoDateTime::class);
+        $this->phpStanUtils->registerApiObject(IsoDate::class);
+        $this->phpStanUtils->registerApiObject(IsoTime::class);
+        $this->phpStanUtils->registerApiObject(IsoDateTime::class);
     }
 
     protected function handle(mixed $input): mixed {

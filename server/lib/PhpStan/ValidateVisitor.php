@@ -22,6 +22,7 @@ use PhpTypeScriptApi\Translator;
 final class ValidateVisitor extends AbstractNodeVisitor {
     /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
+        protected PhpStanUtils $phpStanUtils,
         protected mixed $value,
         protected array $aliasNodes = [],
         protected bool $serialize = false,
@@ -29,14 +30,24 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     }
 
     /** @param array<string, TypeNode> $aliasNodes */
-    public static function validateSerialize(mixed $value, Node $type, array $aliasNodes = []): ValidationResultNode {
-        $validator = new ValidateVisitor($value, $aliasNodes, true);
+    public static function validateSerialize(
+        PhpStanUtils $phpStanUtils,
+        mixed $value,
+        Node $type,
+        array $aliasNodes = [],
+    ): ValidationResultNode {
+        $validator = new ValidateVisitor($phpStanUtils, $value, $aliasNodes, true);
         return $validator->subValidate($value, $type);
     }
 
     /** @param array<string, TypeNode> $aliasNodes */
-    public static function validateDeserialize(mixed $value, Node $type, array $aliasNodes = []): ValidationResultNode {
-        $validator = new ValidateVisitor($value, $aliasNodes, false);
+    public static function validateDeserialize(
+        PhpStanUtils $phpStanUtils,
+        mixed $value,
+        Node $type,
+        array $aliasNodes = [],
+    ): ValidationResultNode {
+        $validator = new ValidateVisitor($phpStanUtils, $value, $aliasNodes, false);
         return $validator->subValidate($value, $type);
     }
 
@@ -93,9 +104,9 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 if ($aliased_node) {
                     return $this->subValidate($this->value, $aliased_node);
                 }
-                $serialized_node = PhpStanUtils::getApiObjectTypeNode($node->name);
+                $serialized_node = $this->phpStanUtils->getApiObjectTypeNode($node->name);
                 if ($serialized_node) {
-                    $class_info = PhpStanUtils::resolveApiObjectClass($node->name);
+                    $class_info = $this->phpStanUtils->resolveApiObjectClass($node->name);
                     $class = $class_info?->getName();
                     if ($this->value instanceof $class) {
                         // @phpstan-ignore method.notFound
@@ -288,7 +299,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     }
 
     public function subValidate(mixed $value, Node $type): ValidationResultNode {
-        $visitor = new ValidateVisitor($value, $this->aliasNodes, $this->serialize);
+        $visitor = new ValidateVisitor($this->phpStanUtils, $value, $this->aliasNodes, $this->serialize);
         $traverser = new NodeTraverser([$visitor]);
         [$result_node] = $traverser->traverse([$type]);
         if (!($result_node instanceof ValidationResultNode)) {
