@@ -9,7 +9,6 @@ use PhpTypeScriptApi\Endpoint;
 use PhpTypeScriptApi\Fields\FieldTypes;
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\IsoTime;
-use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\TypedEndpoint;
 use Psr\Log\LoggerInterface;
@@ -89,6 +88,7 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handled_with_resource = null;
     public ?\Exception $handle_with_error = null;
+    /** @var SampleTypedExport1 */
     public mixed $handle_with_output = null;
 
     public mixed $resource = null;
@@ -100,7 +100,7 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
     }
 
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoDate::class);
+        $this->phpStanUtils->registerApiObject(IsoDate::class);
     }
 
     public function runtimeSetup(): void {
@@ -129,6 +129,7 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
 class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
     public mixed $handled_with_input;
     public mixed $handled_with_resource;
+    /** @var array{time: IsoTime} */
     public mixed $handle_with_output;
 
     public mixed $resource;
@@ -139,7 +140,7 @@ class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
     }
 
     public function configure(): void {
-        PhpStanUtils::registerApiObject(IsoTime::class);
+        $this->phpStanUtils->registerApiObject(IsoTime::class);
     }
 
     protected function handle(mixed $input): mixed {

@@ -205,11 +205,12 @@ final class TypeScriptVisitorTest extends UnitTestCase {
             'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
             'Aliased_4' => $this->getTypeNode('null'),
         ];
-        PhpStanUtils::registerApiObject(IsoDate::class);
-        PhpStanUtils::registerApiObject(IsoDateTime::class);
-        PhpStanUtils::registerApiObject(IsoTime::class);
+        $php_stan_utils = new PhpStanUtils();
+        $php_stan_utils->registerApiObject(IsoDate::class);
+        $php_stan_utils->registerApiObject(IsoDateTime::class);
+        $php_stan_utils->registerApiObject(IsoTime::class);
 
-        $visitor = new TypeScriptVisitor($aliases);
+        $visitor = new TypeScriptVisitor($php_stan_utils, $aliases);
         $traverser = new NodeTraverser([$visitor]);
         try {
             [$ts_type_node] = $traverser->traverse([$type_node]);

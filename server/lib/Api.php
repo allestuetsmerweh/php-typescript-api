@@ -98,9 +98,14 @@ class Api {
     }
 
     public function getResponse(Request $request): JsonResponse {
+        $accept_langs = $request->server->get('HTTP_ACCEPT_LANGUAGE');
+        $path_info = $request->server->get('PATH_INFO');
         $translator = Translator::getInstance();
-        $translator->setAcceptLangs($request->server->get('HTTP_ACCEPT_LANGUAGE'));
-        $endpoint_name = $this->getSanitizedEndpointName($request->server->get('PATH_INFO'));
+        $translator->setAcceptLangs(is_string($accept_langs)
+            ? $accept_langs : null);
+        $endpoint_name = $this->getSanitizedEndpointName(
+            is_string($path_info) ? $path_info : ''
+        );
         if ($this->logger) {
             $handler = new \Monolog\ErrorHandler($this->logger);
             $handler->registerErrorHandler();

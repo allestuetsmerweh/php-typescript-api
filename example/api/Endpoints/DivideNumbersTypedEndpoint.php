@@ -1,7 +1,5 @@
 <?php
 
-use PhpTypeScriptApi\PhpStan\PhpStanUtils;
-
 require_once __DIR__.'/DivideTypedEndpoint.php';
 
 /**
@@ -11,6 +9,6 @@ require_once __DIR__.'/DivideTypedEndpoint.php';
  */
 class DivideNumbersTypedEndpoint extends DivideTypedEndpoint {
     public function configure(): void {
-        PhpStanUtils::registerTypeImport(DivideTypedEndpoint::class);
+        $this->phpStanUtils->registerTypeImport(DivideTypedEndpoint::class);
     }
 }

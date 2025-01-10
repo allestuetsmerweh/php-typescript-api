@@ -32,7 +32,8 @@ class UnitTestCase extends TestCase {
     }
 
     protected function getTypeNode(string $type_str): TypeNode {
-        $phpDocNode = PhpStanUtils::parseDocComment("/** @return {$type_str} */");
+        $utils = new PhpStanUtils();
+        $phpDocNode = $utils->parseDocComment("/** @return {$type_str} */");
         if (!$phpDocNode) {
             throw new \Exception("Could not parse: {$type_str}");
         }

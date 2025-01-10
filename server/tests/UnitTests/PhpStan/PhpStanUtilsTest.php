@@ -37,81 +37,92 @@ class FakeApiObject implements ApiObjectInterface {
  */
 final class PhpStanUtilsTest extends UnitTestCase {
     public function testResolveFull(): void {
+        $utils = new PhpStanUtils();
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveClass(FakeApiObject::class, [])?->getName(),
+            $utils->resolveClass(FakeApiObject::class, [])?->getName(),
         );
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveApiObjectClass(FakeApiObject::class)?->getName(),
+            $utils->resolveApiObjectClass(FakeApiObject::class)?->getName(),
         );
     }
 
     public function testResolveFullyQualified(): void {
+        $utils = new PhpStanUtils();
         $class_name = FakeApiObject::class;
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveClass("\\{$class_name}", [])?->getName(),
+            $utils->resolveClass("\\{$class_name}", [])?->getName(),
         );
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveApiObjectClass("\\{$class_name}")?->getName(),
+            $utils->resolveApiObjectClass("\\{$class_name}")?->getName(),
         );
     }
 
     public function testResolveShort(): void {
+        $utils = new PhpStanUtils();
         $registry = ['FakeApiObject' => FakeApiObject::class];
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveClass('FakeApiObject', $registry)?->getName(),
+            $utils->resolveClass('FakeApiObject', $registry)?->getName(),
         );
-        PhpStanUtils::registerApiObject(FakeApiObject::class);
+        $utils->registerApiObject(FakeApiObject::class);
         $this->assertSame(
             FakeApiObject::class,
-            PhpStanUtils::resolveApiObjectClass('FakeApiObject')?->getName(),
+            $utils->resolveApiObjectClass('FakeApiObject')?->getName(),
         );
     }
 
     public function testResolveInvalid(): void {
-        $this->assertNull(PhpStanUtils::resolveClass('Invalid', []));
-        $this->assertNull(PhpStanUtils::resolveApiObjectClass('Invalid'));
+        $utils = new PhpStanUtils();
+        $this->assertNull($utils->resolveClass('Invalid', []));
+        $this->assertNull($utils->resolveApiObjectClass('Invalid'));
     }
 
     public function testResolveNonApiObject(): void {
+        $utils = new PhpStanUtils();
         $this->assertSame(
             PhpStanUtilsTest::class,
-            PhpStanUtils::resolveClass(PhpStanUtilsTest::class, [])?->getName(),
+            $utils->resolveClass(PhpStanUtilsTest::class, [])?->getName(),
         );
-        $this->assertNull(PhpStanUtils::resolveApiObjectClass(PhpStanUtilsTest::class));
+        $this->assertNull($utils->resolveApiObjectClass(PhpStanUtilsTest::class));
     }
 
     public function testApiObjectTypeNodeFull(): void {
-        $node = PhpStanUtils::getApiObjectTypeNode(FakeApiObject::class);
+        $utils = new PhpStanUtils();
+        $node = $utils->getApiObjectTypeNode(FakeApiObject::class);
         $this->assertSame("'foo'", "{$node}");
     }
 
     public function testApiObjectTypeNodeFullyQualified(): void {
+        $utils = new PhpStanUtils();
         $class_name = FakeApiObject::class;
-        $node = PhpStanUtils::getApiObjectTypeNode("\\{$class_name}");
+        $node = $utils->getApiObjectTypeNode("\\{$class_name}");
         $this->assertSame("'foo'", "{$node}");
     }
 
     public function testApiObjectTypeNodeShort(): void {
-        PhpStanUtils::registerApiObject(FakeApiObject::class);
+        $utils = new PhpStanUtils();
+        $utils->registerApiObject(FakeApiObject::class);
 
-        $node = PhpStanUtils::getApiObjectTypeNode('FakeApiObject');
+        $node = $utils->getApiObjectTypeNode('FakeApiObject');
         $this->assertSame("'foo'", "{$node}");
     }
 
     public function testApiObjectTypeNodeInvalid(): void {
-        $this->assertNull(PhpStanUtils::getApiObjectTypeNode('Invalid'));
+        $utils = new PhpStanUtils();
+        $this->assertNull($utils->getApiObjectTypeNode('Invalid'));
     }
 
     public function testApiObjectTypeNodeNonApiObject(): void {
-        $this->assertNull(PhpStanUtils::getApiObjectTypeNode(PhpStanUtilsTest::class));
+        $utils = new PhpStanUtils();
+        $this->assertNull($utils->getApiObjectTypeNode(PhpStanUtilsTest::class));
     }
 
     public function testGetAliases(): void {
+        $utils = new PhpStanUtils();
         $comment = <<<'ZZZZZZZZZZ'
             /**
              * @phpstan-type AliasedInt int
@@ -119,38 +130,40 @@ final class PhpStanUtilsTest extends UnitTestCase {
              * @phpstan-type AliasedRecursive array{recursive: AliasedRecursive|int}
              */
             ZZZZZZZZZZ;
-        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+        $phpDocNode = $utils->parseDocComment($comment);
 
         $this->assertEquals([
             'AliasedInt' => $this->getTypeNode("int"),
             'AliasedArray' => $this->getTypeNode("array<string, int>"),
             'AliasedRecursive' => $this->getTypeNode("array{recursive: AliasedRecursive|int}"),
-        ], PhpStanUtils::getAliases($phpDocNode));
+        ], $utils->getAliases($phpDocNode));
     }
 
     public function testGetImportedAliases(): void {
-        PhpStanUtils::registerTypeImport(FakePhpStanUtilsTypedEndpoint::class);
+        $utils = new PhpStanUtils();
+        $utils->registerTypeImport(FakePhpStanUtilsTypedEndpoint::class);
         $comment = <<<'ZZZZZZZZZZ'
             /**
              * @phpstan-import-type AliasedInt from FakePhpStanUtilsTypedEndpoint
              */
             ZZZZZZZZZZ;
-        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+        $phpDocNode = $utils->parseDocComment($comment);
 
         $this->assertEquals([
             'AliasedInt' => $this->getTypeNode("int"),
-        ], PhpStanUtils::getAliases($phpDocNode));
+        ], $utils->getAliases($phpDocNode));
     }
 
     public function testGetImportedAliasesError(): void {
+        $utils = new PhpStanUtils();
         $comment = <<<'ZZZZZZZZZZ'
             /**
              * @phpstan-import-type AliasedInt from Invalid
              */
             ZZZZZZZZZZ;
-        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+        $phpDocNode = $utils->parseDocComment($comment);
         try {
-            PhpStanUtils::getAliases($phpDocNode);
+            $utils->getAliases($phpDocNode);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
@@ -161,6 +174,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
     }
 
     public function testParseValidDocComment(): void {
+        $utils = new PhpStanUtils();
         $comment = <<<'ZZZZZZZZZZ'
             /**
              * @param string $arg0
@@ -168,26 +182,29 @@ final class PhpStanUtilsTest extends UnitTestCase {
              */
             ZZZZZZZZZZ;
 
-        $phpDocNode = PhpStanUtils::parseDocComment($comment);
+        $phpDocNode = $utils->parseDocComment($comment);
 
         $this->assertSame('string', "{$phpDocNode?->getParamTagValues()[0]->type}");
         $this->assertSame('int', "{$phpDocNode?->getReturnTagValues()[0]->type}");
     }
 
     public function testParseEmptyDocComment(): void {
-        $phpDocNode = PhpStanUtils::parseDocComment('/** Empty */');
+        $utils = new PhpStanUtils();
+        $phpDocNode = $utils->parseDocComment('/** Empty */');
 
         $this->assertSame([], $phpDocNode?->getParamTagValues());
         $this->assertSame([], $phpDocNode->getReturnTagValues());
     }
 
     public function testParseInexistentDocComment(): void {
-        $this->assertNull(PhpStanUtils::parseDocComment(false));
+        $utils = new PhpStanUtils();
+        $this->assertNull($utils->parseDocComment(false));
     }
 
     public function testParseInvalidDocComment(): void {
+        $utils = new PhpStanUtils();
         try {
-            PhpStanUtils::parseDocComment('invalid');
+            $utils->parseDocComment('invalid');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(

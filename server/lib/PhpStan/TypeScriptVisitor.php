@@ -26,6 +26,7 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
 
     /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
+        protected PhpStanUtils $phpStanUtils,
         protected array $aliasNodes = [],
     ) {
     }
@@ -98,7 +99,7 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
             $new_name = $mapping[$node->name] ?? null;
             if ($new_name === null) {
                 $resolved_node = $this->aliasNodes[$node->name] ??
-                    PhpStanUtils::getApiObjectTypeNode($node->name);
+                    $this->phpStanUtils->getApiObjectTypeNode($node->name);
                 if ($resolved_node) {
                     $sane_node = preg_replace('/[^A-Za-z0-9_]/', '_', $node->name);
                     $this->exported_classes[$sane_node] = $resolved_node;

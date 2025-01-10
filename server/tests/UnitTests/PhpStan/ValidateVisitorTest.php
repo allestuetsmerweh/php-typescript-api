@@ -1066,28 +1066,32 @@ final class ValidateVisitorTest extends UnitTestCase {
     }
 
     public function testIsoDateSerialize(): void {
+        $php_stan_utils = new PhpStanUtils();
+        $php_stan_utils->registerApiObject(IsoDate::class);
         $type_node = $this->getTypeNode("IsoDate");
 
         $this->assertSame(
             '2024-12-24',
-            ValidateVisitor::validateSerialize('2024-12-24', $type_node)->getValue(),
+            ValidateVisitor::validateSerialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
         );
         $this->assertSame(
             '2024-12-24',
-            ValidateVisitor::validateSerialize(new IsoDate('2024-12-24'), $type_node)->getValue(),
+            ValidateVisitor::validateSerialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
         );
     }
 
     public function testIsoDateDeserialize(): void {
+        $php_stan_utils = new PhpStanUtils();
+        $php_stan_utils->registerApiObject(IsoDate::class);
         $type_node = $this->getTypeNode("IsoDate");
 
         $this->assertEquals(
             new IsoDate('2024-12-24'),
-            ValidateVisitor::validateDeserialize('2024-12-24', $type_node)->getValue(),
+            ValidateVisitor::validateDeserialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
         );
         $this->assertEquals(
             new IsoDate('2024-12-24'),
-            ValidateVisitor::validateDeserialize(new IsoDate('2024-12-24'), $type_node)->getValue(),
+            ValidateVisitor::validateDeserialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
         );
     }
 
@@ -1127,11 +1131,12 @@ final class ValidateVisitorTest extends UnitTestCase {
             'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
             'Aliased_4' => $this->getTypeNode('false'),
         ];
-        PhpStanUtils::registerApiObject(IsoDate::class);
-        PhpStanUtils::registerApiObject(IsoDateTime::class);
-        PhpStanUtils::registerApiObject(IsoTime::class);
+        $php_stan_utils = new PhpStanUtils();
+        $php_stan_utils->registerApiObject(IsoDate::class);
+        $php_stan_utils->registerApiObject(IsoDateTime::class);
+        $php_stan_utils->registerApiObject(IsoTime::class);
 
-        $result_node = ValidateVisitor::validateDeserialize($value, $type_node, $aliases);
+        $result_node = ValidateVisitor::validateDeserialize($php_stan_utils, $value, $type_node, $aliases);
         return $result_node->isValid() ? null : "{$result_node}";
     }
 }

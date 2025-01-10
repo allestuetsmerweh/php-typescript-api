@@ -13,17 +13,17 @@ use PHPStan\PhpDocParser\ParserConfig;
 
 class PhpStanUtils {
     /** @var array<string, string> */
-    protected static array $apiObjectRegistry = [];
+    protected array $apiObjectRegistry = [];
 
     /** @var array<string, string> */
-    protected static array $typeImportRegistry = [];
+    protected array $typeImportRegistry = [];
 
-    public static function getApiObjectTypeNode(string $name): ?TypeNode {
-        $class_info = self::resolveApiObjectClass($name);
+    public function getApiObjectTypeNode(string $name): ?TypeNode {
+        $class_info = $this->resolveApiObjectClass($name);
         if ($class_info === null) {
             return null;
         }
-        $php_doc_node = self::parseDocComment($class_info->getDocComment());
+        $php_doc_node = $this->parseDocComment($class_info->getDocComment());
         $implements_node = null;
         foreach ($php_doc_node?->getImplementsTagValues() ?? [] as $node) {
             $generic_node = $node->type;
@@ -35,8 +35,8 @@ class PhpStanUtils {
     }
 
     /** @return \ReflectionClass<ApiObjectInterface<mixed>> */
-    public static function resolveApiObjectClass(string $name): ?\ReflectionClass {
-        $class_info = self::resolveClass($name, PhpStanUtils::$apiObjectRegistry);
+    public function resolveApiObjectClass(string $name): ?\ReflectionClass {
+        $class_info = $this->resolveClass($name, $this->apiObjectRegistry);
         if (!$class_info || !$class_info->implementsInterface(ApiObjectInterface::class)) {
             return null;
         }
@@ -49,7 +49,7 @@ class PhpStanUtils {
      *
      * @return ?\ReflectionClass<object>
      */
-    public static function resolveClass(string $name, array $registry): ?\ReflectionClass {
+    public function resolveClass(string $name, array $registry): ?\ReflectionClass {
         try {
             // @phpstan-ignore argument.type
             return new \ReflectionClass($name);
@@ -64,25 +64,33 @@ class PhpStanUtils {
         }
     }
 
-    /** @param class-string<ApiObjectInterface<mixed>> $class */
-    public static function registerApiObject(string $class): void {
+    /**
+     * @template T of ApiObjectInterface<mixed>
+     *
+     * @param class-string<T> $class
+     */
+    public function registerApiObject(string $class): void {
         $class_info = new \ReflectionClass($class);
         if ($class_info->implementsInterface(ApiObjectInterface::class)) {
             $components = explode('\\', $class);
             $short_name = end($components);
-            PhpStanUtils::$apiObjectRegistry[$short_name] = $class;
+            $this->apiObjectRegistry[$short_name] = $class;
         }
     }
 
-    /** @param class-string<mixed> $class */
-    public static function registerTypeImport(string $class): void {
+    /**
+     * @template T
+     *
+     * @param class-string<T> $class
+     */
+    public function registerTypeImport(string $class): void {
         $components = explode('\\', $class);
         $short_name = end($components);
-        PhpStanUtils::$typeImportRegistry[$short_name] = $class;
+        $this->typeImportRegistry[$short_name] = $class;
     }
 
     /** @return array<string, TypeNode> */
-    public static function getAliases(?PhpDocNode $php_doc_node): array {
+    public function getAliases(?PhpDocNode $php_doc_node): array {
         $aliases = [];
         foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
             $aliases[$alias_node->alias] = $alias_node->type;
@@ -90,8 +98,8 @@ class PhpStanUtils {
         foreach ($php_doc_node?->getTypeAliasImportTagValues() ?? [] as $import_node) {
             $alias = $import_node->importedAs ?? $import_node->importedAlias;
             $from = $import_node->importedFrom->name;
-            $class_info = self::resolveClass($from, PhpStanUtils::$typeImportRegistry);
-            $import_php_doc_node = self::parseDocComment($class_info?->getDocComment());
+            $class_info = $this->resolveClass($from, $this->typeImportRegistry);
+            $import_php_doc_node = $this->parseDocComment($class_info?->getDocComment());
             $found_alias = null;
             foreach ($import_php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
                 if ($alias_node->alias === $import_node->importedAlias) {
@@ -106,7 +114,7 @@ class PhpStanUtils {
         return $aliases;
     }
 
-    public static function parseDocComment(string|false|null $doc_comment): ?PhpDocNode {
+    public function parseDocComment(string|false|null $doc_comment): ?PhpDocNode {
         if (!$doc_comment) {
             return null;
         }
