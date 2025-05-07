@@ -416,7 +416,7 @@ final class ApiTest extends UnitTestCase {
         ]), $response->getContent());
 
         $this->assertSame([
-            'WARNING Invalid endpoint called: inexistent',
+            'NOTICE Invalid endpoint called: inexistent',
         ], $this->fakeLogHandler->getPrettyRecords());
     }
 

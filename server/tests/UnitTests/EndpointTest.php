@@ -213,7 +213,7 @@ final class EndpointTest extends UnitTestCase {
                 'error' => true,
             ], $err->getStructuredAnswer());
             $this->assertSame([
-                "ERROR Throttled user request",
+                "NOTICE Throttled user request",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
     }
@@ -235,7 +235,7 @@ final class EndpointTest extends UnitTestCase {
                 ],
             ], $err->getStructuredAnswer());
             $this->assertSame([
-                "WARNING Bad user request",
+                "NOTICE Bad user request",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
     }
@@ -282,7 +282,7 @@ final class EndpointTest extends UnitTestCase {
             $this->assertSame([
                 "INFO Valid user request",
                 "INFO Handling with HTTP error...",
-                "WARNING HTTP error 418",
+                "NOTICE HTTP error 418",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
     }
@@ -307,7 +307,7 @@ final class EndpointTest extends UnitTestCase {
             $this->assertSame([
                 "INFO Valid user request",
                 "INFO Handling with validation error...",
-                "WARNING Bad user request",
+                "NOTICE Bad user request",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
     }
