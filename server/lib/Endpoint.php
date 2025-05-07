@@ -45,7 +45,7 @@ abstract class Endpoint implements EndpointInterface {
 
     public function call(mixed $raw_input): mixed {
         if ($this->shouldFailThrottling()) {
-            $this->logger?->error("Throttled user request");
+            $this->logger?->notice("Throttled user request");
             throw new HttpError(429, Translator::__('endpoint.too_many_requests'));
         }
         $field_utils = Fields\FieldUtils::create();
@@ -54,17 +54,17 @@ abstract class Endpoint implements EndpointInterface {
             $validated_input = $field_utils->validate($this->getRequestField(), $raw_input);
             $this->logger?->info("Valid user request");
         } catch (Fields\ValidationError $verr) {
-            $this->logger?->warning("Bad user request", $verr->getStructuredAnswer());
+            $this->logger?->notice("Bad user request", $verr->getStructuredAnswer());
             throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         }
 
         try {
             $raw_result = $this->handle($validated_input);
         } catch (Fields\ValidationError $verr) {
-            $this->logger?->warning("Bad user request", $verr->getStructuredAnswer());
+            $this->logger?->notice("Bad user request", $verr->getStructuredAnswer());
             throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
-            $this->logger?->warning("HTTP error {$http_error->getCode()}", [$http_error]);
+            $this->logger?->notice("HTTP error {$http_error->getCode()}", [$http_error]);
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();

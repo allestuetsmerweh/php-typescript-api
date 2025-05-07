@@ -114,7 +114,7 @@ class Api {
         try {
             if (!isset($this->endpoints[$endpoint_name])) {
                 if ($this->logger) {
-                    $this->logger->warning("Invalid endpoint called: {$endpoint_name}");
+                    $this->logger->notice("Invalid endpoint called: {$endpoint_name}");
                 }
                 throw new HttpError(400, Translator::__('api.invalid_endpoint'));
             }

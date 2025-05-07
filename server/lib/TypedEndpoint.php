@@ -172,7 +172,7 @@ abstract class TypedEndpoint implements EndpointInterface {
      */
     public function call(mixed $raw_input): mixed {
         if ($this->shouldFailThrottling()) {
-            $this->logger?->error("Throttled user request");
+            $this->logger?->notice("Throttled user request");
             throw new HttpError(429, Translator::__('endpoint.too_many_requests'));
         }
 
@@ -183,7 +183,7 @@ abstract class TypedEndpoint implements EndpointInterface {
             $this->getAliasNodes(),
         );
         if (!$result->isValid()) {
-            $this->logger?->warning("Bad user request", [$result->getErrors()]);
+            $this->logger?->notice("Bad user request", [$result->getErrors()]);
             throw new HttpError(400, Translator::__('endpoint.bad_input'), new ValidationError($result->getErrors()));
         }
         $this->logger?->info("Valid user request");
@@ -192,10 +192,10 @@ abstract class TypedEndpoint implements EndpointInterface {
         try {
             $raw_output = $this->handle($input);
         } catch (ValidationError $verr) {
-            $this->logger?->warning("Bad user request", $verr->getStructuredAnswer());
+            $this->logger?->notice("Bad user request", $verr->getStructuredAnswer());
             throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
-            $this->logger?->warning("HTTP error {$http_error->getCode()}", [$http_error]);
+            $this->logger?->notice("HTTP error {$http_error->getCode()}", [$http_error]);
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();
