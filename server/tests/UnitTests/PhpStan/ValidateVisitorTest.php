@@ -206,11 +206,11 @@ final class ValidateVisitorTest extends UnitTestCase {
     public function testFloatNode(): void {
         $this->assertNotNull($this->validate('float', null));
         $this->assertNotNull($this->validate('float', true));
-        $this->assertNotNull($this->validate('float', PHP_INT_MIN));
-        $this->assertNotNull($this->validate('float', -100));
-        $this->assertNotNull($this->validate('float', 0));
-        $this->assertNotNull($this->validate('float', 2));
-        $this->assertNotNull($this->validate('float', PHP_INT_MAX));
+        $this->assertNull($this->validate('float', PHP_INT_MIN));
+        $this->assertNull($this->validate('float', -100));
+        $this->assertNull($this->validate('float', 0));
+        $this->assertNull($this->validate('float', 2));
+        $this->assertNull($this->validate('float', PHP_INT_MAX));
         $this->assertNotNull($this->validate('float', '5'));
         $this->assertNull($this->validate('float', 3.14));
         $this->assertNull($this->validate('float', 7.64E+5));
@@ -224,11 +224,11 @@ final class ValidateVisitorTest extends UnitTestCase {
     public function testDoubleNode(): void {
         $this->assertNotNull($this->validate('double', null));
         $this->assertNotNull($this->validate('double', true));
-        $this->assertNotNull($this->validate('double', PHP_INT_MIN));
-        $this->assertNotNull($this->validate('double', -100));
-        $this->assertNotNull($this->validate('double', 0));
-        $this->assertNotNull($this->validate('double', 2));
-        $this->assertNotNull($this->validate('double', PHP_INT_MAX));
+        $this->assertNull($this->validate('double', PHP_INT_MIN));
+        $this->assertNull($this->validate('double', -100));
+        $this->assertNull($this->validate('double', 0));
+        $this->assertNull($this->validate('double', 2));
+        $this->assertNull($this->validate('double', PHP_INT_MAX));
         $this->assertNotNull($this->validate('double', '5'));
         $this->assertNull($this->validate('double', 3.14));
         $this->assertNull($this->validate('double', 7.64E+5));

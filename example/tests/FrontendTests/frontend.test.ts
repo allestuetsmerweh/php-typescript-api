@@ -200,10 +200,7 @@ describe('frontend end-to-end', () => {
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
-                    '.': [
-                        {'.': ['Value must be of type float.']},
-                        {'.': ['Value must not be less than 0.']},
-                    ],
+                    '.': ['Value must not be negative'],
                 });
             }
 
