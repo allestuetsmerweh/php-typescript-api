@@ -69,34 +69,34 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         }
         if ($node instanceof IdentifierTypeNode) {
             $mapping = [
-                'mixed' => fn (): bool => true,
-                'null' => fn ($value): bool => $value === null,
+                'mixed' => fn ($value): mixed => $value,
+                'null' => fn ($value) => $value === null ? $value : throw new \Exception(),
                 // Boolean
-                'bool' => fn ($value): bool => is_bool($value),
-                'boolean' => fn ($value): bool => is_bool($value),
-                'true' => fn ($value): bool => is_bool($value) && $value === true,
-                'false' => fn ($value): bool => is_bool($value) && $value === false,
+                'bool' => fn ($value): bool => is_bool($value) ? $value : throw new \Exception(),
+                'boolean' => fn ($value): bool => is_bool($value) ? $value : throw new \Exception(),
+                'true' => fn ($value): bool => (is_bool($value) && $value === true) ? $value : throw new \Exception(),
+                'false' => fn ($value): bool => (is_bool($value) && $value === false) ? $value : throw new \Exception(),
                 // Numeric
-                'int' => fn ($value): bool => is_int($value),
-                'integer' => fn ($value): bool => is_int($value),
-                'positive-int' => fn ($value): bool => is_int($value) && $value > 0,
-                'negative-int' => fn ($value): bool => is_int($value) && $value < 0,
-                'non-positive-int' => fn ($value): bool => is_int($value) && $value <= 0,
-                'non-negative-int' => fn ($value): bool => is_int($value) && $value >= 0,
-                'non-zero-int' => fn ($value): bool => is_int($value) && $value !== 0,
-                'float' => fn ($value): bool => is_float($value),
-                'double' => fn ($value): bool => is_double($value),
-                'number' => fn ($value): bool => is_numeric($value),
+                'int' => fn ($value): int => is_int($value) ? $value : throw new \Exception(),
+                'integer' => fn ($value): int => is_int($value) ? $value : throw new \Exception(),
+                'positive-int' => fn ($value): int => (is_int($value) && $value > 0) ? $value : throw new \Exception(),
+                'negative-int' => fn ($value): int => (is_int($value) && $value < 0) ? $value : throw new \Exception(),
+                'non-positive-int' => fn ($value): int => (is_int($value) && $value <= 0) ? $value : throw new \Exception(),
+                'non-negative-int' => fn ($value): int => (is_int($value) && $value >= 0) ? $value : throw new \Exception(),
+                'non-zero-int' => fn ($value): int => (is_int($value) && $value !== 0) ? $value : throw new \Exception(),
+                'float' => fn ($value): float => (is_float($value) || is_int($value)) ? floatval($value) : throw new \Exception(),
+                'double' => fn ($value): float => (is_float($value) || is_int($value)) ? floatval($value) : throw new \Exception(),
+                'number' => fn ($value): string|float|int => is_numeric($value) ? $value : throw new \Exception(),
                 // String
-                'string' => fn ($value): bool => is_string($value),
-                'numeric-string' => fn ($value): bool => is_string($value) && is_numeric($value),
-                'non-empty-string' => fn ($value): bool => is_string($value) && !empty($value),
-                'lowercase-string' => fn ($value): bool => is_string($value) && preg_match('/^[a-z]+$/', $value),
+                'string' => fn ($value): string => is_string($value) ? $value : throw new \Exception(),
+                'numeric-string' => fn ($value): string => (is_string($value) && is_numeric($value)) ? $value : throw new \Exception(),
+                'non-empty-string' => fn ($value): string => (is_string($value) && !empty($value)) ? $value : throw new \Exception(),
+                'lowercase-string' => fn ($value): string => (is_string($value) && preg_match('/^[a-z]+$/', $value)) ? $value : throw new \Exception(),
                 // Never
-                'never' => fn (): bool => false,
-                'never-return' => fn (): bool => false,
-                'never-returns' => fn (): bool => false,
-                'no-return' => fn (): bool => false,
+                'never' => fn () => throw new \Exception(),
+                'never-return' => fn () => throw new \Exception(),
+                'never-returns' => fn () => throw new \Exception(),
+                'no-return' => fn () => throw new \Exception(),
             ];
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {
@@ -130,10 +130,11 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 }
                 throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}");
             }
-            if (!$fn($this->value)) {
+            try {
+                return ValidationResultNode::valid($fn($this->value));
+            } catch (\Throwable $th) {
                 return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
             }
-            return ValidationResultNode::valid($this->value);
         }
         if ($node instanceof GenericTypeNode) {
             if ("{$node->type}" === 'int') {

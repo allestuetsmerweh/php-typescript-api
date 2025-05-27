@@ -38,10 +38,7 @@ final class SquareRootTypedEndpointTest extends ExampleBackendTestCase {
             'error' => [
                 'type' => 'ValidationError',
                 'validationErrors' => [
-                    '.' => [
-                        ['.' => ['']],
-                        ['.' => ['']],
-                    ],
+                    '.' => ['Value must not be negative'],
                 ],
             ],
         ], $result['result']);
