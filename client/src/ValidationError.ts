@@ -1,4 +1,4 @@
-export type ErrorsByField = {[fieldId in string]: Array<ErrorsByField|string>};
+export type ErrorsByField = {[fieldId in string]: Array<ErrorsByField | string>};
 
 export type ErrorsByFlatField = {[fieldId in string]: string[]};
 

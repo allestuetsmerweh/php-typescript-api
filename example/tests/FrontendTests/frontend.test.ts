@@ -38,7 +38,7 @@ describe('frontend end-to-end', () => {
             try {
                 // On CI, only this works!
                 process.kill(-server.pid);
-            } catch (e: unknown) {
+            } catch (_e: unknown) {
                 server.kill();
             }
         } else {

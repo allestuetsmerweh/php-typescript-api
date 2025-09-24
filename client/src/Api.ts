@@ -4,7 +4,7 @@ import {ErrorsByField, ValidationError} from './ValidationError';
 export abstract class Api<
     Endpoints extends string,
     Requests extends {[key in Endpoints]: any},
-    Responses extends {[key in Endpoints]: any}
+    Responses extends {[key in Endpoints]: any},
 > {
     public abstract baseUrl: string;
 
@@ -61,14 +61,14 @@ export abstract class Api<
 
     public getValidationErrorFromResponseText(
         responseText?: string,
-    ): ValidationError|undefined {
+    ): ValidationError | undefined {
         if (!responseText) {
             return undefined;
         }
         let structuredError;
         try {
             structuredError = JSON.parse(responseText);
-        } catch (e: unknown) {
+        } catch (_e: unknown) {
             return undefined;
         }
         if (structuredError?.error?.type !== 'ValidationError') {

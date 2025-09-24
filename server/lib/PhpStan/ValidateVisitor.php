@@ -108,8 +108,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 if ($serialized_node) {
                     $class_info = $this->phpStanUtils->resolveApiObjectClass($node->name);
                     $class = $class_info?->getName();
-                    if ($this->value instanceof $class) {
-                        // @phpstan-ignore method.notFound
+                    if ($class && $this->value instanceof $class) {
                         $data = $this->value->data();
                         $result = $this->subValidate($data, $serialized_node);
                         if ($this->serialize) {

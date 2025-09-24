@@ -6,6 +6,9 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB;
 
 /**
  * @template T
+ * @template U
+ *
+ * @phpstan-type FakeBType string
  */
 class FakeBClass {
 }

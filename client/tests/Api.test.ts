@@ -6,10 +6,10 @@ import {ValidationError} from '../src/ValidationError';
 
 type UnfetchFetchFunction = typeof fetch;
 
-type FakeApiEndpoint = 'fake1'|'fake2';
+type FakeApiEndpoint = 'fake1' | 'fake2';
 type FakeApiRequests = {
     'fake1': string,
-    'fake2': {arg1: number|null, arg2: string},
+    'fake2': {arg1: number | null, arg2: string},
 };
 type FakeApiResponses = {
     'fake1': string[],

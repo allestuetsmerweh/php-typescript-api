@@ -31,12 +31,12 @@ use Symfony\Component\HttpFoundation\Request;
  *   date: IsoDate,
  * }
  *
- * @extends TypedEndpoint<FakeInput, FakeOutput>
+ * @extends TypedEndpoint<FakeInput, ?FakeOutput>
  */
 class FakeTypedEndpoint extends TypedEndpoint {
-    /** @var FakeInput */
+    /** @var ?FakeInput */
     public mixed $handled_with_input = null;
-    /** @var FakeOutput */
+    /** @var ?FakeOutput */
     public mixed $handle_with_output = null;
     public bool $ran_runtime_setup = false;
 
@@ -217,7 +217,7 @@ class TypedEndpointTest extends UnitTestCase {
      * @var array{
      *     mapping: array<string, number>,
      *     named: array{id: int, name: string, nested: array{id: int}},
-     *     date: \PhpTypeScriptApi\PhpStan\IsoDate,
+     *     date: IsoDate,
      *   }
      */
     protected static array $input;
@@ -299,7 +299,7 @@ class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame("FakeInput", $endpoint->getRequestTsType());
-        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
+        $this->assertSame("(FakeOutput | null)", $endpoint->getResponseTsType());
         $this->assertEquals(
             [
                 'FakeNestedThing' => "{'id': number}",
@@ -317,7 +317,7 @@ class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTransitiveTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame("FakeInput", $endpoint->getRequestTsType());
-        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
+        $this->assertSame("(FakeOutput | null)", $endpoint->getResponseTsType());
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
@@ -332,7 +332,7 @@ class TypedEndpointTest extends UnitTestCase {
         $endpoint = new FakeTransitiveBogusTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
         $this->assertSame("FakeInput", $endpoint->getRequestTsType());
-        $this->assertSame("FakeOutput", $endpoint->getResponseTsType());
+        $this->assertSame("(FakeOutput | null)", $endpoint->getResponseTsType());
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",

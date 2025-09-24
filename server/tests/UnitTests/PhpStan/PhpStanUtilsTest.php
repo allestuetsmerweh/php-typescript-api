@@ -10,6 +10,7 @@ use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAnotherAClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeSameFileAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
 
@@ -167,8 +168,9 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $fake_aa_class = FakeAAClass::class;
         $fake_b_class = FakeBClass::class;
         $fake_class = FakeClass::class;
+        $fake_same_file_a_class = FakeSameFileAClass::class;
         $this->assertSame(
-            "{$fake_another_class}<{$fake_aa_class}<{$fake_b_class}<{$fake_class}<string>>>>",
+            "{$fake_another_class}<FakeAnotherAType, {$fake_aa_class}<FakeAAType, {$fake_b_class}<FakeBType, {$fake_class}<FakeType, {$fake_same_file_a_class}<FakeSameFileAType, string>>>>>",
             "{$phpDocNode?->getExtendsTagValues()[0]->type}",
         );
     }

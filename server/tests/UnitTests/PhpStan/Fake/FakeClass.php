@@ -6,6 +6,9 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake;
 
 /**
  * @template T
+ * @template U
+ *
+ * @phpstan-type FakeType string
  */
 class FakeClass {
 }

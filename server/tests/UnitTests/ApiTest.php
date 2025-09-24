@@ -82,13 +82,13 @@ class FakeApiTestEndpoint2 extends Endpoint {
 /**
  * @phpstan-type SampleTypedExport1 array{}
  *
- * @extends TypedEndpoint<?array{date: IsoDate}, SampleTypedExport1>
+ * @extends TypedEndpoint<?array{date: IsoDate}, ?SampleTypedExport1>
  */
 class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
     public mixed $handled_with_input = null;
     public mixed $handled_with_resource = null;
     public ?\Exception $handle_with_error = null;
-    /** @var SampleTypedExport1 */
+    /** @var ?SampleTypedExport1 */
     public mixed $handle_with_output = null;
 
     public mixed $resource = null;
@@ -195,7 +195,7 @@ final class ApiTest extends UnitTestCase {
             export interface FakeApiResponses extends FakeApiEndpointMapping {
                 fakeEndpoint1: SampleExport1,
                 fakeEndpoint2: unknown,
-                fakeTypedEndpoint1: SampleTypedExport1,
+                fakeTypedEndpoint1: (SampleTypedExport1 | null),
                 fakeTypedEndpoint2: {'time': _PhpTypeScriptApi_PhpStan_IsoTime},
             }
 

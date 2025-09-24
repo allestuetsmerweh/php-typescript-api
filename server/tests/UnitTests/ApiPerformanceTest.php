@@ -218,31 +218,6 @@ function threshold(int|float ...$measurements): float {
  * @coversNothing
  */
 final class ApiPerformanceTest extends UnitTestCase {
-    /** @return array<string, array{0: ApiConfig}> */
-    public static function apiConfigProvider(): array {
-        $typed_cases = [false, true];
-        $complex_cases = [false, true];
-        $direct_cases = [false, true];
-        $api_configs = [];
-        foreach ($typed_cases as $typed_case) {
-            foreach ($complex_cases as $complex_case) {
-                foreach ($direct_cases as $direct_case) {
-                    $pretty_typed = $typed_case ? 'typed' : 'normal';
-                    $pretty_complex = $complex_case ? 'complex' : 'simple';
-                    $pretty_direct = $direct_case ? 'direct' : 'indirect';
-                    $name = "{$pretty_typed} {$pretty_complex} {$pretty_direct}";
-                    $api_config = [
-                        $typed_case,
-                        $complex_case,
-                        $direct_case,
-                    ];
-                    $api_configs[$name] = [$api_config];
-                }
-            }
-        }
-        return $api_configs;
-    }
-
     /** @param ApiConfig $api_config */
     #[DataProvider('apiConfigProvider')]
     public function testGetFakeApiLatency(array $api_config): void {
@@ -261,7 +236,7 @@ final class ApiPerformanceTest extends UnitTestCase {
             'typed complex direct' => threshold(251, 188, 212),
         ];
         $this->assertLessThan(
-            $thresholds[$this->dataName()],
+            $thresholds[$this->dataName()] ?? null,
             $duration_ms,
             'getFakeApi latency',
         );
@@ -288,7 +263,7 @@ final class ApiPerformanceTest extends UnitTestCase {
             'typed complex direct' => threshold(495, 416, 485),
         ];
         $this->assertLessThan(
-            $thresholds[$this->dataName()],
+            $thresholds[$this->dataName()] ?? null,
             $duration_ms,
             'getTypeScriptDefinition latency',
         );
@@ -315,7 +290,7 @@ final class ApiPerformanceTest extends UnitTestCase {
             'typed complex direct' => 1,
         ];
         $this->assertLessThan(
-            $thresholds[$this->dataName()],
+            $thresholds[$this->dataName()] ?? null,
             $duration_ms,
             'getResponse latency',
         );
@@ -361,10 +336,35 @@ final class ApiPerformanceTest extends UnitTestCase {
             'typed complex direct' => threshold(492, 494, 533),
         ];
         $this->assertLessThan(
-            $thresholds[$this->dataName()],
+            $thresholds[$this->dataName()] ?? null,
             $duration_ms,
             'getResponse latency',
         );
+    }
+
+    /** @return array<string, array{0: ApiConfig}> */
+    public static function apiConfigProvider(): array {
+        $typed_cases = [false, true];
+        $complex_cases = [false, true];
+        $direct_cases = [false, true];
+        $api_configs = [];
+        foreach ($typed_cases as $typed_case) {
+            foreach ($complex_cases as $complex_case) {
+                foreach ($direct_cases as $direct_case) {
+                    $pretty_typed = $typed_case ? 'typed' : 'normal';
+                    $pretty_complex = $complex_case ? 'complex' : 'simple';
+                    $pretty_direct = $direct_case ? 'direct' : 'indirect';
+                    $name = "{$pretty_typed} {$pretty_complex} {$pretty_direct}";
+                    $api_config = [
+                        $typed_case,
+                        $complex_case,
+                        $direct_case,
+                    ];
+                    $api_configs[$name] = [$api_config];
+                }
+            }
+        }
+        return $api_configs;
     }
 
     /**

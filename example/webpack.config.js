@@ -1,4 +1,5 @@
 /* eslint-env node */
+/* global module */
 
 const path = require('path');
 const WebpackShellPluginNext = require('webpack-shell-plugin-next');
