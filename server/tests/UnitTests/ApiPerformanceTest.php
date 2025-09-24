@@ -156,12 +156,6 @@ class FakeApiPerfTestSimpleTypedEndpoint extends TypedEndpoint {
  * @extends TypedEndpoint<ComplexField1, ComplexField1>
  */
 class FakeApiPerfTestComplexTypedEndpoint extends TypedEndpoint {
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoDate::class);
-        $this->phpStanUtils->registerApiObject(IsoDateTime::class);
-        $this->phpStanUtils->registerApiObject(IsoTime::class);
-    }
-
     protected function handle(mixed $input): mixed {
         return $input;
     }

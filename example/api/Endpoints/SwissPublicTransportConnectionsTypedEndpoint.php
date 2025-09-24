@@ -1,6 +1,5 @@
 <?php
 
-use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -21,10 +20,6 @@ use PhpTypeScriptApi\TypedEndpoint;
  * >
  */
 class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoDate::class);
-    }
-
     protected function handle(mixed $input): mixed {
         $base_url = 'https://transport.opendata.ch/v1/connections';
         $get_params = http_build_query([
