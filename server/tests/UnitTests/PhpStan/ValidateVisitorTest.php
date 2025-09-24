@@ -7,7 +7,6 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
-use PhpTypeScriptApi\PhpStan\IsoDateTime;
 use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
@@ -1000,27 +999,6 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => 'bar']));
     }
 
-    public function testIsoDateNode(): void {
-        $this->assertNotNull($this->validate("IsoDate", null));
-        $this->assertNotNull($this->validate("IsoDate", true));
-        $this->assertNotNull($this->validate("IsoDate", false));
-        $this->assertNotNull($this->validate("IsoDate", 2));
-        $this->assertNotNull($this->validate("IsoDate", 'text'));
-        $this->assertNull($this->validate("IsoDate", '2024-12-24'));
-        $this->assertNull($this->validate("IsoDate", new IsoDate('2024-12-24')));
-        $this->assertNotNull($this->validate("IsoDate", new IsoTime('13:27:35')));
-        $this->assertNotNull($this->validate("IsoDate", []));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3]));
-        $this->assertNotNull($this->validate("IsoDate", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("IsoDate", [null => 3, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, null => 'test']));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => 3, 'bar' => null]));
-        $this->assertNotNull($this->validate("IsoDate", [1, 2, 3]));
-        $this->assertNotNull($this->validate("IsoDate", ['foo' => 'bar']));
-    }
-
     public function testIsoDateFullNode(): void {
         $class = IsoDate::class;
         $this->assertNotNull($this->validate("{$class}", null));
@@ -1067,8 +1045,7 @@ final class ValidateVisitorTest extends UnitTestCase {
 
     public function testIsoDateSerialize(): void {
         $php_stan_utils = new PhpStanUtils();
-        $php_stan_utils->registerApiObject(IsoDate::class);
-        $type_node = $this->getTypeNode("IsoDate");
+        $type_node = $this->getTypeNode(IsoDate::class);
 
         $this->assertSame(
             '2024-12-24',
@@ -1082,8 +1059,7 @@ final class ValidateVisitorTest extends UnitTestCase {
 
     public function testIsoDateDeserialize(): void {
         $php_stan_utils = new PhpStanUtils();
-        $php_stan_utils->registerApiObject(IsoDate::class);
-        $type_node = $this->getTypeNode("IsoDate");
+        $type_node = $this->getTypeNode(IsoDate::class);
 
         $this->assertEquals(
             new IsoDate('2024-12-24'),
@@ -1132,9 +1108,6 @@ final class ValidateVisitorTest extends UnitTestCase {
             'Aliased_4' => $this->getTypeNode('false'),
         ];
         $php_stan_utils = new PhpStanUtils();
-        $php_stan_utils->registerApiObject(IsoDate::class);
-        $php_stan_utils->registerApiObject(IsoDateTime::class);
-        $php_stan_utils->registerApiObject(IsoTime::class);
 
         $result_node = ValidateVisitor::validateDeserialize($php_stan_utils, $value, $type_node, $aliases);
         return $result_node->isValid() ? null : "{$result_node}";

@@ -99,10 +99,6 @@ class FakeApiTestTypedEndpoint1 extends TypedEndpoint {
         $this->resource = $resource;
     }
 
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoDate::class);
-    }
-
     public function runtimeSetup(): void {
         $this->runtimeSetupCompleted = true;
     }
@@ -139,10 +135,6 @@ class FakeApiTestTypedEndpoint2 extends TypedEndpoint {
         $this->resource = $resource;
     }
 
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoTime::class);
-    }
-
     protected function handle(mixed $input): mixed {
         $this->handled_with_input = $input;
         $this->handled_with_resource = $this->resource;
@@ -176,7 +168,7 @@ final class ApiTest extends UnitTestCase {
 
             export type SampleExport2 = unknown;
 
-            export type IsoDate = string;
+            export type PhpTypeScriptApi_PhpStan_IsoDate = string;
 
             export type SampleTypedExport1 = Record<string, never>;
 
@@ -196,7 +188,7 @@ final class ApiTest extends UnitTestCase {
             export interface FakeApiRequests extends FakeApiEndpointMapping {
                 fakeEndpoint1: unknown,
                 fakeEndpoint2: SampleExport2,
-                fakeTypedEndpoint1: ({'date': IsoDate} | null),
+                fakeTypedEndpoint1: ({'date': PhpTypeScriptApi_PhpStan_IsoDate} | null),
                 fakeTypedEndpoint2: SampleTypedExport2,
             }
 

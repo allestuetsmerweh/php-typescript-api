@@ -7,6 +7,11 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAnotherAClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
 
 /**
  * @phpstan-type AliasedInt int
@@ -40,10 +45,6 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $utils = new PhpStanUtils();
         $this->assertSame(
             FakeApiObject::class,
-            $utils->resolveClass(FakeApiObject::class, [])?->getName(),
-        );
-        $this->assertSame(
-            FakeApiObject::class,
             $utils->resolveApiObjectClass(FakeApiObject::class)?->getName(),
         );
     }
@@ -53,40 +54,17 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $class_name = FakeApiObject::class;
         $this->assertSame(
             FakeApiObject::class,
-            $utils->resolveClass("\\{$class_name}", [])?->getName(),
-        );
-        $this->assertSame(
-            FakeApiObject::class,
             $utils->resolveApiObjectClass("\\{$class_name}")?->getName(),
-        );
-    }
-
-    public function testResolveShort(): void {
-        $utils = new PhpStanUtils();
-        $registry = ['FakeApiObject' => FakeApiObject::class];
-        $this->assertSame(
-            FakeApiObject::class,
-            $utils->resolveClass('FakeApiObject', $registry)?->getName(),
-        );
-        $utils->registerApiObject(FakeApiObject::class);
-        $this->assertSame(
-            FakeApiObject::class,
-            $utils->resolveApiObjectClass('FakeApiObject')?->getName(),
         );
     }
 
     public function testResolveInvalid(): void {
         $utils = new PhpStanUtils();
-        $this->assertNull($utils->resolveClass('Invalid', []));
         $this->assertNull($utils->resolveApiObjectClass('Invalid'));
     }
 
     public function testResolveNonApiObject(): void {
         $utils = new PhpStanUtils();
-        $this->assertSame(
-            PhpStanUtilsTest::class,
-            $utils->resolveClass(PhpStanUtilsTest::class, [])?->getName(),
-        );
         $this->assertNull($utils->resolveApiObjectClass(PhpStanUtilsTest::class));
     }
 
@@ -100,14 +78,6 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $utils = new PhpStanUtils();
         $class_name = FakeApiObject::class;
         $node = $utils->getApiObjectTypeNode("\\{$class_name}");
-        $this->assertSame("'foo'", "{$node}");
-    }
-
-    public function testApiObjectTypeNodeShort(): void {
-        $utils = new PhpStanUtils();
-        $utils->registerApiObject(FakeApiObject::class);
-
-        $node = $utils->getApiObjectTypeNode('FakeApiObject');
         $this->assertSame("'foo'", "{$node}");
     }
 
@@ -141,10 +111,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
 
     public function testGetImportedAliases(): void {
         $utils = new PhpStanUtils();
-        $utils->registerTypeImport(FakePhpStanUtilsTypedEndpoint::class);
-        $comment = <<<'ZZZZZZZZZZ'
+        $class_name = FakePhpStanUtilsTypedEndpoint::class;
+        $comment = <<<ZZZZZZZZZZ
             /**
-             * @phpstan-import-type AliasedInt from FakePhpStanUtilsTypedEndpoint
+             * @phpstan-import-type AliasedInt from {$class_name}
              */
             ZZZZZZZZZZ;
         $phpDocNode = $utils->parseDocComment($comment);
@@ -188,6 +158,21 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertSame('int', "{$phpDocNode?->getReturnTagValues()[0]->type}");
     }
 
+    public function testParseValidDocCommentWithScope(): void {
+        $utils = new PhpStanUtils();
+        $comment = (new \ReflectionClass(FakeAClass::class))->getDocComment();
+
+        $phpDocNode = $utils->parseDocComment($comment, __DIR__.'/Fake/NamespaceA/FakeAClass.php');
+        $fake_another_class = FakeAnotherAClass::class;
+        $fake_aa_class = FakeAAClass::class;
+        $fake_b_class = FakeBClass::class;
+        $fake_class = FakeClass::class;
+        $this->assertSame(
+            "{$fake_another_class}<{$fake_aa_class}<{$fake_b_class}<{$fake_class}<string>>>>",
+            "{$phpDocNode?->getExtendsTagValues()[0]->type}",
+        );
+    }
+
     public function testParseEmptyDocComment(): void {
         $utils = new PhpStanUtils();
         $phpDocNode = $utils->parseDocComment('/** Empty */');
@@ -212,5 +197,19 @@ final class PhpStanUtilsTest extends UnitTestCase {
                 $th->getMessage(),
             );
         }
+    }
+
+    public function testGetFileScope(): void {
+        $utils = new PhpStanUtils();
+        $this->assertSame([
+            'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA',
+            [
+                'FakeTopLevelClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass',
+                'FakeAAClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAClass',
+                'FakeBClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass',
+            ],
+        ], $utils->getFileScopeInfo(__DIR__.'/Fake/NamespaceA/FakeAClass.php'));
+        $this->assertSame([null, []], $utils->getFileScopeInfo(__DIR__.'/Fake/InexistentClass.php'));
+        $this->assertSame([null, []], $utils->getFileScopeInfo(null));
     }
 }

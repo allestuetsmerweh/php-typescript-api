@@ -40,10 +40,6 @@ class FakeTypedEndpoint extends TypedEndpoint {
     public mixed $handle_with_output = null;
     public bool $ran_runtime_setup = false;
 
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoDate::class);
-    }
-
     public function runtimeSetup(): void {
         $this->logger?->info("Runtime setup...");
         $this->ran_runtime_setup = true;
@@ -147,10 +143,6 @@ class FakePhpstanExtendsTypedEndpoint extends TypedEndpoint {
  * @extends TypedEndpoint<FakeNamedThing, string>
  */
 class FakeMissingHiddenImportTypedEndpoint extends TypedEndpoint {
-    public function configure(): void {
-        $this->phpStanUtils->registerTypeImport(FakeTypedEndpoint::class);
-    }
-
     protected function handle(mixed $input): mixed {
         return 'test';
     }
@@ -182,11 +174,6 @@ class FakeTypedEndpointWithErrors extends TypedEndpoint {
     public bool $handle_with_validation_error = false;
     /** @var ?FakeOutputAbsolute */
     public mixed $handle_with_output = null;
-
-    public function configure(): void {
-        $this->phpStanUtils->registerApiObject(IsoDate::class);
-        $this->phpStanUtils->registerTypeImport(FakeTypedEndpoint::class);
-    }
 
     public function shouldFailThrottling(): bool {
         return (bool) $this->handle_with_throttling;
@@ -317,9 +304,9 @@ class TypedEndpointTest extends UnitTestCase {
             [
                 'FakeNestedThing' => "{'id': number}",
                 'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
-                'IsoDate' => "string",
-                'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-                'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+                'PhpTypeScriptApi_PhpStan_IsoDate' => "string",
+                'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
+                'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
             ],
             $endpoint->getNamedTsTypes(),
         );
@@ -334,9 +321,9 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
-            'IsoDate' => "string",
-            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            'PhpTypeScriptApi_PhpStan_IsoDate' => "string",
+            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
+            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -349,9 +336,9 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertEquals([
             'FakeNestedThing' => "{'id': number}",
             'FakeNamedThing' => "{'id': number, 'name': string, 'nested': FakeNestedThing}",
-            'IsoDate' => "string",
-            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
-            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': IsoDate}",
+            'PhpTypeScriptApi_PhpStan_IsoDate' => "string",
+            'FakeInput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
+            'FakeOutput' => "{'mapping': {[key: string]: number}, 'named': FakeNamedThing, 'date': PhpTypeScriptApi_PhpStan_IsoDate}",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }

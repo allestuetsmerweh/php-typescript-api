@@ -8,8 +8,6 @@ use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
-use PhpTypeScriptApi\PhpStan\IsoDateTime;
-use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
@@ -159,10 +157,6 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame('Aliased_4', $this->getTypeScript('Aliased_4'));
     }
 
-    public function testIsoDateNode(): void {
-        $this->assertSame('IsoDate', $this->getTypeScript('IsoDate'));
-    }
-
     public function testIsoDateFullNode(): void {
         $class = IsoDate::class;
         $this->assertSame(
@@ -206,9 +200,6 @@ final class TypeScriptVisitorTest extends UnitTestCase {
             'Aliased_4' => $this->getTypeNode('null'),
         ];
         $php_stan_utils = new PhpStanUtils();
-        $php_stan_utils->registerApiObject(IsoDate::class);
-        $php_stan_utils->registerApiObject(IsoDateTime::class);
-        $php_stan_utils->registerApiObject(IsoTime::class);
 
         $visitor = new TypeScriptVisitor($php_stan_utils, $aliases);
         $traverser = new NodeTraverser([$visitor]);
