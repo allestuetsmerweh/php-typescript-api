@@ -14,7 +14,7 @@ class ObjectField extends Field {
         parent::__construct($config);
         $field_structure = $config['field_structure'] ?? [];
         foreach ($field_structure as $key => $field) {
-            if (!($field instanceof Field)) {
+            if (!$field instanceof Field) {
                 throw new \Exception("`field_structure`['{$key}'] must be an instance of `Field`");
             }
         }

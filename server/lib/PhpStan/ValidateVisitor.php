@@ -145,7 +145,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 }
                 $lower = $node->genericTypes[0];
                 if ($lower instanceof ConstTypeNode) {
-                    if (!($lower->constExpr instanceof ConstExprIntegerNode)) {
+                    if (!$lower->constExpr instanceof ConstExprIntegerNode) {
                         throw new \Exception("Unsupported lower constExpr {$this->prettyNode($lower->constExpr)}");
                     }
                     if ($this->value < intval($lower->constExpr->value)) {
@@ -160,7 +160,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 }
                 $upper = $node->genericTypes[1];
                 if ($upper instanceof ConstTypeNode) {
-                    if (!($upper->constExpr instanceof ConstExprIntegerNode)) {
+                    if (!$upper->constExpr instanceof ConstExprIntegerNode) {
                         throw new \Exception("Unsupported upper constExpr {$this->prettyNode($upper->constExpr)}");
                     }
                     if ($this->value > intval($upper->constExpr->value)) {
@@ -220,6 +220,8 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                         $value_node = $this->subValidate($value, $value_type);
                         if (!$value_node->isValid()) {
                             $result_node->recordErrorInKey("{$key}", $value_node->getErrors());
+                        } elseif ($key_node->getValue() === null) {
+                            $result_node->recordErrorInKey("{$key}", Translator::__('fields.must_not_be_empty', []));
                         } else {
                             $validated_value[$key_node->getValue()] = $value_node->getValue();
                         }
@@ -302,7 +304,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         $visitor = new ValidateVisitor($this->phpStanUtils, $value, $this->aliasNodes, $this->serialize);
         $traverser = new NodeTraverser([$visitor]);
         [$result_node] = $traverser->traverse([$type]);
-        if (!($result_node instanceof ValidationResultNode)) {
+        if (!$result_node instanceof ValidationResultNode) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
             throw new \Exception("Validation result for {$this->prettyNode($type)} must be ValidationResultNode, not {$this->prettyNode($result_node)}");

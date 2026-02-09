@@ -36,6 +36,7 @@ class EnumField extends Field {
             if (!is_scalar($value)) {
                 $validation_result->recordError(Translator::__('fields.must_be_scalar_value'));
             } else {
+                // @phpstan-ignore-next-line offsetAccess.invalidOffset
                 $is_allowed_value = $this->allowed_value_map[$value] ?? false;
                 if (!$is_allowed_value) {
                     $validation_result->recordError(Translator::__('fields.must_be_allowed_value'));
