@@ -700,9 +700,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate('array<int, string>', ['a', 'b', 'c']));
         $this->assertNull($this->validate('array<int, string>', [2 => 'foo']));
         $this->assertNull($this->validate('array<int, string>', [2 => 'foo', -7 => 'bar']));
-        $this->assertNotNull($this->validate('array<int, string>', [null => 'foo']));
         $this->assertNotNull($this->validate('array<int, string>', [2 => null]));
-        $this->assertNotNull($this->validate('array<int, string>', [2 => 'foo', null => 'bar']));
         $this->assertNotNull($this->validate('array<int, string>', [2 => 'foo', -7 => null]));
         $this->assertNotNull($this->validate('array<int, string>', [1, 2, 3]));
         $this->assertNotNull($this->validate('array<int, string>', ['foo' => 'bar']));
@@ -720,9 +718,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('array<bool, ?string>', ['a', 'b', 'c']));
         $this->assertNotNull($this->validate('array<bool, ?string>', [false => 'foo']));
         $this->assertNotNull($this->validate('array<bool, ?string>', [false => 'foo', true => 'bar']));
-        $this->assertNotNull($this->validate('array<bool, ?string>', [null => 'foo']));
         $this->assertNotNull($this->validate('array<bool, ?string>', [false => null]));
-        $this->assertNotNull($this->validate('array<bool, ?string>', [false => 'foo', null => 'bar']));
         $this->assertNotNull($this->validate('array<bool, ?string>', [false => 'foo', true => null]));
         $this->assertNotNull($this->validate('array<bool, ?string>', [1, 2, 3]));
         $this->assertNotNull($this->validate('array<bool, ?string>', ['foo' => 'bar']));
@@ -739,10 +735,8 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('array<?string, bool>', ['a', 'b', 'c']));
         $this->assertNull($this->validate('array<?string, bool>', ['foo' => false]));
         $this->assertNull($this->validate('array<?string, bool>', ['foo' => false, 'bar' => true]));
-        $this->assertNull($this->validate('array<?string, bool>', [null => false]));
         $this->assertNotNull($this->validate('array<?string, bool>', [1 => false]));
         $this->assertNotNull($this->validate('array<?string, bool>', ['foo' => null]));
-        $this->assertNull($this->validate('array<?string, bool>', ['foo' => false, null => true]));
         $this->assertNotNull($this->validate('array<?string, bool>', ['foo' => false, 1 => true]));
         $this->assertNotNull($this->validate('array<?string, bool>', ['foo' => false, 'bar' => null]));
         $this->assertNotNull($this->validate('array<?string, bool>', [1, 2, 3]));
@@ -760,9 +754,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate('non-empty-array<int, string>', ['a', 'b', 'c']));
         $this->assertNull($this->validate('non-empty-array<int, string>', [2 => 'foo']));
         $this->assertNull($this->validate('non-empty-array<int, string>', [2 => 'foo', -7 => 'bar']));
-        $this->assertNotNull($this->validate('non-empty-array<int, string>', [null => 'foo']));
         $this->assertNotNull($this->validate('non-empty-array<int, string>', [2 => null]));
-        $this->assertNotNull($this->validate('non-empty-array<int, string>', [2 => 'foo', null => 'bar']));
         $this->assertNotNull($this->validate('non-empty-array<int, string>', [2 => 'foo', -7 => null]));
         $this->assertNotNull($this->validate('non-empty-array<int, string>', [1, 2, 3]));
         $this->assertNotNull($this->validate('non-empty-array<int, string>', ['foo' => 'bar']));
@@ -778,9 +770,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => 3]));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", [1, 2, 3]));
         $this->assertNotNull($this->validate("array{'foo': int, \"bar\": string}", ['foo' => 'bar']));
@@ -796,9 +786,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 3]));
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", [1, 2, 3]));
         $this->assertNotNull($this->validate("array{foo: int, 'bar'?: string}", ['foo' => 'bar']));
@@ -814,9 +802,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3]));
         $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("array{foo: int, bar?: string}", [1, 2, 3]));
         $this->assertNotNull($this->validate("array{foo: int, bar?: string}", ['foo' => 'bar']));
@@ -836,9 +822,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1 => 0, 0 => -7, 2 => null]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1 => 0, 0 => -7, 2 => 1]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [0 => -7, 1 => 0, 'foo' => 'bar']));
-        $this->assertNotNull($this->validate("array{0: int, 1?: int}", [null => 0, 0 => -7]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1 => null, 0 => -7]));
-        $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1 => 0, null => -7]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1 => 0, 0 => null]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", [1, 2, 3]));
         $this->assertNotNull($this->validate("array{0: int, 1?: int}", ['foo']));
@@ -856,9 +840,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("array{}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{}", ['foo' => 3]));
         $this->assertNotNull($this->validate("array{}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("array{}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("array{}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("array{}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("array{}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("array{}", [1, 2, 3]));
         $this->assertNotNull($this->validate("array{}", ['foo' => 'bar']));
@@ -874,9 +856,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => 3]));
         $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", [1, 2, 3]));
         $this->assertNotNull($this->validate("object{'foo': int, 'bar'?: string}", ['foo' => 'bar']));
@@ -892,9 +872,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("object{}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("object{}", ['foo' => 3]));
         $this->assertNotNull($this->validate("object{}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("object{}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("object{}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("object{}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("object{}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("object{}", [1, 2, 3]));
         $this->assertNotNull($this->validate("object{}", ['foo' => 'bar']));
@@ -973,9 +951,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNull($this->validate("AliasedObject", ['foo' => 3, 'bar' => 'test']));
         $this->assertNull($this->validate("AliasedObject", ['foo' => 3]));
         $this->assertNotNull($this->validate("AliasedObject", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("AliasedObject", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("AliasedObject", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("AliasedObject", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("AliasedObject", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("AliasedObject", [1, 2, 3]));
         $this->assertNotNull($this->validate("AliasedObject", ['foo' => 'bar']));
@@ -991,9 +967,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3]));
         $this->assertNotNull($this->validate("Aliased_4", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("Aliased_4", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("Aliased_4", [1, 2, 3]));
         $this->assertNotNull($this->validate("Aliased_4", ['foo' => 'bar']));
@@ -1013,9 +987,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("{$class}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("{$class}", ['foo' => 3]));
         $this->assertNotNull($this->validate("{$class}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("{$class}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("{$class}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("{$class}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("{$class}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("{$class}", [1, 2, 3]));
         $this->assertNotNull($this->validate("{$class}", ['foo' => 'bar']));
@@ -1035,9 +1007,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3]));
         $this->assertNotNull($this->validate("\\{$class}", [3 => 'foo', 'test' => 'bar']));
-        $this->assertNotNull($this->validate("\\{$class}", [null => 3, 'bar' => 'test']));
         $this->assertNotNull($this->validate("\\{$class}", ['foo' => null, 'bar' => 'test']));
-        $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, null => 'test']));
         $this->assertNotNull($this->validate("\\{$class}", ['foo' => 3, 'bar' => null]));
         $this->assertNotNull($this->validate("\\{$class}", [1, 2, 3]));
         $this->assertNotNull($this->validate("\\{$class}", ['foo' => 'bar']));

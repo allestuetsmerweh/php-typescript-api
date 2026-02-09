@@ -12,7 +12,7 @@ class DictField extends Field {
     public function __construct(array $config = []) {
         parent::__construct($config);
         $item_field = $config['item_field'] ?? [];
-        if (!($item_field instanceof Field)) {
+        if (!$item_field instanceof Field) {
             throw new \Exception("`item_field` must be an instance of `Field`");
         }
         $this->item_field = $item_field;

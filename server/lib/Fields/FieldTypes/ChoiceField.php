@@ -17,7 +17,7 @@ class ChoiceField extends Field {
             throw new \Exception('`field_map` must be defined.');
         }
         foreach ($field_map as $key => $field) {
-            if (!($field instanceof Field)) {
+            if (!$field instanceof Field) {
                 throw new \Exception("Field für Schlüssel '{$key}' muss ein Field sein.");
             }
         }

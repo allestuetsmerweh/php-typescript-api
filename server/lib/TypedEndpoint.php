@@ -31,7 +31,6 @@ abstract class TypedEndpoint implements EndpointInterface {
     }
 
     public function parseType(): void {
-        $this->configure();
         $class_name = get_called_class();
         $class_info = new \ReflectionClass($class_name);
         $this->aliasNodes = [];
@@ -73,10 +72,6 @@ abstract class TypedEndpoint implements EndpointInterface {
         }
         $this->requestTypeNode = $extends_node->type->genericTypes[0];
         $this->responseTypeNode = $extends_node->type->genericTypes[1];
-    }
-
-    public function configure(): void {
-        // Do nothing by default
     }
 
     /**
@@ -132,7 +127,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         $visitor = new ResolveAliasesVisitor($template_aliases);
         $traverser = new NodeTraverser([$visitor]);
         [$resolved_extends_node] = $traverser->traverse([$extends_type_node]);
-        if (!($resolved_extends_node instanceof ExtendsTagValueNode)) {
+        if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
             throw new \Exception("Expected ExtendsTagValueNode, but got {$resolved_extends_node}");

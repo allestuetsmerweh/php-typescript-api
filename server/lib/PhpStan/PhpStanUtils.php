@@ -44,29 +44,45 @@ class PhpStanUtils {
 
     /** @return array<string, TypeNode> */
     public function getAliases(?PhpDocNode $php_doc_node): array {
+        return $this->getAliasesInternal($php_doc_node, null);
+    }
+
+    protected int $recursion = 0;
+    public int $max_recursion = 100;
+
+    /** @return array<string, TypeNode> */
+    protected function getAliasesInternal(?PhpDocNode $php_doc_node, ?string $name_filter): array {
         $aliases = [];
         foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
+            if ($name_filter && $alias_node->alias !== $name_filter) {
+                continue;
+            }
             $aliases[$alias_node->alias] = $alias_node->type;
         }
         foreach ($php_doc_node?->getTypeAliasImportTagValues() ?? [] as $import_node) {
             $alias = $import_node->importedAs ?? $import_node->importedAlias;
+            if ($name_filter && $alias !== $name_filter) {
+                continue;
+            }
             $from = $import_node->importedFrom->name;
             $class_info = $this->getReflectionClass($from);
             $import_php_doc_node = $this->parseDocComment(
                 $class_info?->getDocComment(),
                 $class_info?->getFileName() ?: null,
             );
-            $found_alias = null;
-            foreach ($import_php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
-                if ($alias_node->alias === $import_node->importedAlias) {
-                    $found_alias = $alias_node;
-                }
+            $this->recursion++;
+            if ($this->recursion > $this->max_recursion) {
+                throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$import_node->importedAlias} from {$from}");
             }
+            $import_aliases = $this->getAliasesInternal($import_php_doc_node, $import_node->importedAlias);
+            $this->recursion--;
+            $found_alias = $import_aliases[$import_node->importedAlias] ?? null;
             if ($found_alias === null) {
                 throw new \Exception("Failed importing {$import_node->importedAlias} from {$from}");
             }
-            $aliases[$alias] = $found_alias->type;
+            $aliases[$alias] = $found_alias;
         }
+        $this->recursion = 0;
         return $aliases;
     }
 

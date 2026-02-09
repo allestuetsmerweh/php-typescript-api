@@ -15,8 +15,32 @@ use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAC
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
 
 /**
- * @phpstan-type AliasedInt int
+ * @phpstan-type AliasedUtilString non-empty-string
+ *
+ * @phpstan-import-type AliasedInt from FakePhpStanUtilsTypedEndpoint as AliasedUtilInt
+ *
+ * @phpstan-type AliasedUtilIntArray array<AliasedUtilInt>
+ *
+ * @phpstan-import-type InfiniteLoop from FakePhpStanUtilsTypedEndpoint
  */
+// @phpstan-ignore-next-line typeAlias.circular
+class FakeUtil1 {
+}
+
+/**
+ * @phpstan-type AliasedInt int
+ *
+ * @phpstan-import-type AliasedUtilString from FakeUtil1
+ *
+ * @phpstan-type AliasedUtilStringArray array<AliasedUtilString>
+ *
+ * @phpstan-import-type AliasedUtilIntArray from FakeUtil1
+ *
+ * @phpstan-type AliasedUtilIntArrayArray array<AliasedUtilIntArray>
+ *
+ * @phpstan-import-type InfiniteLoop from FakeUtil1
+ */
+// @phpstan-ignore-next-line typeAlias.circular
 class FakePhpStanUtilsTypedEndpoint {
 }
 
@@ -116,13 +140,77 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $comment = <<<ZZZZZZZZZZ
             /**
              * @phpstan-import-type AliasedInt from {$class_name}
+             * @phpstan-import-type AliasedInt from {$class_name} as MyInt
+             * @phpstan-import-type AliasedUtilString from {$class_name}
+             * @phpstan-import-type AliasedUtilString from {$class_name} as MyString
+             * @phpstan-import-type AliasedUtilStringArray from {$class_name}
+             * @phpstan-import-type AliasedUtilStringArray from {$class_name} as MyStringArray
+             * @phpstan-import-type AliasedUtilIntArray from {$class_name}
+             * @phpstan-import-type AliasedUtilIntArray from {$class_name} as MyIntArray
+             * @phpstan-import-type AliasedUtilIntArrayArray from {$class_name}
+             * @phpstan-import-type AliasedUtilIntArrayArray from {$class_name} as MyIntArrayArray
              */
             ZZZZZZZZZZ;
         $phpDocNode = $utils->parseDocComment($comment);
 
         $this->assertEquals([
             'AliasedInt' => $this->getTypeNode("int"),
+            'MyInt' => $this->getTypeNode("int"),
+            'AliasedUtilString' => $this->getTypeNode("non-empty-string"),
+            'MyString' => $this->getTypeNode("non-empty-string"),
+            'AliasedUtilStringArray' => $this->getTypeNode("array<AliasedUtilString>"),
+            'MyStringArray' => $this->getTypeNode("array<AliasedUtilString>"),
+            'AliasedUtilIntArray' => $this->getTypeNode("array<AliasedUtilInt>"),
+            'MyIntArray' => $this->getTypeNode("array<AliasedUtilInt>"),
+            'AliasedUtilIntArrayArray' => $this->getTypeNode("array<AliasedUtilIntArray>"),
+            'MyIntArrayArray' => $this->getTypeNode("array<AliasedUtilIntArray>"),
         ], $utils->getAliases($phpDocNode));
+    }
+
+    public function testGetImportedUtilAliases(): void {
+        $utils = new PhpStanUtils();
+        $class_name = FakeUtil1::class;
+        $comment = <<<ZZZZZZZZZZ
+            /**
+             * @phpstan-import-type AliasedUtilString from {$class_name}
+             * @phpstan-import-type AliasedUtilString from {$class_name} as MyString
+             * @phpstan-import-type AliasedUtilInt from {$class_name}
+             * @phpstan-import-type AliasedUtilInt from {$class_name} as MyInt
+             * @phpstan-import-type AliasedUtilIntArray from {$class_name}
+             * @phpstan-import-type AliasedUtilIntArray from {$class_name} as MyIntArray
+             */
+            ZZZZZZZZZZ;
+        $phpDocNode = $utils->parseDocComment($comment);
+
+        $this->assertEquals([
+            'AliasedUtilString' => $this->getTypeNode("non-empty-string"),
+            'MyString' => $this->getTypeNode("non-empty-string"),
+            'AliasedUtilInt' => $this->getTypeNode("int"),
+            'MyInt' => $this->getTypeNode("int"),
+            'AliasedUtilIntArray' => $this->getTypeNode("array<AliasedUtilInt>"),
+            'MyIntArray' => $this->getTypeNode("array<AliasedUtilInt>"),
+        ], $utils->getAliases($phpDocNode));
+    }
+
+    public function testGetImportInfiniteLoop(): void {
+        $utils = new PhpStanUtils();
+        $class_name = FakePhpStanUtilsTypedEndpoint::class;
+        $comment = <<<ZZZZZZZZZZ
+            /**
+             * @phpstan-import-type InfiniteLoop from {$class_name}
+             */
+            ZZZZZZZZZZ;
+        $phpDocNode = $utils->parseDocComment($comment);
+
+        try {
+            $utils->getAliases($phpDocNode);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                'Maximum recusion level (100) reached: Failed importing InfiniteLoop from PhpTypeScriptApi\Tests\UnitTests\PhpStan\FakePhpStanUtilsTypedEndpoint',
+                $th->getMessage(),
+            );
+        }
     }
 
     public function testGetImportedAliasesError(): void {
