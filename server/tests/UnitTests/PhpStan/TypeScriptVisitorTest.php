@@ -195,9 +195,9 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         }
 
         $aliases = [
-            'AliasedInt' => $this->getTypeNode('int'),
-            'AliasedObject' => $this->getTypeNode('array{foo: int, bar?: string}'),
-            'Aliased_4' => $this->getTypeNode('null'),
+            'AliasedInt' => ['type' => $this->getTypeNode('int')],
+            'AliasedObject' => ['type' => $this->getTypeNode('array{foo: int, bar?: string}')],
+            'Aliased_4' => ['type' => $this->getTypeNode('null')],
         ];
         $php_stan_utils = new PhpStanUtils();
 

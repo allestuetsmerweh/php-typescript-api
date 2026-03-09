@@ -15,12 +15,14 @@ use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 use PhpTypeScriptApi\Translator;
 
+/**
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ */
 final class ValidateVisitor extends AbstractNodeVisitor {
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public function __construct(
         protected PhpStanUtils $phpStanUtils,
         protected mixed $value,
@@ -29,7 +31,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     ) {
     }
 
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public static function validateSerialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,
@@ -40,7 +42,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         return $validator->subValidate($value, $type);
     }
 
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public static function validateDeserialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,
@@ -100,9 +102,10 @@ final class ValidateVisitor extends AbstractNodeVisitor {
             ];
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {
-                $aliased_node = $this->aliasNodes[$node->name] ?? null;
-                if ($aliased_node) {
-                    return $this->subValidate($this->value, $aliased_node);
+                $alias = $this->aliasNodes[$node->name] ?? null;
+                if ($alias) {
+                    $resolved_alias = $this->phpStanUtils->resolveAlias($alias);
+                    return $this->subValidate($this->value, $resolved_alias);
                 }
                 $serialized_node = $this->phpStanUtils->getApiObjectTypeNode($node->name);
                 if ($serialized_node) {
