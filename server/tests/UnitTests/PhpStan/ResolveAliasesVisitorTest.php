@@ -146,8 +146,8 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
     public function testResolveAliasesVisitorLeavesAliasesUnmodified(): void {
         $type_node = $this->getTypeNode('AliasedObject');
         $aliases = [
-            'AliasedInt' => $this->getTypeNode('int'),
-            'AliasedObject' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}'),
+            'AliasedInt' => ['type' => $this->getTypeNode('int')],
+            'AliasedObject' => ['type' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}')],
         ];
 
         $visitor = new ResolveAliasesVisitor($aliases);
@@ -156,8 +156,8 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
 
         $this->assertSame('array{foo: int, bar?: string}', "{$new_type_node}");
         $this->assertEquals([
-            'AliasedInt' => $this->getTypeNode('int'),
-            'AliasedObject' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}'),
+            'AliasedInt' => ['type' => $this->getTypeNode('int')],
+            'AliasedObject' => ['type' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}')],
         ], $aliases);
     }
 
@@ -169,9 +169,9 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
         }
 
         $aliases = [
-            'AliasedInt' => $this->getTypeNode('int'),
-            'AliasedObject' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}'),
-            'Aliased_4' => $this->getTypeNode('null'),
+            'AliasedInt' => ['type' => $this->getTypeNode('int')],
+            'AliasedObject' => ['type' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}')],
+            'Aliased_4' => ['type' => $this->getTypeNode('null')],
         ];
 
         $visitor = new ResolveAliasesVisitor($aliases);
