@@ -9,8 +9,11 @@ use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 
+/**
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ */
 final class ResolveAliasesVisitor extends AbstractNodeVisitor {
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public function __construct(
         protected array $aliasNodes = [],
     ) {
@@ -20,9 +23,9 @@ final class ResolveAliasesVisitor extends AbstractNodeVisitor {
         $node = clone $originalNode;
         if (
             $node instanceof IdentifierTypeNode
-            && isset($this->aliasNodes[$node->name])
+            && isset($this->aliasNodes[$node->name]['type'])
         ) {
-            return clone $this->aliasNodes[$node->name];
+            return clone $this->aliasNodes[$node->name]['type'];
         }
         return $node;
     }

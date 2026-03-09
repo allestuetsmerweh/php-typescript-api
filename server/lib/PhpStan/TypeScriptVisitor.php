@@ -20,11 +20,14 @@ use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
+/**
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ */
 final class TypeScriptVisitor extends AbstractNodeVisitor {
-    /** @var array<string, TypeNode> */
-    public array $exported_classes = [];
+    /** @var NamespaceAliases */
+    public array $exported_aliases = [];
 
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public function __construct(
         protected PhpStanUtils $phpStanUtils,
         protected array $aliasNodes = [],
@@ -98,16 +101,27 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
             ];
             $new_name = $mapping[$node->name] ?? null;
             if ($new_name === null) {
-                $resolved_node = $this->aliasNodes[$node->name] ??
-                    $this->phpStanUtils->getApiObjectTypeNode($node->name);
-                if ($resolved_node) {
+                if (isset($this->aliasNodes[$node->name])) {
                     $sane_node = preg_replace('/[^A-Za-z0-9_]/', '_', $node->name);
-                    $this->exported_classes[$sane_node] = $resolved_node;
+                    $this->exported_aliases[$sane_node] = $this->aliasNodes[$node->name];
                     $new_name = $sane_node;
                 }
             }
             if ($new_name === null) {
+                $resolved_node = $this->phpStanUtils->getApiObjectTypeNode($node->name);
+                if ($resolved_node) {
+                    $sane_node = preg_replace('/[^A-Za-z0-9_]/', '_', $node->name);
+                    $this->exported_aliases[$sane_node] = ['type' => $resolved_node];
+                    $new_name = $sane_node;
+                }
+            }
+            if ($new_name === null) {
+                $pretty_aliases = implode("\n", array_map(function ($key) {
+                    $value = json_encode($this->aliasNodes[$key]);
+                    return "{$key} => {$value}";
+                }, array_keys($this->aliasNodes)));
                 throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}");
+                // throw new \Exception("Unknown IdentifierTypeNode name: {$node->name}\nAliases:\n{$pretty_aliases})");
             }
             $node->name = $new_name;
         } elseif ($node instanceof GenericTypeNode) {

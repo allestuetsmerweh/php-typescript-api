@@ -2,6 +2,8 @@
 
 namespace PhpTypeScriptApi;
 
+use AliasCache;
+use NamespaceAliases;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
@@ -16,6 +18,10 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * @template Request
  * @template Response
+ * 
+ * @phpstan-import-type Alias from PhpStanUtils
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ * @phpstan-import-type AliasCache from PhpStanUtils
  */
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
@@ -23,8 +29,8 @@ abstract class TypedEndpoint implements EndpointInterface {
     protected PhpStanUtils $phpStanUtils;
     private ?TypeNode $requestTypeNode = null;
     private ?TypeNode $responseTypeNode = null;
-    /** @var ?array<string, TypeNode> */
-    private ?array $aliasNodes = null;
+    /** @var ?AliasCache */
+    private ?array $aliasCache = null;
 
     public function __construct() {
         $this->phpStanUtils = new PhpStanUtils();
@@ -33,17 +39,19 @@ abstract class TypedEndpoint implements EndpointInterface {
     public function parseType(): void {
         $class_name = get_called_class();
         $class_info = new \ReflectionClass($class_name);
-        $this->aliasNodes = [];
+        $this->aliasCache = [];
         $template_aliases = [];
         $extends_node = null;
         while ($class_info->getParentClass()) {
+            $file_path = $class_info->getFileName() ?: null;
             $php_doc_node = $this->phpStanUtils->parseDocComment(
                 $class_info->getDocComment(),
-                $class_info->getFileName() ?: null,
+                $file_path,
             );
             $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
-            $this->aliasNodes = [
-                ...$this->aliasNodes,
+            $this->aliasCache[$class_info->getName()] = [
+                ...($this->aliasCache[$class_info->getName()] ?? []),
+                ...$template_aliases,
                 ...$this->phpStanUtils->getAliases($php_doc_node),
             ];
             $extends_node = $this->getResolvedExtendsNode($php_doc_node, $template_aliases);
@@ -53,10 +61,11 @@ abstract class TypedEndpoint implements EndpointInterface {
             }
             $class_info = $parent_class_info;
         }
-        $this->aliasNodes = [
-            ...$this->aliasNodes,
+        $this->aliasCache[$class_info->getName()] = [
+            ...($this->aliasCache[$class_info->getName()] ?? []),
             ...$template_aliases,
         ];
+        echo $this->phpStanUtils->getPrettyAliasCache($this->aliasCache);
         if (!$extends_node) {
             throw new \Exception("Could not parse type for {$class_name}");
         }
@@ -75,7 +84,7 @@ abstract class TypedEndpoint implements EndpointInterface {
     }
 
     /**
-     * @return array<string, TypeNode>
+     * @return NamespaceAliases
      */
     protected function getTemplateAliases(
         ?PhpDocNode $php_doc_node,
@@ -107,13 +116,13 @@ abstract class TypedEndpoint implements EndpointInterface {
                 throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
                 // @codeCoverageIgnoreEnd
             }
-            $aliases[$node->name] = $value;
+            $aliases[$node->name] = ['type' => $value];
         }
         return $aliases;
     }
 
     /**
-     * @param array<string, TypeNode> $template_aliases
+     * @param NamespaceAliases $template_aliases
      */
     protected function getResolvedExtendsNode(
         ?PhpDocNode $php_doc_node,
@@ -224,10 +233,12 @@ abstract class TypedEndpoint implements EndpointInterface {
         $named_ts_types = [];
         // We're recursively adding exported classes.
         // An array in PHP is actually an ordered map, so this should work.
-        for ($i = 0; $i < count($visitor->exported_classes); $i++) {
-            $name = array_keys($visitor->exported_classes)[$i];
-            $php_type_node = $visitor->exported_classes[$name];
+        for ($i = 0; $i < count($visitor->exported_aliases); $i++) {
+            $name = array_keys($visitor->exported_aliases)[$i];
+            echo "EXPORTING {$name}...\n";
+            $php_type_node = $this->phpStanUtils->resolveAlias($visitor->exported_aliases[$name]);
             [$ts_type_node] = $traverser->traverse([$php_type_node]);
+            echo "EXPORTED: {$name} => {$ts_type_node}\n";
             $named_ts_types[$name] = "{$ts_type_node}";
         }
         return $named_ts_types;
@@ -247,18 +258,18 @@ abstract class TypedEndpoint implements EndpointInterface {
         return "{$ts_type_node}";
     }
 
-    /** @return array<string, TypeNode> */
+    /** @return AliasCache */
     protected function getAliasNodes(): array {
-        if ($this->aliasNodes === null) {
+        if ($this->aliasCache === null) {
             $this->parseType();
         }
-        if ($this->aliasNodes === null) {
+        if ($this->aliasCache === null) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
             throw new \Exception('Must be set now');
             // @codeCoverageIgnoreEnd
         }
-        return $this->aliasNodes;
+        return $this->aliasCache;
     }
 
     protected function getRequestTypeNode(): TypeNode {
