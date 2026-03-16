@@ -22,7 +22,7 @@ use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
  *   top: FakeTopType,
  *   sameFileA: FakeSameFileAType,
  * }
- * 
+ *
  * @extends FakeAnotherAClass<FakeAnotherAType,
  *   FakeAAClass<FakeAAType,
  *     FakeBClass<FakeBType,

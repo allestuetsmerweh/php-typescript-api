@@ -16,6 +16,10 @@ use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
 
 /**
  * @phpstan-import-type AliasCache from PhpStanUtils
+ *
+ * @internal
+ *
+ * @coversNothing
  */
 class PhpStanUtilsForTest extends PhpStanUtils {
     /** @return AliasCache */
@@ -27,12 +31,14 @@ class PhpStanUtilsForTest extends PhpStanUtils {
 /**
  * @phpstan-import-type InfiniteLoop from FakeLoop2
  */
-class FakeLoop1 {}
+class FakeLoop1 {
+}
 
 /**
  * @phpstan-import-type InfiniteLoop from FakeLoop1
  */
-class FakeLoop2 {}
+class FakeLoop2 {
+}
 
 /**
  * @phpstan-type AliasedUtilString non-empty-string
@@ -154,7 +160,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $utils = new PhpStanUtils();
         $class_info = new \ReflectionClass(FakeAClass::class);
         $phpDocNode = $utils->parseDocComment(
-            $class_info->getDocComment(), 
+            $class_info->getDocComment(),
             $class_info->getFileName() ?: null,
         );
         $this->assertEquals([
@@ -351,7 +357,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
         );
         $this->assertEquals([
             FakeAClass::class => [
-                'FakeType' => ['type' => $this->getTypeNode(<<<ZZZZZZZZZZ
+                'FakeType' => ['type' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
                     array{
                         anotherA: FakeAnotherAType,
                         aa: FakeAAType,
