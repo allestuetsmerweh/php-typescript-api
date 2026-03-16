@@ -42,10 +42,9 @@ abstract class TypedEndpoint implements EndpointInterface {
                 $class_info->getFileName() ?: null,
             );
             $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
-            $this->aliasNodes = [
-                ...$this->aliasNodes,
-                ...$this->phpStanUtils->getAliases($php_doc_node),
-            ];
+            foreach ($this->phpStanUtils->getAliases($php_doc_node) as $key => $value) {
+                $this->aliasNodes[$key] = $this->phpStanUtils->resolveAlias($value);
+            }
             $extends_node = $this->getResolvedExtendsNode($php_doc_node, $template_aliases);
             $parent_class_info = $class_info->getParentClass();
             if ($parent_class_info->getName() === TypedEndpoint::class) {
