@@ -8,16 +8,18 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\HttpError;
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAClass;
 use PhpTypeScriptApi\TypedEndpoint;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ * 
  * @phpstan-type FakeNestedThing array{id: int}
  * @phpstan-type FakeNamedThing array{id: int, name: string, nested: FakeNestedThing}
  * @phpstan-type FakeInput array{
@@ -52,7 +54,7 @@ class FakeTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @return array<string, TypeNode>
+     * @return NamespaceAliases
      */
     public function testOnlyGetTemplateAliases(
         ?PhpDocNode $php_doc_node,
@@ -62,7 +64,7 @@ class FakeTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @param array<string, TypeNode> $template_aliases
+     * @param NamespaceAliases $template_aliases
      */
     public function testOnlyGetResolvedExtendsNode(
         ?PhpDocNode $php_doc_node,
@@ -77,12 +79,19 @@ class FakeTypedEndpoint extends TypedEndpoint {
  * @template Out
  * @template CustomIn = never
  *
- * @phpstan-type Input array{in: In, custom?: CustomIn}
+ * @phpstan-import-type FakeType from FakeAClass as Imported
+ * 
+ * @phpstan-type Input array{in: In, custom?: CustomIn, imported: Imported}
  *
  * @extends TypedEndpoint<Input, Out>
  */
 abstract class FakeIntermediateGenericTypedEndpoint extends TypedEndpoint {
 }
+
+/**
+ * @phpstan-type UtilType array{}
+ */
+class FakeUtil {}
 
 /**
  * @phpstan-type AliasedString string
@@ -349,10 +358,11 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame("Input", $endpoint->getRequestTsType());
         $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertEquals([
-            'Input' => "{'in': In, 'custom'?: CustomIn}",
+            'Input' => "{'in': In, 'custom'?: CustomIn, 'imported': Imported}",
             'AliasedString' => "string",
             'In' => "number",
             'CustomIn' => "number",
+            'Imported' => "string",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -363,10 +373,11 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame("Input", $endpoint->getRequestTsType());
         $this->assertSame("AliasedString", $endpoint->getResponseTsType());
         $this->assertEquals([
-            'Input' => "{'in': In, 'custom'?: CustomIn}",
+            'Input' => "{'in': In, 'custom'?: CustomIn, 'imported': Imported}",
             'AliasedString' => "string",
             'In' => "number",
             'CustomIn' => "never",
+            'Imported' => "string",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -643,19 +654,19 @@ class TypedEndpointTest extends UnitTestCase {
         $this->assertSame([], $endpoint->testOnlyGetTemplateAliases($php_doc_node_0, null));
 
         $this->assertEquals([
-            'T' => $this->getTypeNode('int'),
+            'T' => ['type' => $this->getTypeNode('int')],
         ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1, $extends_1));
         $this->assertEquals([
-            'T' => $this->getTypeNode('int'),
-            'U' => $this->getTypeNode('string'),
+            'T' => ['type' => $this->getTypeNode('int')],
+            'U' => ['type' => $this->getTypeNode('string')],
         ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_2, $extends_2));
         $this->assertEquals([
-            'T' => $this->getTypeNode('int'),
-            'U' => $this->getTypeNode('null'),
+            'T' => ['type' => $this->getTypeNode('int')],
+            'U' => ['type' => $this->getTypeNode('null')],
         ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1_or_2, $extends_1));
         $this->assertEquals([
-            'T' => $this->getTypeNode('int'),
-            'U' => $this->getTypeNode('string'),
+            'T' => ['type' => $this->getTypeNode('int')],
+            'U' => ['type' => $this->getTypeNode('string')],
         ], $endpoint->testOnlyGetTemplateAliases($php_doc_node_1_or_2, $extends_2));
 
         try {
@@ -729,10 +740,10 @@ class TypedEndpointTest extends UnitTestCase {
              */
             ZZZZZZZZZZ);
         $aliases_0 = [];
-        $aliases_1 = ['T' => $this->getTypeNode('float')];
+        $aliases_1 = ['T' => ['type' => $this->getTypeNode('float')]];
         $aliases_2 = [
-            'U' => $this->getTypeNode('string'),
-            'T' => $this->getTypeNode('int'),
+            'U' => ['type' => $this->getTypeNode('string')],
+            'T' => ['type' => $this->getTypeNode('int')],
         ];
         $extends_1_1 = $this->getExtendsNode(['float']);
         $extends_2_2 = $this->getExtendsNode(['int', 'string']);
