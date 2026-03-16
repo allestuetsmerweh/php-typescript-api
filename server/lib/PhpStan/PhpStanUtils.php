@@ -11,6 +11,13 @@ use PHPStan\PhpDocParser\Parser\TokenIterator;
 use PHPStan\PhpDocParser\Parser\TypeParser;
 use PHPStan\PhpDocParser\ParserConfig;
 
+/**
+ * @phpstan-type ImportAlias array{namespace: string, name: string}
+ * @phpstan-type TypeAlias array{type: TypeNode}
+ * @phpstan-type Alias TypeAlias|ImportAlias
+ * @phpstan-type NamespaceAliases array<string, Alias>
+ * @phpstan-type AliasCache array<string, NamespaceAliases>
+ */
 class PhpStanUtils {
     public function getApiObjectTypeNode(string $name): ?TypeNode {
         $class_info = $this->resolveApiObjectClass($name);
@@ -42,48 +49,70 @@ class PhpStanUtils {
         return $class_info;
     }
 
-    /** @return array<string, TypeNode> */
+    /** @return NamespaceAliases */
     public function getAliases(?PhpDocNode $php_doc_node): array {
-        return $this->getAliasesInternal($php_doc_node, null);
-    }
-
-    protected int $recursion = 0;
-    public int $max_recursion = 100;
-
-    /** @return array<string, TypeNode> */
-    protected function getAliasesInternal(?PhpDocNode $php_doc_node, ?string $name_filter): array {
         $aliases = [];
         foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
-            if ($name_filter && $alias_node->alias !== $name_filter) {
-                continue;
-            }
-            $aliases[$alias_node->alias] = $alias_node->type;
+            $aliases[$alias_node->alias] = ['type' => $alias_node->type];
         }
         foreach ($php_doc_node?->getTypeAliasImportTagValues() ?? [] as $import_node) {
             $alias = $import_node->importedAs ?? $import_node->importedAlias;
-            if ($name_filter && $alias !== $name_filter) {
-                continue;
-            }
             $from = $import_node->importedFrom->name;
-            $class_info = $this->getReflectionClass($from);
+            $aliases[$alias] = ['namespace' => $from, 'name' => $import_node->importedAlias];
+        }
+        return $aliases;
+    }
+
+    /** @var AliasCache */
+    protected array $alias_cache = [];
+    protected int $recursion = 0;
+    public int $max_recursion = 100;
+
+    /**
+     * @param Alias $alias
+     */
+    public function resolveAlias(array $alias): TypeNode {
+        if (isset($alias['type'])) {
+            return $alias['type'];
+        }
+        $namespace = $alias['namespace'] ?? null;
+        $name = $alias['name'] ?? null;
+        assert($namespace !== null);
+        assert($name !== null);
+        if (!isset($this->alias_cache[$namespace])) {
+            $class_info = $this->getReflectionClass($namespace);
             $import_php_doc_node = $this->parseDocComment(
                 $class_info?->getDocComment(),
                 $class_info?->getFileName() ?: null,
             );
-            $this->recursion++;
-            if ($this->recursion > $this->max_recursion) {
-                throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$import_node->importedAlias} from {$from}");
-            }
-            $import_aliases = $this->getAliasesInternal($import_php_doc_node, $import_node->importedAlias);
-            $this->recursion--;
-            $found_alias = $import_aliases[$import_node->importedAlias] ?? null;
-            if ($found_alias === null) {
-                throw new \Exception("Failed importing {$import_node->importedAlias} from {$from}");
-            }
-            $aliases[$alias] = $found_alias;
+            $this->alias_cache[$namespace] = $this->getAliases($import_php_doc_node);
         }
-        $this->recursion = 0;
-        return $aliases;
+        $import_alias = $this->alias_cache[$namespace][$name] ?? null;
+        if ($import_alias === null) {
+            throw new \Exception("Failed importing {$name} from {$namespace}");
+        }
+        $this->recursion++;
+        if ($this->recursion > $this->max_recursion) {
+            throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$name} from {$namespace}");
+        }
+        $resolved_alias = $this->resolveAlias($import_alias);
+        $this->recursion--;
+        return $resolved_alias;
+
+        // $this->recursion++;
+        // if ($this->recursion > $this->max_recursion) {
+        //     throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$import_node->importedAlias} from {$from}");
+        // }
+        // $import_aliases = $this->discoverAliases($import_php_doc_node);
+        // $this->recursion--;
+        // $found_alias = $import_aliases[$import_node->importedAlias] ?? null;
+        // if ($found_alias === null) {
+        //     throw new \Exception("Failed importing {$import_node->importedAlias} from {$from}");
+        // }
+        // $aliases[$alias] = $found_alias;
+
+        // $this->recursion = 0;
+        // return $aliases;
     }
 
     public function parseDocComment(
@@ -168,6 +197,31 @@ class PhpStanUtils {
             }
         }
         return [$namespace, $scope];
+    }
+
+    /** @param AliasCache $alias_cache */
+    public function getPrettyAliasCache(array $alias_cache): string {
+        $out = '---';
+        foreach ($alias_cache as $namespace => $aliases) {
+            $out .= "\n{$namespace}\n";
+            foreach ($aliases as $name => $alias) {
+                $out .= "    {$name} => {$this->getPrettyAlias($alias)}\n";
+            }
+        }
+        $out .= "---\n";
+        return $out;
+    }
+
+    /** @param Alias $alias */
+    public function getPrettyAlias(array $alias): string {
+        if (isset($alias['type'])) {
+            return "{$alias['type']}";
+        }
+        if (isset($alias['namespace'])) {
+            return "{$alias['namespace']}::{$alias['name']}";
+        }
+        $enc_alias = json_encode($alias) ?: '';
+        return "INVALID ALIAS: {$enc_alias}";
     }
 
     /** @return ?\ReflectionClass<object> */
