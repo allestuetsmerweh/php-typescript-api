@@ -15,12 +15,11 @@ use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 use PhpTypeScriptApi\Translator;
 
 final class ValidateVisitor extends AbstractNodeVisitor {
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param array<string, Node> $aliasNodes */
     public function __construct(
         protected PhpStanUtils $phpStanUtils,
         protected mixed $value,
@@ -29,7 +28,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     ) {
     }
 
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param array<string, Node> $aliasNodes */
     public static function validateSerialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,
@@ -40,7 +39,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
         return $validator->subValidate($value, $type);
     }
 
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param array<string, Node> $aliasNodes */
     public static function validateDeserialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,

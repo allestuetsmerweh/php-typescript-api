@@ -10,5 +10,5 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake;
  *
  * @phpstan-type FakeTopType string
  */
-class FakeClass {
+class FakeTopClass {
 }

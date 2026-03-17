@@ -7,7 +7,8 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
-use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeMyArray;
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeTopClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeAnotherAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\FakeSameFileAClass;
@@ -83,6 +84,53 @@ class FakeApiObject implements ApiObjectInterface {
 }
 
 /**
+ * @phpstan-import-type AliasedUtilStringArray from FakePhpStanUtilsTypedEndpoint
+ *
+ * @implements ApiObjectInterface<AliasedUtilStringArray>
+ */
+class FakeAliasApiObject implements ApiObjectInterface {
+    /** @return AliasedUtilStringArray */
+    public function data(): array {
+        return ['test'];
+    }
+
+    public static function fromData(mixed $data): FakeAliasApiObject {
+        if (!is_array($data)) {
+            throw new \InvalidArgumentException("FakeAliasApiObject must be array");
+        }
+        for ($idx1 = 0; $idx1 < count($data); $idx1++) {
+            if (!is_string($data[$idx1])) {
+                throw new \InvalidArgumentException("FakeAliasApiObject[{$idx1}] must be string");
+            }
+        }
+        return new FakeAliasApiObject();
+    }
+}
+
+/**
+ * @phpstan-import-type AliasedUtilStringArray from FakePhpStanUtilsTypedEndpoint
+ *
+ * @implements ApiObjectInterface<FakeMyArray<int>>
+ */
+class FakeGenericApiObject implements ApiObjectInterface {
+    public function data(): FakeMyArray {
+        return new FakeMyArray([1]);
+    }
+
+    public static function fromData(mixed $data): FakeGenericApiObject {
+        if (!is_array($data)) {
+            throw new \InvalidArgumentException("FakeGenericApiObject must be array");
+        }
+        for ($idx1 = 0; $idx1 < count($data); $idx1++) {
+            if (!is_int($data[$idx1])) {
+                throw new \InvalidArgumentException("FakeGenericApiObject[{$idx1}] must be int");
+            }
+        }
+        return new FakeGenericApiObject();
+    }
+}
+
+/**
  * @internal
  *
  * @covers \PhpTypeScriptApi\PhpStan\PhpStanUtils
@@ -128,6 +176,34 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertSame("'foo'", "{$node}");
     }
 
+    public function testAliasApiObjectTypeNodeFull(): void {
+        $utils = new PhpStanUtils();
+        $node = $utils->getApiObjectTypeNode(FakeAliasApiObject::class);
+        $this->assertSame("array<AliasedUtilString>", "{$node}");
+    }
+
+    public function testAliasApiObjectTypeNodeFullyQualified(): void {
+        $utils = new PhpStanUtils();
+        $class_name = FakeAliasApiObject::class;
+        $node = $utils->getApiObjectTypeNode("\\{$class_name}");
+        $this->assertSame("array<AliasedUtilString>", "{$node}");
+    }
+
+    public function testGenericApiObjectTypeNodeFull(): void {
+        $utils = new PhpStanUtils();
+        $expected_name = FakeMyArray::class;
+        $node = $utils->getApiObjectTypeNode(FakeGenericApiObject::class);
+        $this->assertSame("{$expected_name}<int>", "{$node}");
+    }
+
+    public function testGenericApiObjectTypeNodeFullyQualified(): void {
+        $utils = new PhpStanUtils();
+        $class_name = FakeGenericApiObject::class;
+        $expected_name = FakeMyArray::class;
+        $node = $utils->getApiObjectTypeNode("\\{$class_name}");
+        $this->assertSame("{$expected_name}<int>", "{$node}");
+    }
+
     public function testApiObjectTypeNodeInvalid(): void {
         $utils = new PhpStanUtils();
         $this->assertNull($utils->getApiObjectTypeNode('Invalid'));
@@ -168,7 +244,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
             'FakeAnotherAType' => ['namespace' => FakeAnotherAClass::class, 'name' => 'FakeAnotherAType'],
             'FakeAAType' => ['namespace' => FakeAAClass::class, 'name' => 'FakeAAType'],
             'FakeBType' => ['namespace' => FakeBClass::class, 'name' => 'FakeBType'],
-            'FakeTopType' => ['namespace' => FakeClass::class, 'name' => 'FakeTopType'],
+            'FakeTopType' => ['namespace' => FakeTopClass::class, 'name' => 'FakeTopType'],
             'FakeSameFileAType' => ['namespace' => FakeSameFileAClass::class, 'name' => 'FakeSameFileAType'],
         ], $utils->getAliases($phpDocNode));
     }
@@ -379,7 +455,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
                     'name' => 'FakeBType',
                 ],
                 'FakeTopType' => [
-                    'namespace' => FakeClass::class,
+                    'namespace' => FakeTopClass::class,
                     'name' => 'FakeTopType',
                 ],
                 'FakeSameFileAType' => [
@@ -396,7 +472,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
             FakeBClass::class => [
                 'FakeBType' => ['type' => $this->getTypeNode("string")],
             ],
-            FakeClass::class => [
+            FakeTopClass::class => [
                 'FakeTopType' => ['type' => $this->getTypeNode("string")],
             ],
             FakeSameFileAClass::class => [
@@ -472,7 +548,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $fake_another_class = FakeAnotherAClass::class;
         $fake_aa_class = FakeAAClass::class;
         $fake_b_class = FakeBClass::class;
-        $fake_class = FakeClass::class;
+        $fake_class = FakeTopClass::class;
         $fake_same_file_a_class = FakeSameFileAClass::class;
         $this->assertSame(
             "{$fake_another_class}<FakeAnotherAType, {$fake_aa_class}<FakeAAType, {$fake_b_class}<FakeBType, {$fake_class}<FakeTopType, {$fake_same_file_a_class}<FakeSameFileAType, string>>>>>",
@@ -511,7 +587,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertSame([
             'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA',
             [
-                'FakeTopLevelClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass',
+                'FakeTopLevelClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeTopClass',
                 'FakeAAClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAClass',
                 'FakeBClass' => 'PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass',
             ],
