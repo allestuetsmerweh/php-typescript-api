@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA;
 
-use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeClass as FakeTopLevelClass;
+// Intentionally aliased!
+use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\FakeTopClass as FakeTopLevelClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceA\NamespaceAA\FakeAAClass;
 use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
 

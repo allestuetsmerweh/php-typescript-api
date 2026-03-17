@@ -2,8 +2,9 @@
 
 namespace PhpTypeScriptApi\PhpStan;
 
+use PHPStan\PhpDocParser\Ast\Node;
+use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
 use PHPStan\PhpDocParser\Parser\ConstExprParser;
 use PHPStan\PhpDocParser\Parser\PhpDocParser;
@@ -13,13 +14,13 @@ use PHPStan\PhpDocParser\ParserConfig;
 
 /**
  * @phpstan-type ImportAlias array{namespace: string, name: string}
- * @phpstan-type TypeAlias array{type: TypeNode}
+ * @phpstan-type TypeAlias array{type: Node}
  * @phpstan-type Alias TypeAlias|ImportAlias
  * @phpstan-type NamespaceAliases array<string, Alias>
  * @phpstan-type AliasCache array<string, NamespaceAliases>
  */
 class PhpStanUtils {
-    public function getApiObjectTypeNode(string $name): ?TypeNode {
+    public function getApiObjectTypeNode(string $name): ?Node {
         $class_info = $this->resolveApiObjectClass($name);
         if ($class_info === null) {
             return null;
@@ -28,12 +29,13 @@ class PhpStanUtils {
             $class_info->getDocComment(),
             $class_info->getFileName() ?: null,
         );
+        $aliases = $this->getAliases($php_doc_node);
         $api_object_interface = ApiObjectInterface::class;
         $implements_node = null;
         foreach ($php_doc_node?->getImplementsTagValues() ?? [] as $node) {
             $generic_node = $node->type;
             if ("{$generic_node->type}" === $api_object_interface) {
-                $implements_node = $generic_node->genericTypes[0];
+                $implements_node = $this->resolveTypeAliases($generic_node->genericTypes[0], $aliases);
             }
         }
         return $implements_node;
@@ -47,6 +49,16 @@ class PhpStanUtils {
         }
         // @phpstan-ignore return.type
         return $class_info;
+    }
+
+    /**
+     * @param NamespaceAliases $aliases
+     */
+    public function resolveTypeAliases(Node $node, array $aliases): Node {
+        $visitor = new ResolveAliasesVisitor($this, $aliases);
+        $traverser = new NodeTraverser([$visitor]);
+        [$resolved_extends_node] = $traverser->traverse([$node]);
+        return $resolved_extends_node;
     }
 
     /** @return NamespaceAliases */
@@ -71,9 +83,9 @@ class PhpStanUtils {
     /**
      * @param Alias $alias
      */
-    public function resolveAlias(array $alias): TypeNode {
+    public function resolveAlias(array $alias): Node {
         if (isset($alias['type'])) {
-            return $alias['type'];
+            return clone $alias['type'];
         }
         $namespace = $alias['namespace'] ?? null;
         $name = $alias['name'] ?? null;
@@ -98,21 +110,6 @@ class PhpStanUtils {
         $resolved_alias = $this->resolveAlias($import_alias);
         $this->recursion--;
         return $resolved_alias;
-
-        // $this->recursion++;
-        // if ($this->recursion > $this->max_recursion) {
-        //     throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$import_node->importedAlias} from {$from}");
-        // }
-        // $import_aliases = $this->discoverAliases($import_php_doc_node);
-        // $this->recursion--;
-        // $found_alias = $import_aliases[$import_node->importedAlias] ?? null;
-        // if ($found_alias === null) {
-        //     throw new \Exception("Failed importing {$import_node->importedAlias} from {$from}");
-        // }
-        // $aliases[$alias] = $found_alias;
-
-        // $this->recursion = 0;
-        // return $aliases;
     }
 
     public function parseDocComment(

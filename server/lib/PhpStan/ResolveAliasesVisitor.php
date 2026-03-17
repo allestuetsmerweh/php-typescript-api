@@ -7,11 +7,14 @@ namespace PhpTypeScriptApi\PhpStan;
 use PHPStan\PhpDocParser\Ast\AbstractNodeVisitor;
 use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 
+/**
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
+ */
 final class ResolveAliasesVisitor extends AbstractNodeVisitor {
-    /** @param array<string, TypeNode> $aliasNodes */
+    /** @param NamespaceAliases $aliasNodes */
     public function __construct(
+        protected PhpStanUtils $phpStanUtils,
         protected array $aliasNodes = [],
     ) {
     }
@@ -22,7 +25,7 @@ final class ResolveAliasesVisitor extends AbstractNodeVisitor {
             $node instanceof IdentifierTypeNode
             && isset($this->aliasNodes[$node->name])
         ) {
-            return clone $this->aliasNodes[$node->name];
+            return $this->phpStanUtils->resolveAlias($this->aliasNodes[$node->name]);
         }
         return $node;
     }

@@ -2,10 +2,10 @@
 
 namespace PhpTypeScriptApi;
 
+use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
@@ -16,14 +16,16 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * @template Request
  * @template Response
+ *
+ * @phpstan-import-type NamespaceAliases from PhpStanUtils
  */
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
     protected PhpStanUtils $phpStanUtils;
-    private ?TypeNode $requestTypeNode = null;
-    private ?TypeNode $responseTypeNode = null;
-    /** @var ?array<string, TypeNode> */
+    private ?Node $requestTypeNode = null;
+    private ?Node $responseTypeNode = null;
+    /** @var ?array<string, Node> */
     private ?array $aliasNodes = null;
 
     public function __construct() {
@@ -42,6 +44,9 @@ abstract class TypedEndpoint implements EndpointInterface {
                 $class_info->getFileName() ?: null,
             );
             $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
+            foreach ($template_aliases as $key => $value) {
+                $this->aliasNodes[$key] = $this->phpStanUtils->resolveAlias($value);
+            }
             foreach ($this->phpStanUtils->getAliases($php_doc_node) as $key => $value) {
                 $this->aliasNodes[$key] = $this->phpStanUtils->resolveAlias($value);
             }
@@ -52,10 +57,10 @@ abstract class TypedEndpoint implements EndpointInterface {
             }
             $class_info = $parent_class_info;
         }
-        $this->aliasNodes = [
-            ...$this->aliasNodes,
-            ...$template_aliases,
-        ];
+        // $this->aliasNodes = [
+        //     ...$this->aliasNodes,
+        //     ...$template_aliases,
+        // ];
         if (!$extends_node) {
             throw new \Exception("Could not parse type for {$class_name}");
         }
@@ -74,7 +79,7 @@ abstract class TypedEndpoint implements EndpointInterface {
     }
 
     /**
-     * @return array<string, TypeNode>
+     * @return NamespaceAliases
      */
     protected function getTemplateAliases(
         ?PhpDocNode $php_doc_node,
@@ -106,13 +111,13 @@ abstract class TypedEndpoint implements EndpointInterface {
                 throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
                 // @codeCoverageIgnoreEnd
             }
-            $aliases[$node->name] = $value;
+            $aliases[$node->name] = ['type' => $value];
         }
         return $aliases;
     }
 
     /**
-     * @param array<string, TypeNode> $template_aliases
+     * @param NamespaceAliases $template_aliases
      */
     protected function getResolvedExtendsNode(
         ?PhpDocNode $php_doc_node,
@@ -123,7 +128,7 @@ abstract class TypedEndpoint implements EndpointInterface {
             return null;
         }
 
-        $visitor = new ResolveAliasesVisitor($template_aliases);
+        $visitor = new ResolveAliasesVisitor($this->phpStanUtils, $template_aliases);
         $traverser = new NodeTraverser([$visitor]);
         [$resolved_extends_node] = $traverser->traverse([$extends_type_node]);
         if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
@@ -246,7 +251,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return "{$ts_type_node}";
     }
 
-    /** @return array<string, TypeNode> */
+    /** @return array<string, Node> */
     protected function getAliasNodes(): array {
         if ($this->aliasNodes === null) {
             $this->parseType();
@@ -260,7 +265,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $this->aliasNodes;
     }
 
-    protected function getRequestTypeNode(): TypeNode {
+    protected function getRequestTypeNode(): Node {
         if ($this->requestTypeNode === null) {
             $this->parseType();
         }
@@ -273,7 +278,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $this->requestTypeNode;
     }
 
-    protected function getResponseTypeNode(): TypeNode {
+    protected function getResponseTypeNode(): Node {
         if ($this->responseTypeNode === null) {
             $this->parseType();
         }
