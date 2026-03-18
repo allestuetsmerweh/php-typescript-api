@@ -17,13 +17,14 @@ use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 
 final class TypeScriptVisitor extends AbstractNodeVisitor {
-    /** @var array<string, Node> */
+    /** @var array<string, TypeNode> */
     public array $exported_classes = [];
 
-    /** @param array<string, Node> $aliasNodes */
+    /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
         protected PhpStanUtils $phpStanUtils,
         protected array $aliasNodes = [],

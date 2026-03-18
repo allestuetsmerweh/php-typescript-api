@@ -6,11 +6,11 @@ namespace PhpTypeScriptApi\PhpStan;
  * @implements ApiObjectInterface<non-empty-string>
  */
 class IsoDateTime extends \DateTime implements ApiObjectInterface {
-    public function data(): mixed {
+    public function toWire(): mixed {
         return $this->format('Y-m-d H:i:s');
     }
 
-    public static function fromData(mixed $data): IsoDateTime {
+    public static function fromWire(mixed $data): IsoDateTime {
         if (!is_string($data)) {
             throw new \InvalidArgumentException("IsoDateTime must be string");
         }
@@ -28,6 +28,6 @@ class IsoDateTime extends \DateTime implements ApiObjectInterface {
     }
 
     public function __toString(): string {
-        return "{$this->data()}";
+        return "{$this->toWire()}";
     }
 }

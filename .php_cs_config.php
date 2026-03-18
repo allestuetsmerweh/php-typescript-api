@@ -14,7 +14,7 @@ return $config
         '@PSR12' => true,
         '@PhpCsFixer' => true,
         '@Symfony' => true,
-        '@PHP82Migration' => true,
+        '@PHP8x2Migration' => true,
         'blank_line_before_statement' => false,
         'braces_position' => [
             'functions_opening_brace' => 'same_line',

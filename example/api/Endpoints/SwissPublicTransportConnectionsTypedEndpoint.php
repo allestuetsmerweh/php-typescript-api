@@ -26,7 +26,7 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
             'from' => $input['from'],
             'to' => $input['to'],
             'via' => $input['via'],
-            'date' => $input['date']->data(),
+            'date' => $input['date']->format('Y-m-d'),
             'time' => $input['time'],
             'isArrivalTime' => $input['isArrivalTime'],
         ]);

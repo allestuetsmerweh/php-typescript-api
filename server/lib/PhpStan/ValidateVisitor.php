@@ -15,11 +15,12 @@ use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\NullableTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ObjectShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Ast\Type\UnionTypeNode;
 use PhpTypeScriptApi\Translator;
 
 final class ValidateVisitor extends AbstractNodeVisitor {
-    /** @param array<string, Node> $aliasNodes */
+    /** @param array<string, TypeNode> $aliasNodes */
     public function __construct(
         protected PhpStanUtils $phpStanUtils,
         protected mixed $value,
@@ -28,22 +29,22 @@ final class ValidateVisitor extends AbstractNodeVisitor {
     ) {
     }
 
-    /** @param array<string, Node> $aliasNodes */
+    /** @param array<string, TypeNode> $aliasNodes */
     public static function validateSerialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,
-        Node $type,
+        TypeNode $type,
         array $aliasNodes = [],
     ): ValidationResultNode {
         $validator = new ValidateVisitor($phpStanUtils, $value, $aliasNodes, true);
         return $validator->subValidate($value, $type);
     }
 
-    /** @param array<string, Node> $aliasNodes */
+    /** @param array<string, TypeNode> $aliasNodes */
     public static function validateDeserialize(
         PhpStanUtils $phpStanUtils,
         mixed $value,
-        Node $type,
+        TypeNode $type,
         array $aliasNodes = [],
     ): ValidationResultNode {
         $validator = new ValidateVisitor($phpStanUtils, $value, $aliasNodes, false);
@@ -92,10 +93,10 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 'non-empty-string' => fn ($value): string => (is_string($value) && !empty($value)) ? $value : throw new \Exception(),
                 'lowercase-string' => fn ($value): string => (is_string($value) && preg_match('/^[a-z]+$/', $value)) ? $value : throw new \Exception(),
                 // Never
-                'never' => fn () => throw new \Exception(),
-                'never-return' => fn () => throw new \Exception(),
-                'never-returns' => fn () => throw new \Exception(),
-                'no-return' => fn () => throw new \Exception(),
+                'never' => fn ($value) => throw new \Exception(),
+                'never-return' => fn ($value) => throw new \Exception(),
+                'never-returns' => fn ($value) => throw new \Exception(),
+                'no-return' => fn ($value) => throw new \Exception(),
             ];
             $fn = $mapping[$node->name] ?? null;
             if ($fn === null) {
@@ -108,7 +109,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                     $class_info = $this->phpStanUtils->resolveApiObjectClass($node->name);
                     $class = $class_info?->getName();
                     if ($class && $this->value instanceof $class) {
-                        $data = $this->value->data();
+                        $data = $this->value->toWire();
                         $result = $this->subValidate($data, $serialized_node);
                         if ($this->serialize) {
                             $result->setValue($data);
@@ -119,7 +120,7 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                     if (!$this->serialize) {
                         try {
                             // @phpstan-ignore staticMethod.nonObject
-                            $result->setValue($class::fromData($this->value));
+                            $result->setValue($class::fromWire($this->value));
                         } catch (\Throwable $th) {
                             return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
                         }
