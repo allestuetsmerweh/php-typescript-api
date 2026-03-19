@@ -71,11 +71,11 @@ class FakePhpStanUtilsTypedEndpoint {
  * @implements ApiObjectInterface<'foo'>
  */
 class FakeApiObject implements ApiObjectInterface {
-    public function data(): mixed {
+    public function toWire(): mixed {
         return 'foo';
     }
 
-    public static function fromData(mixed $data): FakeApiObject {
+    public static function fromWire(mixed $data): FakeApiObject {
         if ($data !== 'foo') {
             throw new \InvalidArgumentException("FakeApiObject must be foo");
         }
@@ -89,12 +89,11 @@ class FakeApiObject implements ApiObjectInterface {
  * @implements ApiObjectInterface<AliasedUtilStringArray>
  */
 class FakeAliasApiObject implements ApiObjectInterface {
-    /** @return AliasedUtilStringArray */
-    public function data(): array {
+    public function toWire(): mixed {
         return ['test'];
     }
 
-    public static function fromData(mixed $data): FakeAliasApiObject {
+    public static function fromWire(mixed $data): FakeAliasApiObject {
         if (!is_array($data)) {
             throw new \InvalidArgumentException("FakeAliasApiObject must be array");
         }
@@ -113,11 +112,11 @@ class FakeAliasApiObject implements ApiObjectInterface {
  * @implements ApiObjectInterface<FakeMyArray<int>>
  */
 class FakeGenericApiObject implements ApiObjectInterface {
-    public function data(): FakeMyArray {
+    public function toWire(): mixed {
         return new FakeMyArray([1]);
     }
 
-    public static function fromData(mixed $data): FakeGenericApiObject {
+    public static function fromWire(mixed $data): FakeGenericApiObject {
         if (!is_array($data)) {
             throw new \InvalidArgumentException("FakeGenericApiObject must be array");
         }
@@ -127,6 +126,70 @@ class FakeGenericApiObject implements ApiObjectInterface {
             }
         }
         return new FakeGenericApiObject();
+    }
+}
+
+/**
+ * @template T
+ */
+interface BogusInterface {
+}
+
+/**
+ * @template T
+ */
+interface TheInterface {
+    /** @return T */
+    public function get(): mixed;
+}
+
+class NonGenericSuperClass {
+}
+
+/**
+ * @template T
+ * @template U
+ */
+class SuperClass extends NonGenericSuperClass {
+}
+
+/**
+ * @template T
+ *
+ * @phpstan-import-type AliasedUtilString from FakeUtil1
+ *
+ * @phpstan-type AliasedString string
+ * @phpstan-type AliasedArray array<AliasedUtilString>
+ *
+ * @extends SuperClass<T, array{20: AliasedUtilString, 21: AliasedString, 22: AliasedArray, 23: T}>
+ *
+ * @implements BogusInterface<array{30: AliasedUtilString, 31: AliasedString, 32: AliasedArray, 33: T}>
+ * @implements TheInterface<array{10: AliasedUtilString, 11: AliasedString, 12: AliasedArray, 13: T}>
+ */
+class IntermediateClass extends SuperClass implements BogusInterface, TheInterface {
+    /** @param array<T> $value */
+    protected function __construct(
+        protected mixed $value,
+    ) {
+    }
+
+    /** @return array<array<T>> */
+    public function get(): mixed {
+        return $this->value;
+    }
+}
+
+/**
+ * @phpstan-import-type AliasedUtilString from FakeUtil1
+ *
+ * @phpstan-type AliasedString string
+ * @phpstan-type AliasedArray array<AliasedUtilString>
+ *
+ * @extends IntermediateClass<array{0: AliasedUtilString, 1: AliasedString, 2: AliasedArray}>
+ */
+class SubClass extends IntermediateClass {
+    public function __construct() {
+        parent::__construct([['a', '', ['a']]]);
     }
 }
 
@@ -525,6 +588,28 @@ final class PhpStanUtilsTest extends UnitTestCase {
         }
     }
 
+    public function testParseClassDocComment(): void {
+        $utils = new PhpStanUtils();
+
+        $phpDocNode = $utils->parseClassDocComment(FakeUtil1::class);
+
+        $this->assertSame('AliasedUtilString', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
+        $this->assertSame('non-empty-string', "{$phpDocNode?->getTypeAliasTagValues()[0]->type}");
+        $this->assertSame('AliasedUtilIntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
+        $this->assertSame('array<AliasedUtilInt>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
+    }
+
+    public function testParseReflectionClassDocComment(): void {
+        $utils = new PhpStanUtils();
+
+        $phpDocNode = $utils->parseReflectionClassDocComment(new \ReflectionClass(FakeUtil1::class));
+
+        $this->assertSame('AliasedUtilString', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
+        $this->assertSame('non-empty-string', "{$phpDocNode?->getTypeAliasTagValues()[0]->type}");
+        $this->assertSame('AliasedUtilIntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
+        $this->assertSame('array<AliasedUtilInt>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
+    }
+
     public function testParseValidDocComment(): void {
         $utils = new PhpStanUtils();
         $comment = <<<'ZZZZZZZZZZ'
@@ -594,5 +679,195 @@ final class PhpStanUtilsTest extends UnitTestCase {
         ], $utils->getFileScopeInfo(__DIR__.'/Fake/NamespaceA/FakeAClass.php'));
         $this->assertSame([null, []], $utils->getFileScopeInfo(__DIR__.'/Fake/InexistentClass.php'));
         $this->assertSame([null, []], $utils->getFileScopeInfo(null));
+    }
+
+    public function testGetSuperInterfaceGenerics(): void {
+        $utils = new PhpStanUtils();
+        $this->assertEquals([
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    10: non-empty-string,
+                    11: string,
+                    12: array<non-empty-string>,
+                    13: array{
+                        0: non-empty-string,
+                        1: string,
+                        2: array<non-empty-string>,
+                    },
+                }
+                ZZZZZZZZZZ),
+        ], $utils->getSuperGenerics(SubClass::class, TheInterface::class));
+    }
+
+    public function testGetSuperClassGenerics(): void {
+        $utils = new PhpStanUtils();
+        $this->assertEquals([
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    0: non-empty-string,
+                    1: string,
+                    2: array<non-empty-string>,
+                }
+                ZZZZZZZZZZ),
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    20: non-empty-string,
+                    21: string,
+                    22: array<non-empty-string>,
+                    23: array{
+                        0: non-empty-string,
+                        1: string,
+                        2: array<non-empty-string>,
+                    },
+                }
+                ZZZZZZZZZZ),
+        ], $utils->getSuperGenerics(SubClass::class, SuperClass::class));
+    }
+
+    public function testGetSuperGenericsNotSuperClass(): void {
+        $utils = new PhpStanUtils();
+        $intermediate_class_name = IntermediateClass::class;
+        $sub_class_name = SubClass::class;
+        try {
+            $utils->getSuperGenerics($intermediate_class_name, $sub_class_name);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "getSuperGenerics: {$intermediate_class_name} is not a subclass of {$sub_class_name}",
+                $th->getMessage(),
+            );
+        }
+    }
+
+    public function testGetSuperGenericsNotSuperInterface(): void {
+        $utils = new PhpStanUtils();
+        $super_class_name = SuperClass::class;
+        $the_interface_name = TheInterface::class;
+        try {
+            $utils->getSuperGenerics($super_class_name, $the_interface_name);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "getSuperGenerics: {$super_class_name} is not a subclass of {$the_interface_name}",
+                $th->getMessage(),
+            );
+        }
+    }
+
+    public function testGetSuperGenericsNonGenericSuperClass(): void {
+        $utils = new PhpStanUtils();
+        $this->assertSame([], $utils->getSuperGenerics(SubClass::class, NonGenericSuperClass::class));
+    }
+
+    public function testGetTemplateAliases(): void {
+        $utils = new PhpStanUtils();
+        $phpDocNode = $utils->parseDocComment(<<<'ZZZZZZZZZZ'
+            /**
+             * @template T
+             * @template U of string
+             * @template V = int
+             * @template W of int = int<0, max>
+             * @return int
+             */
+            ZZZZZZZZZZ);
+
+        $this->assertEquals([
+            'T' => ['type' => $this->getTypeNode("string")],
+            'U' => ['type' => $this->getTypeNode("'foo'")],
+            'V' => ['type' => $this->getTypeNode("int")],
+            'W' => ['type' => $this->getTypeNode("int<0, max>")],
+            // @phpstan-ignore-next-line argument.type
+        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 'foo'>")));
+        $this->assertEquals([
+            'T' => ['type' => $this->getTypeNode("string")],
+            'U' => ['type' => $this->getTypeNode("'foo'")],
+            'V' => ['type' => $this->getTypeNode("3")],
+            'W' => ['type' => $this->getTypeNode("-1")],
+            // @phpstan-ignore-next-line argument.type
+        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 'foo', 3, -1>")));
+        // We don't do checks
+        $this->assertEquals([
+            'T' => ['type' => $this->getTypeNode("string")],
+            'U' => ['type' => $this->getTypeNode("3")],
+            'V' => ['type' => $this->getTypeNode("'foo'")],
+            'W' => ['type' => $this->getTypeNode("'bar'")],
+            // @phpstan-ignore-next-line argument.type
+        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 3, 'foo', 'bar'>")));
+        try {
+            // @phpstan-ignore-next-line argument.type
+            $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<'too few'>"));
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 2-4 generic arguments, but got 'A<'too few'>'",
+                $th->getMessage(),
+            );
+        }
+        try {
+            // @phpstan-ignore-next-line argument.type
+            $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<'too', 'many', 'args', 'in', 'here'>"));
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 2-4 generic arguments, but got 'A<'too', 'many', 'args', 'in', 'here'>'",
+                $th->getMessage(),
+            );
+        }
+
+        // Null-related edge cases
+        $this->assertEquals([], $utils->getTemplateAliases(null, null));
+        try {
+            $this->assertEquals([], $utils->getTemplateAliases($phpDocNode, null));
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame(
+                "Expected 2-4 generic arguments, but got '<>'",
+                $th->getMessage(),
+            );
+        }
+        // @phpstan-ignore-next-line argument.type
+        $this->assertEquals([], $utils->getTemplateAliases(null, $this->getTypeNode("A<string, 'foo'>")));
+    }
+
+    public function testGetPrettyAlias(): void {
+        $utils = new PhpStanUtils();
+        $this->assertSame("array<string>", $utils->getPrettyAlias([
+            'type' => $this->getTypeNode('array<string>'),
+        ]));
+        $this->assertSame("Namespace::Name", $utils->getPrettyAlias([
+            'namespace' => 'Namespace',
+            'name' => 'Name',
+        ]));
+    }
+
+    public function testGetPrettyAliasCache(): void {
+        $utils = new PhpStanUtils();
+
+        $this->assertSame(<<<'ZZZZZZZZZZ'
+            ---
+            Class1
+                StringArrayType => array<string>
+                Imported => Namespace::Name
+
+            Class2
+                IntArrayType => array<int>
+            ---
+            
+            ZZZZZZZZZZ, $utils->getPrettyAliasCache([
+            'Class1' => [
+                'StringArrayType' => [
+                    'type' => $this->getTypeNode('array<string>'),
+                ],
+                'Imported' => [
+                    'namespace' => 'Namespace',
+                    'name' => 'Name',
+                ],
+            ],
+            'Class2' => [
+                'IntArrayType' => [
+                    'type' => $this->getTypeNode('array<int>'),
+                ],
+            ],
+        ]));
     }
 }

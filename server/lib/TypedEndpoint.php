@@ -2,10 +2,10 @@
 
 namespace PhpTypeScriptApi;
 
-use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
+use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
@@ -23,9 +23,9 @@ abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
 
     protected PhpStanUtils $phpStanUtils;
-    private ?Node $requestTypeNode = null;
-    private ?Node $responseTypeNode = null;
-    /** @var ?array<string, Node> */
+    private ?TypeNode $requestTypeNode = null;
+    private ?TypeNode $responseTypeNode = null;
+    /** @var ?array<string, TypeNode> */
     private ?array $aliasNodes = null;
 
     public function __construct() {
@@ -34,6 +34,7 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     public function parseType(): void {
         $class_name = get_called_class();
+        // TODO: Replace with getSuperGenerics once it supports aliases ("exported")
         $class_info = new \ReflectionClass($class_name);
         $this->aliasNodes = [];
         $template_aliases = [];
@@ -251,7 +252,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return "{$ts_type_node}";
     }
 
-    /** @return array<string, Node> */
+    /** @return array<string, TypeNode> */
     protected function getAliasNodes(): array {
         if ($this->aliasNodes === null) {
             $this->parseType();
@@ -265,7 +266,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $this->aliasNodes;
     }
 
-    protected function getRequestTypeNode(): Node {
+    protected function getRequestTypeNode(): TypeNode {
         if ($this->requestTypeNode === null) {
             $this->parseType();
         }
@@ -278,7 +279,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         return $this->requestTypeNode;
     }
 
-    protected function getResponseTypeNode(): Node {
+    protected function getResponseTypeNode(): TypeNode {
         if ($this->responseTypeNode === null) {
             $this->parseType();
         }

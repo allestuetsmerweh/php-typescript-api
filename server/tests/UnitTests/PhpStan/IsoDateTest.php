@@ -16,18 +16,18 @@ final class IsoDateTest extends UnitTestCase {
     public function testSerializeIsoDate(): void {
         $iso_date = new IsoDate('2025-01-01');
 
-        $this->assertSame('2025-01-01', $iso_date->data());
+        $this->assertSame('2025-01-01', $iso_date->toWire());
     }
 
     public function testDeserializeIsoDate(): void {
-        $iso_date = IsoDate::fromData('2024-12-31');
+        $iso_date = IsoDate::fromWire('2024-12-31');
 
         $this->assertSame('2024-12-31', $iso_date->format('Y-m-d'));
     }
 
     public function testDeserializeIllTypedIsoDate(): void {
         try {
-            IsoDate::fromData(['ill-typed']);
+            IsoDate::fromWire(['ill-typed']);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame('IsoDate must be string', $th->getMessage());
@@ -36,7 +36,7 @@ final class IsoDateTest extends UnitTestCase {
 
     public function testDeserializeMalformedIsoDate(): void {
         try {
-            IsoDate::fromData('malformed');
+            IsoDate::fromWire('malformed');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame('IsoDate must be Y-m-d', $th->getMessage());
@@ -45,7 +45,7 @@ final class IsoDateTest extends UnitTestCase {
 
     public function testDeserializeInvalidIsoDate(): void {
         try {
-            IsoDate::fromData('2024-99-99');
+            IsoDate::fromWire('2024-99-99');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             if (\PHP_VERSION_ID < 80300) {

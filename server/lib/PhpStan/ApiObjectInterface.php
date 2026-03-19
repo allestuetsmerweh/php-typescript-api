@@ -3,14 +3,16 @@
 namespace PhpTypeScriptApi\PhpStan;
 
 /**
- * @template Data
+ * @template Wire
  */
 interface ApiObjectInterface {
-    /** @return Data */
-    public function data(): mixed;
+    /** @return Wire */
+    public function toWire(): mixed;
 
     /**
-     * @return ApiObjectInterface<Data>
+     * @return ApiObjectInterface<Wire>
+     *
+     * Note: The param is intentionally untyped, in order to force users to implement validation
      */
-    public static function fromData(mixed $data): ApiObjectInterface;
+    public static function fromWire(mixed $data): ApiObjectInterface;
 }
