@@ -4,19 +4,23 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 
+use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
-use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
+use PhpTypeScriptApi\PhpStan\ReplaceNodesVisitor;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
+ * @phpstan-import-type Alias from PhpStanUtils
+ *
  * @internal
  *
- * @covers \PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor
+ * @covers \PhpTypeScriptApi\PhpStan\ReplaceNodesVisitor
  */
-final class ResolveAliasesVisitorTest extends UnitTestCase {
+final class ReplaceNodesVisitorTest extends UnitTestCase {
     public function testResolvesAliasedIntNode(): void {
         $this->assertSame('int', $this->resolveAliases('AliasedInt'));
     }
@@ -144,16 +148,14 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
         $this->assertSame('$this', $this->resolveAliases('$this'));
     }
 
-    public function testResolveAliasesVisitorLeavesAliasesUnmodified(): void {
+    public function testReplaceNodesVisitorLeavesAliasesUnmodified(): void {
         $type_node = $this->getTypeNode('AliasedObject');
         $aliases = [
             'AliasedInt' => ['type' => $this->getTypeNode('int')],
             'AliasedObject' => ['type' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}')],
         ];
 
-        $visitor = new ResolveAliasesVisitor(new PhpStanUtils(), $aliases);
-        $traverser = new NodeTraverser([$visitor]);
-        [$new_type_node] = $traverser->traverse([$type_node]);
+        $new_type_node = $this->resolveAliases($type_node, $aliases);
 
         $this->assertSame('array{foo: int, bar?: string}', "{$new_type_node}");
         $this->assertEquals([
@@ -162,7 +164,10 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
         ], $aliases);
     }
 
-    private function resolveAliases(string|TypeNode $type): string {
+    /**
+     * @param ?array<string, Alias> $aliases
+     */
+    private function resolveAliases(string|TypeNode $type, ?array $aliases = null): string {
         if ($type instanceof TypeNode) {
             $type_node = $type;
         } else {
@@ -170,13 +175,21 @@ final class ResolveAliasesVisitorTest extends UnitTestCase {
         }
 
         $phpStanUtils = new PhpStanUtils();
-        $aliases = [
+        $aliases ??= [
             'AliasedInt' => ['type' => $this->getTypeNode('int')],
             'AliasedObject' => ['type' => $this->getTypeNode('array{foo: AliasedInt, bar?: string}')],
             'Aliased_4' => ['type' => $this->getTypeNode('null')],
         ];
 
-        $visitor = new ResolveAliasesVisitor($phpStanUtils, $aliases);
+        $visitor = new ReplaceNodesVisitor($phpStanUtils, function (Node $node) use ($phpStanUtils, $aliases) {
+            if (
+                $node instanceof IdentifierTypeNode
+                && isset($aliases[$node->name])
+            ) {
+                return $phpStanUtils->resolveAlias($aliases[$node->name]);
+            }
+            return $node;
+        });
         $traverser = new NodeTraverser([$visitor]);
         try {
             [$new_type_node] = $traverser->traverse([$type_node]);

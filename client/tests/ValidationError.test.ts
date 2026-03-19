@@ -1,5 +1,3 @@
-/* eslint-env jasmine */
-
 import {ValidationError, ErrorsByField} from '../src/ValidationError';
 
 describe('ValidationError', () => {

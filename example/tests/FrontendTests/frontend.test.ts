@@ -1,5 +1,3 @@
-/* eslint-env jasmine */
-
 import {spawn, ChildProcess} from 'child_process';
 import path from 'path';
 import http from 'http';
@@ -68,7 +66,7 @@ describe('frontend end-to-end', () => {
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
-                    throw new Error('ValidationError expected');
+                    fail('ValidationError expected');
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
@@ -113,7 +111,7 @@ describe('frontend end-to-end', () => {
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
-                    throw new Error('ValidationError expected');
+                    fail('ValidationError expected');
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
@@ -147,7 +145,7 @@ describe('frontend end-to-end', () => {
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
-                    throw new Error('ValidationError expected');
+                    fail('ValidationError expected');
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
@@ -196,7 +194,7 @@ describe('frontend end-to-end', () => {
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
-                    throw new Error('ValidationError expected');
+                    fail('ValidationError expected');
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({
@@ -209,7 +207,7 @@ describe('frontend end-to-end', () => {
                 throw new Error('error expected');
             } catch (err: unknown) {
                 if (!(err instanceof ValidationError)) {
-                    throw new Error('ValidationError expected');
+                    fail('ValidationError expected');
                 }
                 expect(err.message).toEqual('Bad input');
                 expect(err.getErrorsByField()).toEqual({

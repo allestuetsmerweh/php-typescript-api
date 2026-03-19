@@ -8,7 +8,6 @@ use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
-use PhpTypeScriptApi\PhpStan\ResolveAliasesVisitor;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
 use Symfony\Component\HttpFoundation\Request;
@@ -129,9 +128,7 @@ abstract class TypedEndpoint implements EndpointInterface {
             return null;
         }
 
-        $visitor = new ResolveAliasesVisitor($this->phpStanUtils, $template_aliases);
-        $traverser = new NodeTraverser([$visitor]);
-        [$resolved_extends_node] = $traverser->traverse([$extends_type_node]);
+        $resolved_extends_node = $this->phpStanUtils->resolveType($extends_type_node, $template_aliases);
         if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
