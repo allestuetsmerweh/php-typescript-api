@@ -1,5 +1,3 @@
-/* eslint-env jasmine */
-
 import fetch from 'unfetch';
 import {Api} from '../src/Api';
 import {ValidationError} from '../src/ValidationError';
@@ -72,7 +70,7 @@ describe('Api', () => {
                 await api.call('fake1', 'test-1234');
             } catch (err: unknown) {
                 if (!(err instanceof Error)) {
-                    throw new Error(`Error was not an error: ${err}`);
+                    fail(`Error was not an error: ${err}`);
                 }
                 expect(fakeFetch).toHaveBeenCalledWith(
                     '/fake_api_server.php/fake1',
@@ -102,7 +100,7 @@ describe('Api', () => {
                 await api.call('fake1', 'test-1234');
             } catch (err: unknown) {
                 if (!(err instanceof Error)) {
-                    throw new Error(`Error was not an error: ${err}`);
+                    fail(`Error was not an error: ${err}`);
                 }
                 expect(fakeFetch).toHaveBeenCalledWith(
                     '/fake_api_server.php/fake1',
@@ -128,7 +126,7 @@ describe('Api', () => {
                 await api.call('fake1', 'test-1234');
             } catch (err: unknown) {
                 if (!(err instanceof Error)) {
-                    throw new Error(`Error was not an error: ${err}`);
+                    fail(`Error was not an error: ${err}`);
                 }
                 expect(err.message).toBe('test-error');
             }

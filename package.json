@@ -18,7 +18,8 @@
     "prepublishOnly": "npm test && npm run lint",
     "preversion": "npm run lint",
     "test": "npm run jest",
-    "test-ci": "npm run jest-ci"
+    "test-ci": "npm run jest-ci",
+    "knip": "knip"
   },
   "repository": {
     "type": "git",
@@ -35,20 +36,21 @@
     "url": "https://github.com/allestuetsmerweh/php-typescript-api/issues"
   },
   "homepage": "https://github.com/allestuetsmerweh/php-typescript-api#readme",
-  "dependencies": {
-    "@types/node-fetch": "^2.6.2",
-    "unfetch": "^4"
-  },
   "devDependencies": {
+    "@eslint/js": "^10",
     "@stylistic/eslint-plugin": "^5.2.3",
     "@types/jest": "^30.0",
-    "@typescript-eslint/eslint-plugin": "^8.0",
-    "@typescript-eslint/parser": "^8.0",
-    "eslint": "^9.0",
+    "@types/node": "^25.5.0",
+    "eslint": "^10.0",
     "jest": "^30.0",
     "jest-environment-jsdom": "^30.0",
+    "knip": "^6.0.1",
     "ts-jest": "^29.0",
-    "typescript": "^5.0",
+    "typescript": "^5.9.3",
     "typescript-eslint": "^8.40.0"
+  },
+  "dependencies": {
+    "@types/node-fetch": "^2.6.13",
+    "unfetch": "^4.0"
   }
 }

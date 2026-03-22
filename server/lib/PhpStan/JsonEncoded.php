@@ -30,17 +30,6 @@ class JsonEncoded implements ApiObjectInterface {
         }
         $php_stan_utils = new PhpStanUtils();
         $generics = $php_stan_utils->getSuperGenerics($class_name, JsonEncoded::class);
-        // $php_doc_node = $php_stan_utils->parseClassDocComment($class_name);
-        // if (!$php_doc_node) {
-        //     throw new \Exception("Could not parse type for {$class_name}");
-        // }
-        // $extends_node = $php_stan_utils->resolveTypeAliases(
-        //     $php_doc_node->getExtendsTagValues()[0],
-        //     $php_stan_utils->getAliases($php_doc_node),
-        // );
-        // if (!preg_match('/(^|\\\)JsonEncoded$/', "{$extends_node->type->type}")) {
-        //     throw new \Exception("{$class_name} does not extend JsonEncoded");
-        // }
         if (count($generics) !== 1) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
@@ -49,7 +38,7 @@ class JsonEncoded implements ApiObjectInterface {
             // @codeCoverageIgnoreEnd
         }
         $type_node = $generics[0];
-        $result_node = ValidateVisitor::validateDeserialize(new PhpStanUtils(), $data, $type_node);
+        $result_node = ValidateVisitor::validateDeserialize($php_stan_utils, $data, $type_node);
         if (!$result_node->isValid()) {
             throw new \InvalidArgumentException("{$class_name} must be valid {$type_node}");
         }

@@ -42,28 +42,34 @@ class FakeLoop2 {
 }
 
 /**
- * @phpstan-type AliasedUtilString non-empty-string
+ * @phpstan-type AliasedUtil1String non-empty-string
  *
- * @phpstan-import-type AliasedInt from FakePhpStanUtilsTypedEndpoint as AliasedUtilInt
+ * @phpstan-import-type AliasedUtil2Int from FakeUtil2 as AliasedUtil1Int
+ * @phpstan-import-type AliasedUtil2IntArray from FakeUtil2
  *
- * @phpstan-type AliasedUtilIntArray array<AliasedUtilInt>
+ * @phpstan-type AliasedUtil1IntArray array<AliasedUtil1Int>
  */
-// @phpstan-ignore-next-line typeAlias.circular
 class FakeUtil1 {
+}
+
+/**
+ * @phpstan-type AliasedUtil2Int int<2, max>
+ * @phpstan-type AliasedUtil2IntArray array<AliasedUtil2Int>
+ */
+class FakeUtil2 {
 }
 
 /**
  * @phpstan-type AliasedInt int
  *
- * @phpstan-import-type AliasedUtilString from FakeUtil1
+ * @phpstan-import-type AliasedUtil1String from FakeUtil1
  *
- * @phpstan-type AliasedUtilStringArray array<AliasedUtilString>
+ * @phpstan-type AliasedUtil1StringArray array<AliasedUtil1String>
  *
- * @phpstan-import-type AliasedUtilIntArray from FakeUtil1
+ * @phpstan-import-type AliasedUtil1IntArray from FakeUtil1
  *
- * @phpstan-type AliasedUtilIntArrayArray array<AliasedUtilIntArray>
+ * @phpstan-type AliasedUtil1IntArrayArray array<AliasedUtil1IntArray>
  */
-// @phpstan-ignore-next-line typeAlias.circular
 class FakePhpStanUtilsTypedEndpoint {
 }
 
@@ -84,9 +90,9 @@ class FakeApiObject implements ApiObjectInterface {
 }
 
 /**
- * @phpstan-import-type AliasedUtilStringArray from FakePhpStanUtilsTypedEndpoint
+ * @phpstan-import-type AliasedUtil1StringArray from FakePhpStanUtilsTypedEndpoint
  *
- * @implements ApiObjectInterface<AliasedUtilStringArray>
+ * @implements ApiObjectInterface<AliasedUtil1StringArray>
  */
 class FakeAliasApiObject implements ApiObjectInterface {
     public function toWire(): mixed {
@@ -107,7 +113,7 @@ class FakeAliasApiObject implements ApiObjectInterface {
 }
 
 /**
- * @phpstan-import-type AliasedUtilStringArray from FakePhpStanUtilsTypedEndpoint
+ * @phpstan-import-type AliasedUtil1StringArray from FakePhpStanUtilsTypedEndpoint
  *
  * @implements ApiObjectInterface<FakeMyArray<int>>
  */
@@ -156,15 +162,15 @@ class SuperClass extends NonGenericSuperClass {
 /**
  * @template T
  *
- * @phpstan-import-type AliasedUtilString from FakeUtil1
+ * @phpstan-import-type AliasedUtil1String from FakeUtil1
  *
  * @phpstan-type AliasedString string
- * @phpstan-type AliasedArray array<AliasedUtilString>
+ * @phpstan-type AliasedArray array<AliasedUtil1String>
  *
- * @extends SuperClass<T, array{20: AliasedUtilString, 21: AliasedString, 22: AliasedArray, 23: T}>
+ * @extends SuperClass<T, array{20: AliasedUtil1String, 21: AliasedString, 22: AliasedArray, 23: T}>
  *
- * @implements BogusInterface<array{30: AliasedUtilString, 31: AliasedString, 32: AliasedArray, 33: T}>
- * @implements TheInterface<array{10: AliasedUtilString, 11: AliasedString, 12: AliasedArray, 13: T}>
+ * @implements BogusInterface<array{30: AliasedUtil1String, 31: AliasedString, 32: AliasedArray, 33: T}>
+ * @implements TheInterface<array{10: AliasedUtil1String, 11: AliasedString, 12: AliasedArray, 13: T}>
  */
 class IntermediateClass extends SuperClass implements BogusInterface, TheInterface {
     /** @param array<T> $value */
@@ -180,12 +186,12 @@ class IntermediateClass extends SuperClass implements BogusInterface, TheInterfa
 }
 
 /**
- * @phpstan-import-type AliasedUtilString from FakeUtil1
+ * @phpstan-import-type AliasedUtil1String from FakeUtil1
  *
  * @phpstan-type AliasedString string
- * @phpstan-type AliasedArray array<AliasedUtilString>
+ * @phpstan-type AliasedArray array<AliasedUtil1String>
  *
- * @extends IntermediateClass<array{0: AliasedUtilString, 1: AliasedString, 2: AliasedArray}>
+ * @extends IntermediateClass<array{0: AliasedUtil1String, 1: AliasedString, 2: AliasedArray}>
  */
 class SubClass extends IntermediateClass {
     public function __construct() {
@@ -242,14 +248,14 @@ final class PhpStanUtilsTest extends UnitTestCase {
     public function testAliasApiObjectTypeNodeFull(): void {
         $utils = new PhpStanUtils();
         $node = $utils->getApiObjectTypeNode(FakeAliasApiObject::class);
-        $this->assertSame("array<AliasedUtilString>", "{$node}");
+        $this->assertSame("array<non-empty-string>", "{$node}");
     }
 
     public function testAliasApiObjectTypeNodeFullyQualified(): void {
         $utils = new PhpStanUtils();
         $class_name = FakeAliasApiObject::class;
         $node = $utils->getApiObjectTypeNode("\\{$class_name}");
-        $this->assertSame("array<AliasedUtilString>", "{$node}");
+        $this->assertSame("array<non-empty-string>", "{$node}");
     }
 
     public function testGenericApiObjectTypeNodeFull(): void {
@@ -319,14 +325,14 @@ final class PhpStanUtilsTest extends UnitTestCase {
             /**
              * @phpstan-import-type AliasedInt from {$class_name}
              * @phpstan-import-type AliasedInt from {$class_name} as MyInt
-             * @phpstan-import-type AliasedUtilString from {$class_name}
-             * @phpstan-import-type AliasedUtilString from {$class_name} as MyString
-             * @phpstan-import-type AliasedUtilStringArray from {$class_name}
-             * @phpstan-import-type AliasedUtilStringArray from {$class_name} as MyStringArray
-             * @phpstan-import-type AliasedUtilIntArray from {$class_name}
-             * @phpstan-import-type AliasedUtilIntArray from {$class_name} as MyIntArray
-             * @phpstan-import-type AliasedUtilIntArrayArray from {$class_name}
-             * @phpstan-import-type AliasedUtilIntArrayArray from {$class_name} as MyIntArrayArray
+             * @phpstan-import-type AliasedUtil1String from {$class_name}
+             * @phpstan-import-type AliasedUtil1String from {$class_name} as MyString
+             * @phpstan-import-type AliasedUtil1StringArray from {$class_name}
+             * @phpstan-import-type AliasedUtil1StringArray from {$class_name} as MyStringArray
+             * @phpstan-import-type AliasedUtil1IntArray from {$class_name}
+             * @phpstan-import-type AliasedUtil1IntArray from {$class_name} as MyIntArray
+             * @phpstan-import-type AliasedUtil1IntArrayArray from {$class_name}
+             * @phpstan-import-type AliasedUtil1IntArrayArray from {$class_name} as MyIntArrayArray
              */
             ZZZZZZZZZZ;
         $phpDocNode = $utils->parseDocComment($comment);
@@ -334,14 +340,14 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertEquals([
             'AliasedInt' => ['namespace' => $class_name, 'name' => 'AliasedInt'],
             'MyInt' => ['namespace' => $class_name, 'name' => 'AliasedInt'],
-            'AliasedUtilString' => ['namespace' => $class_name, 'name' => 'AliasedUtilString'],
-            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtilString'],
-            'AliasedUtilStringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilStringArray'],
-            'MyStringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilStringArray'],
-            'AliasedUtilIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'],
-            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'],
-            'AliasedUtilIntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArrayArray'],
-            'MyIntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArrayArray'],
+            'AliasedUtil1String' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
+            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
+            'AliasedUtil1StringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'],
+            'MyStringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'],
+            'AliasedUtil1IntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
+            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
+            'AliasedUtil1IntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'],
+            'MyIntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'],
         ], $utils->getAliases($phpDocNode));
     }
 
@@ -350,24 +356,72 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $class_name = FakeUtil1::class;
         $comment = <<<ZZZZZZZZZZ
             /**
-             * @phpstan-import-type AliasedUtilString from {$class_name}
-             * @phpstan-import-type AliasedUtilString from {$class_name} as MyString
-             * @phpstan-import-type AliasedUtilInt from {$class_name}
-             * @phpstan-import-type AliasedUtilInt from {$class_name} as MyInt
-             * @phpstan-import-type AliasedUtilIntArray from {$class_name}
-             * @phpstan-import-type AliasedUtilIntArray from {$class_name} as MyIntArray
+             * @phpstan-import-type AliasedUtil1String from {$class_name}
+             * @phpstan-import-type AliasedUtil1String from {$class_name} as MyString
+             * @phpstan-import-type AliasedUtil1Int from {$class_name}
+             * @phpstan-import-type AliasedUtil1Int from {$class_name} as MyInt
+             * @phpstan-import-type AliasedUtil1IntArray from {$class_name}
+             * @phpstan-import-type AliasedUtil1IntArray from {$class_name} as MyIntArray
              */
             ZZZZZZZZZZ;
         $phpDocNode = $utils->parseDocComment($comment);
 
         $this->assertEquals([
-            'AliasedUtilString' => ['namespace' => $class_name, 'name' => 'AliasedUtilString'],
-            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtilString'],
-            'AliasedUtilInt' => ['namespace' => $class_name, 'name' => 'AliasedUtilInt'],
-            'MyInt' => ['namespace' => $class_name, 'name' => 'AliasedUtilInt'],
-            'AliasedUtilIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'],
-            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'],
+            'AliasedUtil1String' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
+            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
+            'AliasedUtil1Int' => ['namespace' => $class_name, 'name' => 'AliasedUtil1Int'],
+            'MyInt' => ['namespace' => $class_name, 'name' => 'AliasedUtil1Int'],
+            'AliasedUtil1IntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
+            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
         ], $utils->getAliases($phpDocNode));
+    }
+
+    public function testResolveType(): void {
+        $utils = new PhpStanUtilsForTest();
+        $this->assertEquals(
+            $this->getTypeNode("non-empty-string"),
+            $utils->resolveType($this->getTypeNode("non-empty-string"), []),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("int"),
+            $utils->resolveType($this->getTypeNode("FakeIntAlias"), [
+                'FakeIntAlias' => ['type' => $this->getTypeNode("int")],
+            ]),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("int"),
+            $utils->resolveType($this->getTypeNode("FakeIntAliasAlias"), [
+                'FakeIntAliasAlias' => ['type' => $this->getTypeNode("FakeIntAlias")],
+                'FakeIntAlias' => ['type' => $this->getTypeNode("int")],
+            ]),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("non-empty-string"),
+            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
+                'FakeImportAlias' => [
+                    'namespace' => FakeUtil1::class,
+                    'name' => 'AliasedUtil1String',
+                ],
+            ]),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("int<2, max>"),
+            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
+                'FakeImportAlias' => [
+                    'namespace' => FakeUtil1::class,
+                    'name' => 'AliasedUtil1Int',
+                ],
+            ]),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("array<int<2, max>>"),
+            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
+                'FakeImportAlias' => [
+                    'namespace' => FakeUtil1::class,
+                    'name' => 'AliasedUtil2IntArray',
+                ],
+            ]),
+        );
     }
 
     public function testResolveTypeAlias(): void {
@@ -375,6 +429,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertEquals(
             $this->getTypeNode("non-empty-string"),
             $utils->resolveAlias(['type' => $this->getTypeNode("non-empty-string")])
+        );
+        $this->assertEquals(
+            $this->getTypeNode("array<Alias>"),
+            $utils->resolveAlias(['type' => $this->getTypeNode("array<Alias>")])
         );
         $this->assertEquals([], $utils->testOnlyGetAliasCache());
     }
@@ -388,40 +446,44 @@ final class PhpStanUtilsTest extends UnitTestCase {
         );
         $this->assertEquals(
             $this->getTypeNode("non-empty-string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilString'])
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1String'])
         );
         $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtilString>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilStringArray'])
+            $this->getTypeNode("array<AliasedUtil1String>"),
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'])
         );
         $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtilInt>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'])
+            $this->getTypeNode("array<AliasedUtil1Int>"),
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'])
         );
         $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtilIntArray>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilIntArrayArray'])
+            $this->getTypeNode("array<AliasedUtil1IntArray>"),
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'])
         );
         $this->assertEquals([
             FakeUtil1::class => [
-                'AliasedUtilString' => ['type' => $this->getTypeNode('non-empty-string')],
-                'AliasedUtilIntArray' => ['type' => $this->getTypeNode('array<AliasedUtilInt>')],
-                'AliasedUtilInt' => [
-                    'namespace' => FakePhpStanUtilsTypedEndpoint::class,
-                    'name' => 'AliasedInt',
+                'AliasedUtil1String' => ['type' => $this->getTypeNode('non-empty-string')],
+                'AliasedUtil1IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil1Int>')],
+                'AliasedUtil2IntArray' => [
+                    'namespace' => FakeUtil2::class,
+                    'name' => 'AliasedUtil2IntArray',
+                ],
+                'AliasedUtil1Int' => [
+                    'namespace' => FakeUtil2::class,
+                    'name' => 'AliasedUtil2Int',
                 ],
             ],
             FakePhpStanUtilsTypedEndpoint::class => [
                 'AliasedInt' => ['type' => $this->getTypeNode('int')],
-                'AliasedUtilStringArray' => ['type' => $this->getTypeNode('array<AliasedUtilString>')],
-                'AliasedUtilIntArrayArray' => ['type' => $this->getTypeNode('array<AliasedUtilIntArray>')],
-                'AliasedUtilString' => [
+                'AliasedUtil1StringArray' => ['type' => $this->getTypeNode('array<AliasedUtil1String>')],
+                'AliasedUtil1IntArrayArray' => ['type' => $this->getTypeNode('array<AliasedUtil1IntArray>')],
+                'AliasedUtil1String' => [
                     'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtilString',
+                    'name' => 'AliasedUtil1String',
                 ],
-                'AliasedUtilIntArray' => [
+                'AliasedUtil1IntArray' => [
                     'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtilIntArray',
+                    'name' => 'AliasedUtil1IntArray',
                 ],
             ],
         ], $utils->testOnlyGetAliasCache());
@@ -432,37 +494,32 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $class_name = FakeUtil1::class;
         $this->assertEquals(
             $this->getTypeNode("non-empty-string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilString'])
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1String'])
         );
         $this->assertEquals(
-            $this->getTypeNode("int"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilInt'])
+            $this->getTypeNode("int<2, max>"),
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1Int'])
         );
         $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtilInt>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtilIntArray'])
+            $this->getTypeNode("array<AliasedUtil1Int>"),
+            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'])
         );
         $this->assertEquals([
             FakeUtil1::class => [
-                'AliasedUtilString' => ['type' => $this->getTypeNode('non-empty-string')],
-                'AliasedUtilIntArray' => ['type' => $this->getTypeNode('array<AliasedUtilInt>')],
-                'AliasedUtilInt' => [
-                    'namespace' => FakePhpStanUtilsTypedEndpoint::class,
-                    'name' => 'AliasedInt',
+                'AliasedUtil1String' => ['type' => $this->getTypeNode('non-empty-string')],
+                'AliasedUtil1IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil1Int>')],
+                'AliasedUtil2IntArray' => [
+                    'namespace' => FakeUtil2::class,
+                    'name' => 'AliasedUtil2IntArray',
+                ],
+                'AliasedUtil1Int' => [
+                    'namespace' => FakeUtil2::class,
+                    'name' => 'AliasedUtil2Int',
                 ],
             ],
-            FakePhpStanUtilsTypedEndpoint::class => [
-                'AliasedInt' => ['type' => $this->getTypeNode('int')],
-                'AliasedUtilStringArray' => ['type' => $this->getTypeNode('array<AliasedUtilString>')],
-                'AliasedUtilIntArrayArray' => ['type' => $this->getTypeNode('array<AliasedUtilIntArray>')],
-                'AliasedUtilString' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtilString',
-                ],
-                'AliasedUtilIntArray' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtilIntArray',
-                ],
+            FakeUtil2::class => [
+                'AliasedUtil2Int' => ['type' => $this->getTypeNode('int<2, max>')],
+                'AliasedUtil2IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil2Int>')],
             ],
         ], $utils->testOnlyGetAliasCache());
     }
@@ -593,10 +650,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
 
         $phpDocNode = $utils->parseClassDocComment(FakeUtil1::class);
 
-        $this->assertSame('AliasedUtilString', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
+        $this->assertSame('AliasedUtil1String', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
         $this->assertSame('non-empty-string', "{$phpDocNode?->getTypeAliasTagValues()[0]->type}");
-        $this->assertSame('AliasedUtilIntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
-        $this->assertSame('array<AliasedUtilInt>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
+        $this->assertSame('AliasedUtil1IntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
+        $this->assertSame('array<AliasedUtil1Int>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
     }
 
     public function testParseReflectionClassDocComment(): void {
@@ -604,10 +661,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
 
         $phpDocNode = $utils->parseReflectionClassDocComment(new \ReflectionClass(FakeUtil1::class));
 
-        $this->assertSame('AliasedUtilString', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
+        $this->assertSame('AliasedUtil1String', "{$phpDocNode?->getTypeAliasTagValues()[0]->alias}");
         $this->assertSame('non-empty-string', "{$phpDocNode?->getTypeAliasTagValues()[0]->type}");
-        $this->assertSame('AliasedUtilIntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
-        $this->assertSame('array<AliasedUtilInt>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
+        $this->assertSame('AliasedUtil1IntArray', "{$phpDocNode?->getTypeAliasTagValues()[1]->alias}");
+        $this->assertSame('array<AliasedUtil1Int>', "{$phpDocNode?->getTypeAliasTagValues()[1]->type}");
     }
 
     public function testParseValidDocComment(): void {
