@@ -7,7 +7,6 @@ use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\ImplementsTagValueNode;
 use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
-use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PHPStan\PhpDocParser\Lexer\Lexer;
@@ -27,45 +26,29 @@ use PHPStan\PhpDocParser\ParserConfig;
 class PhpStanUtils {
     public int $max_recursion = 100;
 
-    public function getApiObjectTypeNode(string $name): ?TypeNode {
-        $class_info = $this->resolveApiObjectClass($name);
-        if ($class_info === null) {
+    public function getApiObjectTypeNode(string $class_name): ?TypeNode {
+        try {
+            $generics = $this->getSuperGenerics($class_name, ApiObjectInterface::class);
+        } catch (\Throwable $th) {
             return null;
         }
-        $php_doc_node = $this->parseDocComment(
-            $class_info->getDocComment(),
-            $class_info->getFileName() ?: null,
-        );
-        $aliases = $this->getAliases($php_doc_node);
-        $api_object_interface = ApiObjectInterface::class;
-        $implements_node = null;
-        foreach ($php_doc_node?->getImplementsTagValues() ?? [] as $node) {
-            $generic_node = $node->type;
-            if ("{$generic_node->type}" === $api_object_interface) {
-                $implements_node = $this->resolveType($generic_node->genericTypes[0], $aliases);
-            }
-        }
+        $implements_node = $generics[0] ?? null;
         if (!$implements_node instanceof TypeNode) {
-            throw new \Exception("getApiObjectTypeNode: Implements node {$implements_node} is not a TypeNode");
+            return null;
         }
         return $implements_node;
     }
 
-    /** @return \ReflectionClass<ApiObjectInterface<mixed>> */
-    public function resolveApiObjectClass(string $name): ?\ReflectionClass {
-        $class_info = $this->getReflectionClass($name);
-        if (!$class_info?->implementsInterface(ApiObjectInterface::class)) {
-            return null;
-        }
-        // @phpstan-ignore return.type
-        return $class_info;
-    }
-
     /**
-     * @param NamespaceAliases $aliases
+     * @param ?array<TypeNode> $generic_args
      */
-    public function resolveType(Node $node, array $aliases): Node {
-        $visitor = new ReplaceNodesVisitor($this, function (Node $node) use ($aliases) {
+    public function resolveType(Node $node, string $class_name, ?array $generic_args = null): Node {
+        $aliases = $this->getAliases($class_name, $generic_args);
+        $visitor = new ReplaceNodesVisitor(function (Node $node) use (
+            $aliases,
+            $class_name,
+            $generic_args,
+        ) {
             if (!$node instanceof IdentifierTypeNode) {
                 return $node;
             }
@@ -75,38 +58,103 @@ class PhpStanUtils {
             }
             // Resolve ImportAlias
             $namespace = null;
-            for ($i = 0; $i < $this->max_recursion && isset($alias['namespace']); $i++) {
+            for ($i = 0; isset($alias['namespace']); $i++) {
+                if ($i > $this->max_recursion) {
+                    throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$alias['name']} from {$alias['namespace']}");
+                }
                 $namespace = $alias['namespace'];
                 $alias = $this->resolveImportAlias($alias);
             }
             if (!isset($alias['type'])) {
                 return $node;
             }
-            $aliases = $namespace === null ? $aliases : $this->getAliasesInClass($namespace);
-            return $this->resolveType($alias['type'], $aliases);
+            if ($namespace === null) {
+                return $this->resolveType($alias['type'], $class_name, $generic_args);
+            }
+            return $this->resolveType($alias['type'], $namespace, []);
         });
         $traverser = new NodeTraverser([$visitor]);
         [$resolved_node] = $traverser->traverse([$node]);
         return $resolved_node;
     }
 
+    /**
+     * @param ?array<TypeNode> $generic_args
+     *
+     * @return array{0: Node, 1: array<string, Node>}
+     */
+    public function rewriteType(Node $node, string $class_name, ?array $generic_args = null): array {
+        $aliases = $this->getAliases($class_name, $generic_args);
+        $exports = [];
+        $visitor = new ReplaceNodesVisitor(function (Node $node) use (
+            $aliases,
+            $class_name,
+            $generic_args,
+            &$exports,
+        ) {
+            if (!$node instanceof IdentifierTypeNode) {
+                return $node;
+            }
+            $alias = $aliases[$node->name] ?? null;
+            if ($alias === null) {
+                return $node;
+            }
+            $esc_class_name = str_replace('\\', '_', $class_name);
+            $absolute_name = "{$esc_class_name}_{$node->name}";
+            if (isset($alias['type'])) {
+                [$new_node, $new_exports] = $this->rewriteType($alias['type'], $class_name, $generic_args);
+                $exports = [
+                    ...$exports,
+                    ...$new_exports,
+                    $absolute_name => $new_node,
+                ];
+                return new IdentifierTypeNode($absolute_name);
+            }
+            if (isset($alias['namespace'])) {
+                $import_node = new IdentifierTypeNode($alias['name']);
+                [$new_node, $new_exports] = $this->rewriteType($import_node, $alias['namespace']);
+                $exports = [
+                    ...$exports,
+                    ...$new_exports,
+                    $absolute_name => $new_node,
+                ];
+                return new IdentifierTypeNode($absolute_name);
+            }
+            // @codeCoverageIgnoreStart
+            // Reason: phpstan does not allow testing this!
+            $enc_alias = json_encode($alias) ?: '';
+            throw new \Exception("Invalid alias: {$enc_alias}");
+            // @codeCoverageIgnoreEnd
+        });
+        $traverser = new NodeTraverser([$visitor]);
+        [$resolved_node] = $traverser->traverse([$node]);
+        return [$resolved_node, $exports];
+    }
+
     /** @var AliasCache */
     protected array $alias_cache = [];
 
     /**
+     * @param ?array<TypeNode> $generic_args
+     *
      * @return NamespaceAliases */
-    public function getAliasesInClass(string $class_name): array {
-        if (isset($this->alias_cache[$class_name])) {
-            return $this->alias_cache[$class_name];
+    public function getAliases(string $class_name, ?array $generic_args = null): array {
+        $php_doc_node = null;
+        $aliases = $this->alias_cache[$class_name] ?? null;
+        if ($aliases === null) {
+            $php_doc_node = $this->parseClassDocComment($class_name);
+            $aliases = $this->getAliasesInPhpDocNode($php_doc_node);
+            $this->alias_cache[$class_name] = $aliases;
         }
-        $php_doc_node = $this->parseClassDocComment($class_name);
-        $aliases = $this->getAliases($php_doc_node);
-        $this->alias_cache[$class_name] = $aliases;
-        return $aliases;
+        if ($generic_args === null) {
+            return $aliases;
+        }
+        $php_doc_node ??= $this->parseClassDocComment($class_name);
+        return [...$aliases, ...$this->getTemplateAliases($php_doc_node, $generic_args)];
     }
 
     /** @return NamespaceAliases */
-    public function getAliases(?PhpDocNode $php_doc_node): array {
+    protected function getAliasesInPhpDocNode(?PhpDocNode $php_doc_node): array {
         $aliases = [];
         foreach ($php_doc_node?->getTypeAliasTagValues() ?? [] as $alias_node) {
             $aliases[$alias_node->alias] = ['type' => $alias_node->type];
@@ -119,32 +167,6 @@ class PhpStanUtils {
         return $aliases;
     }
 
-    protected int $recursion = 0;
-
-    /**
-     * @param Alias $alias
-     */
-    public function resolveAlias(array $alias): TypeNode {
-        if (isset($alias['type'])) {
-            return clone $alias['type'];
-        }
-        if (isset($alias['namespace'])) {
-            $import_alias = $this->resolveImportAlias($alias);
-            $this->recursion++;
-            if ($this->recursion > $this->max_recursion) {
-                throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$alias['name']} from {$alias['namespace']}");
-            }
-            $resolved_alias = $this->resolveAlias($import_alias);
-            $this->recursion--;
-            return $resolved_alias;
-        }
-        // @codeCoverageIgnoreStart
-        // Reason: phpstan does not allow testing this!
-        $enc_alias = json_encode($alias) ?: '';
-        throw new \Exception("Invalid alias: {$enc_alias}");
-        // @codeCoverageIgnoreEnd
-    }
-
     /**
      * @param ImportAlias $import_alias
      *
@@ -153,7 +175,7 @@ class PhpStanUtils {
     public function resolveImportAlias(array $import_alias): array {
         $namespace = $import_alias['namespace'];
         $name = $import_alias['name'];
-        $aliases = $this->getAliasesInClass($namespace);
+        $aliases = $this->getAliases($namespace);
         $alias = $aliases[$name] ?? null;
         if ($alias === null) {
             throw new \Exception("Failed importing {$name} from {$namespace}");
@@ -177,12 +199,20 @@ class PhpStanUtils {
         );
     }
 
+    /** @var array<string, PhpDocNode> */
+    protected array $doc_comment_cache = [];
+
     public function parseDocComment(
         string|false|null $doc_comment,
         ?string $file_path = null,
     ): ?PhpDocNode {
         if (!$doc_comment) {
             return null;
+        }
+        $md5 = md5($doc_comment);
+        $cached = $this->doc_comment_cache[$md5] ?? null;
+        if ($cached) {
+            return $cached;
         }
         [$namespace, $scope] = $this->getFileScopeInfo($file_path);
         $config = new ParserConfig(usedAttributes: []);
@@ -207,7 +237,9 @@ class PhpStanUtils {
             }
             return $token;
         }, $lexer->tokenize($doc_comment));
-        return $phpDocParser->parse(new TokenIterator($tokens));
+        $php_doc_node = $phpDocParser->parse(new TokenIterator($tokens));
+        $this->doc_comment_cache[$md5] = $php_doc_node;
+        return $php_doc_node;
     }
 
     /** @return array{0: ?string, 1: array<string, string>} */
@@ -262,34 +294,42 @@ class PhpStanUtils {
     }
 
     /**
-     * @param class-string $class_name
-     * @param class-string $superclass_name
+     * @param ?callable(Node, string, array<Node>): Node $process_node_fn
      *
      * @return array<TypeNode>
      */
-    public function getSuperGenerics(string $class_name, string $superclass_name): array {
+    public function getSuperGenerics(string $class_name, string $superclass_name, ?callable $process_node_fn = null): array {
         if (!is_subclass_of($class_name, $superclass_name)) {
             throw new \Exception("getSuperGenerics: {$class_name} is not a subclass of {$superclass_name}");
         }
         $esc_superclass_name = preg_quote($superclass_name);
-        $superclass_info = new \ReflectionClass($superclass_name);
+        $superclass_info = $this->getReflectionClass($superclass_name);
+        if ($superclass_info === null) {
+            throw new \Exception("getSuperGenerics: Invalid superclass {$superclass_name}");
+        }
         $is_interface = $superclass_info->isInterface();
+        if ($process_node_fn === null) {
+            $process_node_fn = function (Node $node, string $class_name, array $generic_args) {
+                return $this->resolveType($node, $class_name, $generic_args);
+            };
+        }
 
-        $class_info = new \ReflectionClass($class_name);
+        $class_info = $this->getReflectionClass($class_name);
+        if ($class_info === null) {
+            throw new \Exception("getSuperGenerics: Invalid class {$class_name}");
+        }
         $extends_node = null;
         do {
             $php_doc_node = $this->parseReflectionClassDocComment($class_info);
-            $namespace_aliases = [
-                ...$this->getTemplateAliases($php_doc_node, $extends_node?->type),
-                ...$this->getAliases($php_doc_node),
-            ];
+            $class_name = $class_info->getName();
+            $generic_args = $extends_node?->type->genericTypes ?? [];
             if ($is_interface) {
                 // Note: We don't support interfaces extending other interfaces.
                 foreach (($php_doc_node?->getImplementsTagValues() ?? []) as $implements_node) {
                     if (!preg_match("/(^|\\\\){$esc_superclass_name}$/", "{$implements_node->type->type}")) {
                         continue;
                     }
-                    $resolved_implements_node = $this->resolveType($implements_node, $namespace_aliases);
+                    $resolved_implements_node = $process_node_fn($implements_node, $class_name, $generic_args);
                     if (!$resolved_implements_node instanceof ImplementsTagValueNode) {
                         // @codeCoverageIgnoreStart
                         // Reason: phpstan does not allow testing this!
@@ -301,7 +341,7 @@ class PhpStanUtils {
             }
             $extends_node = $php_doc_node?->getExtendsTagValues()[0] ?? null;
             if ($extends_node) {
-                $resolved_extends_node = $this->resolveType($extends_node, $namespace_aliases);
+                $resolved_extends_node = $process_node_fn($extends_node, $class_name, $generic_args);
                 if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
                     // @codeCoverageIgnoreStart
                     // Reason: phpstan does not allow testing this!
@@ -326,36 +366,38 @@ class PhpStanUtils {
     }
 
     /**
+     * @param array<TypeNode> $generic_args
+     *
      * @return NamespaceAliases
      */
     public function getTemplateAliases(
         ?PhpDocNode $php_doc_node,
-        ?GenericTypeNode $generic_node,
+        array $generic_args,
     ): array {
         if (!$php_doc_node) {
             return [];
         }
         $aliases = [];
-        $args = $generic_node->genericTypes ?? [];
         $template_nodes = $php_doc_node->getTemplateTagValues();
         $min_args = 0;
         $max_args = count($template_nodes);
+        $num_args = count($generic_args);
         foreach ($template_nodes as $template_node) {
             $min_args += $template_node->default === null ? 1 : 0;
         }
         $pretty_range = $min_args === $max_args ? $min_args : "{$min_args}-{$max_args}";
-        if (count($args) < $min_args || count($args) > $max_args) {
-            $pretty_generics = implode(', ', $args);
-            throw new \Exception("Expected {$pretty_range} generic arguments, but got '{$generic_node?->type}<{$pretty_generics}>'");
+        if ($num_args < $min_args || $num_args > $max_args) {
+            $pretty_generics = implode(', ', $generic_args);
+            throw new \Exception("Expected {$pretty_range} generic arguments, but got '<{$pretty_generics}>'");
         }
         for ($i = 0; $i < count($template_nodes); $i++) {
             $node = $template_nodes[$i];
-            $value = $args[$i] ?? $node->default;
+            $value = $generic_args[$i] ?? $node->default;
             if ($value === null) {
                 // @codeCoverageIgnoreStart
                 // Reason: phpstan does not allow testing this!
-                $pretty_generics = implode(', ', $args);
-                throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$generic_node?->type}<{$pretty_generics}>'");
+                $pretty_generics = implode(', ', $generic_args);
+                throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '<{$pretty_generics}>'");
                 // @codeCoverageIgnoreEnd
             }
             $aliases[$node->name] = ['type' => $value];

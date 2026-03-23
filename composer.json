@@ -1,6 +1,6 @@
 {
     "name": "allestuetsmerweh/php-typescript-api",
-    "version": "2.8.0",
+    "version": "3.0.0",
     "type": "library",
     "description": "Build a typed Web API using PHP and TypeScript",
     "keywords": ["PHP","TypeScript","API"],
@@ -38,7 +38,7 @@
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",
         "test": "phpunit server/tests example/tests/BackendTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
         "backend_tests": "phpunit example/tests/BackendTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\"",
-        "unit_tests": "phpunit server/tests/UnitTests && echo \"\n\nOpen the HTML test coverage in a web browser:\n\n    file://$(pwd)/php-coverage/html-coverage/index.html\n\n\""
+        "unit_tests": "./scripts/unit_tests.sh"
     },
     "archive": {
         "exclude": [

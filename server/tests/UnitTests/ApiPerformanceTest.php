@@ -205,7 +205,7 @@ class FakeApiPerfTestComplexTypedEndpoint extends TypedEndpoint {
 function threshold(int|float ...$measurements): float {
     $sum = floatval(array_sum($measurements));
     $num = floatval(count($measurements));
-    return $sum * 2 / $num;
+    return $sum * 3 / $num;
 }
 
 /**
@@ -226,14 +226,14 @@ final class ApiPerformanceTest extends UnitTestCase {
         });
         // See note in doc comment of class.
         $thresholds = [
-            'normal simple indirect' => threshold(329, 214, 184),
-            'normal simple direct' => threshold(150, 439, 120),
-            'normal complex indirect' => threshold(172, 160, 294),
-            'normal complex direct' => threshold(136, 134, 132),
-            'typed simple indirect' => threshold(192, 154, 155),
-            'typed simple direct' => threshold(202, 188, 209),
-            'typed complex indirect' => threshold(162, 155, 167),
-            'typed complex direct' => threshold(251, 188, 212),
+            'normal simple indirect' => threshold(83, 83, 84),
+            'normal simple direct' => threshold(52, 52, 56),
+            'normal complex indirect' => threshold(62, 62, 62),
+            'normal complex direct' => threshold(53, 53, 57),
+            'typed simple indirect' => threshold(65, 65, 65),
+            'typed simple direct' => threshold(76, 76, 92),
+            'typed complex indirect' => threshold(67, 67, 65),
+            'typed complex direct' => threshold(65, 66, 69),
         ];
         $this->assertLessThan(
             $thresholds[$this->dataName()] ?? null,
@@ -253,14 +253,14 @@ final class ApiPerformanceTest extends UnitTestCase {
         });
         // See note in doc comment of class.
         $thresholds = [
-            'normal simple indirect' => threshold(6, 3, 3),
-            'normal simple direct' => threshold(3, 3, 5),
-            'normal complex indirect' => threshold(54, 45, 53),
-            'normal complex direct' => threshold(49, 44, 48),
-            'typed simple indirect' => threshold(62, 55, 58),
-            'typed simple direct' => threshold(56, 53, 53),
-            'typed complex indirect' => threshold(485, 424, 422),
-            'typed complex direct' => threshold(495, 416, 485),
+            'normal simple indirect' => threshold(1, 1, 1),
+            'normal simple direct' => threshold(1, 1, 1),
+            'normal complex indirect' => threshold(19, 19, 20),
+            'normal complex direct' => threshold(19, 18, 19),
+            'typed simple indirect' => threshold(44, 45, 45),
+            'typed simple direct' => threshold(40, 45, 41),
+            'typed complex indirect' => threshold(307, 311, 306),
+            'typed complex direct' => threshold(314, 309, 314),
         ];
         $this->assertLessThan(
             $thresholds[$this->dataName()] ?? null,
@@ -326,14 +326,14 @@ final class ApiPerformanceTest extends UnitTestCase {
         $this->assertStringContainsString('error', "{$invalid_response->getContent()}");
         // See note in doc comment of class.
         $thresholds = [
-            'normal simple indirect' => threshold(7, 8, 7),
-            'normal simple direct' => threshold(6, 6, 7),
-            'normal complex indirect' => threshold(30, 29, 74),
-            'normal complex direct' => threshold(30, 29, 84),
-            'typed simple indirect' => threshold(22, 21, 60),
-            'typed simple direct' => threshold(23, 21, 30),
-            'typed complex indirect' => threshold(494, 490, 521),
-            'typed complex direct' => threshold(492, 494, 533),
+            'normal simple indirect' => threshold(3, 3, 3),
+            'normal simple direct' => threshold(2, 2, 2),
+            'normal complex indirect' => threshold(12, 13, 13),
+            'normal complex direct' => threshold(11, 12, 13),
+            'typed simple indirect' => threshold(22, 23, 23),
+            'typed simple direct' => threshold(4, 5, 5),
+            'typed complex indirect' => threshold(206, 206, 227),
+            'typed complex direct' => threshold(135, 137, 137),
         ];
         $this->assertLessThan(
             $thresholds[$this->dataName()] ?? null,
