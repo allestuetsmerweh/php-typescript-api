@@ -10,6 +10,7 @@
 # JavaScript/Typescript tooling
 /client/lib
 /coverage
+/docs/coverage
 /example/coverage
 /example/node_modules
 /example/vendor

@@ -4,6 +4,7 @@ import stylistic from '@stylistic/eslint-plugin';
 
 const ignores = [
     'client/lib/',
+    'docs/coverage/',
     'example/web/dist/',
     'example/webpack.config.js',
     'node_modules/',

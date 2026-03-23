@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 
+use PHPStan\PhpDocParser\Ast\Node;
+use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
@@ -23,9 +25,13 @@ use PhpTypeScriptApi\Tests\UnitTests\PhpStan\Fake\NamespaceB\FakeBClass;
  * @coversNothing
  */
 class PhpStanUtilsForTest extends PhpStanUtils {
-    /** @return AliasCache */
-    public function testOnlyGetAliasCache(): array {
-        return $this->alias_cache;
+    /** @return array<string, true> */
+    public function testOnlyGetAliasCacheKeys(): array {
+        $keys = [];
+        foreach (array_keys($this->alias_cache) as $key) {
+            $keys[$key] = true;
+        }
+        return $keys;
     }
 }
 
@@ -48,6 +54,7 @@ class FakeLoop2 {
  * @phpstan-import-type AliasedUtil2IntArray from FakeUtil2
  *
  * @phpstan-type AliasedUtil1IntArray array<AliasedUtil1Int>
+ * @phpstan-type AliasedUtil1Util3Minimal FakeUtil3<AliasedUtil1Int, AliasedUtil1String>
  */
 class FakeUtil1 {
 }
@@ -57,6 +64,17 @@ class FakeUtil1 {
  * @phpstan-type AliasedUtil2IntArray array<AliasedUtil2Int>
  */
 class FakeUtil2 {
+}
+
+/**
+ * @template T
+ * @template U of string
+ * @template V = int
+ * @template W of int = int<0, max>
+ *
+ * @phpstan-type AliasedUtil3Item array{t: T, u: U, v: V, w: W}
+ */
+class FakeUtil3 {
 }
 
 /**
@@ -205,33 +223,6 @@ class SubClass extends IntermediateClass {
  * @covers \PhpTypeScriptApi\PhpStan\PhpStanUtils
  */
 final class PhpStanUtilsTest extends UnitTestCase {
-    public function testResolveFull(): void {
-        $utils = new PhpStanUtils();
-        $this->assertSame(
-            FakeApiObject::class,
-            $utils->resolveApiObjectClass(FakeApiObject::class)?->getName(),
-        );
-    }
-
-    public function testResolveFullyQualified(): void {
-        $utils = new PhpStanUtils();
-        $class_name = FakeApiObject::class;
-        $this->assertSame(
-            FakeApiObject::class,
-            $utils->resolveApiObjectClass("\\{$class_name}")?->getName(),
-        );
-    }
-
-    public function testResolveInvalid(): void {
-        $utils = new PhpStanUtils();
-        $this->assertNull($utils->resolveApiObjectClass('Invalid'));
-    }
-
-    public function testResolveNonApiObject(): void {
-        $utils = new PhpStanUtils();
-        $this->assertNull($utils->resolveApiObjectClass(PhpStanUtilsTest::class));
-    }
-
     public function testApiObjectTypeNodeFull(): void {
         $utils = new PhpStanUtils();
         $node = $utils->getApiObjectTypeNode(FakeApiObject::class);
@@ -285,343 +276,102 @@ final class PhpStanUtilsTest extends UnitTestCase {
 
     public function testGetAliases(): void {
         $utils = new PhpStanUtils();
-        $comment = <<<'ZZZZZZZZZZ'
-            /**
-             * @phpstan-type AliasedInt int
-             * @phpstan-type AliasedArray array<string, int>
-             * @phpstan-type AliasedRecursive array{recursive: AliasedRecursive|int}
-             */
-            ZZZZZZZZZZ;
-        $phpDocNode = $utils->parseDocComment($comment);
 
+        $fake_util_3_class = FakeUtil3::class;
         $this->assertEquals([
-            'AliasedInt' => ['type' => $this->getTypeNode("int")],
-            'AliasedArray' => ['type' => $this->getTypeNode("array<string, int>")],
-            'AliasedRecursive' => ['type' => $this->getTypeNode("array{recursive: AliasedRecursive|int}")],
-        ], $utils->getAliases($phpDocNode));
-    }
-
-    public function testGetFakeAliases(): void {
-        $utils = new PhpStanUtils();
-        $class_info = new \ReflectionClass(FakeAClass::class);
-        $phpDocNode = $utils->parseDocComment(
-            $class_info->getDocComment(),
-            $class_info->getFileName() ?: null,
-        );
+            'AliasedUtil1String' => ['type' => $this->getTypeNode('non-empty-string')],
+            'AliasedUtil1IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil1Int>')],
+            'AliasedUtil1Util3Minimal' => ['type' => $this->getTypeNode("{$fake_util_3_class}<AliasedUtil1Int, AliasedUtil1String>")],
+            'AliasedUtil1Int' => ['namespace' => FakeUtil2::class, 'name' => 'AliasedUtil2Int'],
+            'AliasedUtil2IntArray' => ['namespace' => FakeUtil2::class, 'name' => 'AliasedUtil2IntArray'],
+        ], $utils->getAliases(FakeUtil1::class));
         $this->assertEquals([
-            'FakeType' => ['type' => $this->getTypeNode("array{anotherA: FakeAnotherAType, aa: FakeAAType,b: FakeBType,top: FakeTopType,sameFileA: FakeSameFileAType}")],
-            'FakeAnotherAType' => ['namespace' => FakeAnotherAClass::class, 'name' => 'FakeAnotherAType'],
-            'FakeAAType' => ['namespace' => FakeAAClass::class, 'name' => 'FakeAAType'],
-            'FakeBType' => ['namespace' => FakeBClass::class, 'name' => 'FakeBType'],
-            'FakeTopType' => ['namespace' => FakeTopClass::class, 'name' => 'FakeTopType'],
-            'FakeSameFileAType' => ['namespace' => FakeSameFileAClass::class, 'name' => 'FakeSameFileAType'],
-        ], $utils->getAliases($phpDocNode));
-    }
-
-    public function testGetImportedAliases(): void {
-        $utils = new PhpStanUtils();
-        $class_name = FakePhpStanUtilsTypedEndpoint::class;
-        $comment = <<<ZZZZZZZZZZ
-            /**
-             * @phpstan-import-type AliasedInt from {$class_name}
-             * @phpstan-import-type AliasedInt from {$class_name} as MyInt
-             * @phpstan-import-type AliasedUtil1String from {$class_name}
-             * @phpstan-import-type AliasedUtil1String from {$class_name} as MyString
-             * @phpstan-import-type AliasedUtil1StringArray from {$class_name}
-             * @phpstan-import-type AliasedUtil1StringArray from {$class_name} as MyStringArray
-             * @phpstan-import-type AliasedUtil1IntArray from {$class_name}
-             * @phpstan-import-type AliasedUtil1IntArray from {$class_name} as MyIntArray
-             * @phpstan-import-type AliasedUtil1IntArrayArray from {$class_name}
-             * @phpstan-import-type AliasedUtil1IntArrayArray from {$class_name} as MyIntArrayArray
-             */
-            ZZZZZZZZZZ;
-        $phpDocNode = $utils->parseDocComment($comment);
-
+            'AliasedUtil3Item' => ['type' => $this->getTypeNode('array{t: T, u: U, v: V, w: W}')],
+        ], $utils->getAliases(FakeUtil3::class));
+        try {
+            $utils->getAliases(FakeUtil3::class, []);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame("Expected 2-4 generic arguments, but got '<>'", $th->getMessage());
+        }
         $this->assertEquals([
-            'AliasedInt' => ['namespace' => $class_name, 'name' => 'AliasedInt'],
-            'MyInt' => ['namespace' => $class_name, 'name' => 'AliasedInt'],
-            'AliasedUtil1String' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
-            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
-            'AliasedUtil1StringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'],
-            'MyStringArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'],
-            'AliasedUtil1IntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
-            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
-            'AliasedUtil1IntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'],
-            'MyIntArrayArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'],
-        ], $utils->getAliases($phpDocNode));
-    }
-
-    public function testGetImportedUtilAliases(): void {
-        $utils = new PhpStanUtils();
-        $class_name = FakeUtil1::class;
-        $comment = <<<ZZZZZZZZZZ
-            /**
-             * @phpstan-import-type AliasedUtil1String from {$class_name}
-             * @phpstan-import-type AliasedUtil1String from {$class_name} as MyString
-             * @phpstan-import-type AliasedUtil1Int from {$class_name}
-             * @phpstan-import-type AliasedUtil1Int from {$class_name} as MyInt
-             * @phpstan-import-type AliasedUtil1IntArray from {$class_name}
-             * @phpstan-import-type AliasedUtil1IntArray from {$class_name} as MyIntArray
-             */
-            ZZZZZZZZZZ;
-        $phpDocNode = $utils->parseDocComment($comment);
-
-        $this->assertEquals([
-            'AliasedUtil1String' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
-            'MyString' => ['namespace' => $class_name, 'name' => 'AliasedUtil1String'],
-            'AliasedUtil1Int' => ['namespace' => $class_name, 'name' => 'AliasedUtil1Int'],
-            'MyInt' => ['namespace' => $class_name, 'name' => 'AliasedUtil1Int'],
-            'AliasedUtil1IntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
-            'MyIntArray' => ['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'],
-        ], $utils->getAliases($phpDocNode));
+            'T' => ['type' => $this->getTypeNode('int<min, 0>')],
+            'U' => ['type' => $this->getTypeNode('numeric-string')],
+            'V' => ['type' => $this->getTypeNode('int')],
+            'W' => ['type' => $this->getTypeNode('int<0, max>')],
+            'AliasedUtil3Item' => ['type' => $this->getTypeNode('array{t: T, u: U, v: V, w: W}')],
+        ], $utils->getAliases(FakeUtil3::class, [
+            $this->getTypeNode('int<min, 0>'),
+            $this->getTypeNode('numeric-string'),
+        ]));
     }
 
     public function testResolveType(): void {
         $utils = new PhpStanUtilsForTest();
         $this->assertEquals(
             $this->getTypeNode("non-empty-string"),
-            $utils->resolveType($this->getTypeNode("non-empty-string"), []),
+            $utils->resolveType($this->getTypeNode("non-empty-string"), FakeUtil1::class),
         );
-        $this->assertEquals(
-            $this->getTypeNode("int"),
-            $utils->resolveType($this->getTypeNode("FakeIntAlias"), [
-                'FakeIntAlias' => ['type' => $this->getTypeNode("int")],
-            ]),
-        );
-        $this->assertEquals(
-            $this->getTypeNode("int"),
-            $utils->resolveType($this->getTypeNode("FakeIntAliasAlias"), [
-                'FakeIntAliasAlias' => ['type' => $this->getTypeNode("FakeIntAlias")],
-                'FakeIntAlias' => ['type' => $this->getTypeNode("int")],
-            ]),
-        );
+
         $this->assertEquals(
             $this->getTypeNode("non-empty-string"),
-            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
-                'FakeImportAlias' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtil1String',
-                ],
-            ]),
+            $utils->resolveType($this->getTypeNode("AliasedUtil1String"), FakeUtil1::class),
         );
         $this->assertEquals(
             $this->getTypeNode("int<2, max>"),
-            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
-                'FakeImportAlias' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtil1Int',
-                ],
-            ]),
+            $utils->resolveType($this->getTypeNode("AliasedUtil1Int"), FakeUtil1::class),
         );
         $this->assertEquals(
             $this->getTypeNode("array<int<2, max>>"),
-            $utils->resolveType($this->getTypeNode("FakeImportAlias"), [
-                'FakeImportAlias' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtil2IntArray',
-                ],
+            $utils->resolveType($this->getTypeNode("AliasedUtil2IntArray"), FakeUtil1::class),
+        );
+        $fake_util_3_class = FakeUtil3::class;
+        $this->assertEquals(
+            $this->getTypeNode("{$fake_util_3_class}<int<2, max>, non-empty-string>"),
+            $utils->resolveType($this->getTypeNode("AliasedUtil1Util3Minimal"), FakeUtil1::class),
+        );
+        $this->assertEquals(
+            $this->getTypeNode("array{t: T, u: U, v: V, w: W}"),
+            $utils->resolveType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, null),
+        );
+        try {
+            $utils->resolveType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, []);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame("Expected 2-4 generic arguments, but got '<>'", $th->getMessage());
+        }
+        $this->assertEquals(
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    t: int<0, 1>,
+                    u: class-string,
+                    v: int,
+                    w: int<0, max>,
+                }
+                ZZZZZZZZZZ),
+            $utils->resolveType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, [
+                $this->getTypeNode("int<0, 1>"),
+                $this->getTypeNode("class-string"),
             ]),
         );
-    }
 
-    public function testResolveTypeAlias(): void {
-        $utils = new PhpStanUtilsForTest();
-        $this->assertEquals(
-            $this->getTypeNode("non-empty-string"),
-            $utils->resolveAlias(['type' => $this->getTypeNode("non-empty-string")])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("array<Alias>"),
-            $utils->resolveAlias(['type' => $this->getTypeNode("array<Alias>")])
-        );
-        $this->assertEquals([], $utils->testOnlyGetAliasCache());
-    }
-
-    public function testResolveEndpointImportAlias(): void {
-        $utils = new PhpStanUtilsForTest();
-        $class_name = FakePhpStanUtilsTypedEndpoint::class;
-        $this->assertEquals(
-            $this->getTypeNode("int"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedInt'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("non-empty-string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1String'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtil1String>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1StringArray'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtil1Int>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtil1IntArray>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArrayArray'])
-        );
         $this->assertEquals([
-            FakeUtil1::class => [
-                'AliasedUtil1String' => ['type' => $this->getTypeNode('non-empty-string')],
-                'AliasedUtil1IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil1Int>')],
-                'AliasedUtil2IntArray' => [
-                    'namespace' => FakeUtil2::class,
-                    'name' => 'AliasedUtil2IntArray',
-                ],
-                'AliasedUtil1Int' => [
-                    'namespace' => FakeUtil2::class,
-                    'name' => 'AliasedUtil2Int',
-                ],
-            ],
-            FakePhpStanUtilsTypedEndpoint::class => [
-                'AliasedInt' => ['type' => $this->getTypeNode('int')],
-                'AliasedUtil1StringArray' => ['type' => $this->getTypeNode('array<AliasedUtil1String>')],
-                'AliasedUtil1IntArrayArray' => ['type' => $this->getTypeNode('array<AliasedUtil1IntArray>')],
-                'AliasedUtil1String' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtil1String',
-                ],
-                'AliasedUtil1IntArray' => [
-                    'namespace' => FakeUtil1::class,
-                    'name' => 'AliasedUtil1IntArray',
-                ],
-            ],
-        ], $utils->testOnlyGetAliasCache());
+            FakeUtil1::class => true,
+            FakeUtil2::class => true,
+            FakeUtil3::class => true,
+        ], $utils->testOnlyGetAliasCacheKeys());
     }
 
-    public function testResolveUtilImportAlias(): void {
+    public function testResolveTypeInfiniteLoop(): void {
         $utils = new PhpStanUtilsForTest();
-        $class_name = FakeUtil1::class;
-        $this->assertEquals(
-            $this->getTypeNode("non-empty-string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1String'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("int<2, max>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1Int'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("array<AliasedUtil1Int>"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'AliasedUtil1IntArray'])
-        );
-        $this->assertEquals([
-            FakeUtil1::class => [
-                'AliasedUtil1String' => ['type' => $this->getTypeNode('non-empty-string')],
-                'AliasedUtil1IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil1Int>')],
-                'AliasedUtil2IntArray' => [
-                    'namespace' => FakeUtil2::class,
-                    'name' => 'AliasedUtil2IntArray',
-                ],
-                'AliasedUtil1Int' => [
-                    'namespace' => FakeUtil2::class,
-                    'name' => 'AliasedUtil2Int',
-                ],
-            ],
-            FakeUtil2::class => [
-                'AliasedUtil2Int' => ['type' => $this->getTypeNode('int<2, max>')],
-                'AliasedUtil2IntArray' => ['type' => $this->getTypeNode('array<AliasedUtil2Int>')],
-            ],
-        ], $utils->testOnlyGetAliasCache());
-    }
-
-    public function testResolveFakeAliases(): void {
-        $utils = new PhpStanUtilsForTest();
-        $class_name = FakeAClass::class;
-        $this->assertEquals(
-            $this->getTypeNode("array{anotherA: FakeAnotherAType, aa: FakeAAType, b: FakeBType, top: FakeTopType, sameFileA: FakeSameFileAType}"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeType'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeAnotherAType'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeAAType'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeBType'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeTopType'])
-        );
-        $this->assertEquals(
-            $this->getTypeNode("string"),
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'FakeSameFileAType'])
-        );
-        $this->assertEquals([
-            FakeAClass::class => [
-                'FakeType' => ['type' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
-                    array{
-                        anotherA: FakeAnotherAType,
-                        aa: FakeAAType,
-                        b: FakeBType,
-                        top: FakeTopType,
-                        sameFileA: FakeSameFileAType,
-                    }
-                    ZZZZZZZZZZ)],
-                'FakeAnotherAType' => [
-                    'namespace' => FakeAnotherAClass::class,
-                    'name' => 'FakeAnotherAType',
-                ],
-                'FakeAAType' => [
-                    'namespace' => FakeAAClass::class,
-                    'name' => 'FakeAAType',
-                ],
-                'FakeBType' => [
-                    'namespace' => FakeBClass::class,
-                    'name' => 'FakeBType',
-                ],
-                'FakeTopType' => [
-                    'namespace' => FakeTopClass::class,
-                    'name' => 'FakeTopType',
-                ],
-                'FakeSameFileAType' => [
-                    'namespace' => FakeSameFileAClass::class,
-                    'name' => 'FakeSameFileAType',
-                ],
-            ],
-            FakeAnotherAClass::class => [
-                'FakeAnotherAType' => ['type' => $this->getTypeNode("string")],
-            ],
-            FakeAAClass::class => [
-                'FakeAAType' => ['type' => $this->getTypeNode("string")],
-            ],
-            FakeBClass::class => [
-                'FakeBType' => ['type' => $this->getTypeNode("string")],
-            ],
-            FakeTopClass::class => [
-                'FakeTopType' => ['type' => $this->getTypeNode("string")],
-            ],
-            FakeSameFileAClass::class => [
-                'FakeSameFileAType' => ['type' => $this->getTypeNode("string")],
-            ],
-        ], $utils->testOnlyGetAliasCache());
-    }
-
-    public function testResolveImportInfiniteLoop(): void {
-        $utils = new PhpStanUtilsForTest();
-        $class_name = FakeLoop1::class;
         try {
-            $utils->resolveAlias(['namespace' => $class_name, 'name' => 'InfiniteLoop']);
+            $utils->resolveType($this->getTypeNode('InfiniteLoop'), FakeLoop1::class);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertEquals([
-                FakeLoop1::class => [
-                    'InfiniteLoop' => [
-                        'namespace' => FakeLoop2::class,
-                        'name' => 'InfiniteLoop',
-                    ],
-                ],
-                FakeLoop2::class => [
-                    'InfiniteLoop' => [
-                        'namespace' => FakeLoop1::class,
-                        'name' => 'InfiniteLoop',
-                    ],
-                ],
-            ], $utils->testOnlyGetAliasCache());
+                FakeLoop1::class => true,
+                FakeLoop2::class => true,
+            ], $utils->testOnlyGetAliasCacheKeys());
             $this->assertSame(
                 'Maximum recusion level (100) reached: Failed importing InfiniteLoop from PhpTypeScriptApi\Tests\UnitTests\PhpStan\FakeLoop1',
                 $th->getMessage(),
@@ -629,15 +379,168 @@ final class PhpStanUtilsTest extends UnitTestCase {
         }
     }
 
+    public function testRewriteType(): void {
+        $utils = new PhpStanUtilsForTest();
+        $this->assertEquals(
+            [$this->getTypeNode("non-empty-string"), []],
+            $utils->rewriteType($this->getTypeNode("non-empty-string"), FakeUtil1::class),
+        );
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String' => $this->getTypeNode('non-empty-string'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil1String"), FakeUtil1::class),
+        );
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Int"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Int' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int' => $this->getTypeNode('int<2, max>'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil1Int"), FakeUtil1::class),
+        );
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil2IntArray"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil2IntArray' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2IntArray'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2IntArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int>'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int' => $this->getTypeNode('int<2, max>'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil2IntArray"), FakeUtil1::class),
+        );
+        $fake_util_3_class = FakeUtil3::class;
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Util3Minimal"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Util3Minimal' => $this->getTypeNode(<<<ZZZZZZZZZZ
+                    {$fake_util_3_class}<
+                        PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Int,
+                        PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String,
+                    >
+                    ZZZZZZZZZZ),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1Int' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String' => $this->getTypeNode('non-empty-string'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil2_AliasedUtil2Int' => $this->getTypeNode('int<2, max>'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil1Util3Minimal"), FakeUtil1::class),
+        );
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item' => $this->getTypeNode('array{t: T, u: U, v: V, w: W}'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, null),
+        );
+        try {
+            $utils->rewriteType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, []);
+            $this->fail('Error expected');
+        } catch (\Throwable $th) {
+            $this->assertSame("Expected 2-4 generic arguments, but got '<>'", $th->getMessage());
+        }
+        $this->assertEquals(
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                    array{
+                        t: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_T,
+                        u: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_U,
+                        v: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_V,
+                        w: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_W,
+                    }
+                    ZZZZZZZZZZ),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_T' => $this->getTypeNode('int<0, 1>'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_U' => $this->getTypeNode('class-string'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_V' => $this->getTypeNode('int'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_W' => $this->getTypeNode('int<0, max>'),
+            ]],
+            $utils->rewriteType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, [
+                $this->getTypeNode("int<0, 1>"),
+                $this->getTypeNode("class-string"),
+            ]),
+        );
+    }
+
+    public function testResolveEndpointImportAlias(): void {
+        $utils = new PhpStanUtilsForTest();
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("int")],
+            $utils->resolveImportAlias(['namespace' => FakePhpStanUtilsTypedEndpoint::class, 'name' => 'AliasedInt'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeUtil1::class, 'name' => 'AliasedUtil1String'],
+            $utils->resolveImportAlias(['namespace' => FakePhpStanUtilsTypedEndpoint::class, 'name' => 'AliasedUtil1String'])
+        );
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("array<AliasedUtil1String>")],
+            $utils->resolveImportAlias(['namespace' => FakePhpStanUtilsTypedEndpoint::class, 'name' => 'AliasedUtil1StringArray'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeUtil1::class, 'name' => 'AliasedUtil1IntArray'],
+            $utils->resolveImportAlias(['namespace' => FakePhpStanUtilsTypedEndpoint::class, 'name' => 'AliasedUtil1IntArray'])
+        );
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("array<AliasedUtil1IntArray>")],
+            $utils->resolveImportAlias(['namespace' => FakePhpStanUtilsTypedEndpoint::class, 'name' => 'AliasedUtil1IntArrayArray'])
+        );
+        $this->assertEquals([
+            FakePhpStanUtilsTypedEndpoint::class => true,
+        ], $utils->testOnlyGetAliasCacheKeys());
+    }
+
+    public function testResolveUtilImportAlias(): void {
+        $utils = new PhpStanUtilsForTest();
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("non-empty-string")],
+            $utils->resolveImportAlias(['namespace' => FakeUtil1::class, 'name' => 'AliasedUtil1String'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeUtil2::class, 'name' => 'AliasedUtil2Int'],
+            $utils->resolveImportAlias(['namespace' => FakeUtil1::class, 'name' => 'AliasedUtil1Int'])
+        );
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("array<AliasedUtil1Int>")],
+            $utils->resolveImportAlias(['namespace' => FakeUtil1::class, 'name' => 'AliasedUtil1IntArray'])
+        );
+        $this->assertEquals([
+            FakeUtil1::class => true,
+        ], $utils->testOnlyGetAliasCacheKeys());
+    }
+
+    public function testResolveFakeAliases(): void {
+        $utils = new PhpStanUtilsForTest();
+        $this->assertEquals(
+            ['type' => $this->getTypeNode("array{anotherA: FakeAnotherAType, aa: FakeAAType, b: FakeBType, top: FakeTopType, sameFileA: FakeSameFileAType}")],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeType'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeAnotherAClass::class, 'name' => 'FakeAnotherAType'],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeAnotherAType'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeAAClass::class, 'name' => 'FakeAAType'],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeAAType'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeBClass::class, 'name' => 'FakeBType'],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeBType'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeTopClass::class, 'name' => 'FakeTopType'],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeTopType'])
+        );
+        $this->assertEquals(
+            ['namespace' => FakeSameFileAClass::class, 'name' => 'FakeSameFileAType'],
+            $utils->resolveImportAlias(['namespace' => FakeAClass::class, 'name' => 'FakeSameFileAType'])
+        );
+        $this->assertEquals([
+            FakeAClass::class => true,
+        ], $utils->testOnlyGetAliasCacheKeys());
+    }
+
     public function testGetImportedAliasesError(): void {
         $utils = new PhpStanUtilsForTest();
         try {
-            $utils->resolveAlias(['namespace' => 'Invalid', 'name' => 'AliasedInt']);
+            $utils->resolveImportAlias(['namespace' => 'Invalid', 'name' => 'AliasedInt']);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertEquals([
-                'Invalid' => [],
-            ], $utils->testOnlyGetAliasCache());
+                'Invalid' => true,
+            ], $utils->testOnlyGetAliasCacheKeys());
             $this->assertSame(
                 'Failed importing AliasedInt from Invalid',
                 $th->getMessage(),
@@ -756,6 +659,44 @@ final class PhpStanUtilsTest extends UnitTestCase {
         ], $utils->getSuperGenerics(SubClass::class, TheInterface::class));
     }
 
+    public function testGetSuperInterfaceGenericsWithExports(): void {
+        $utils = new PhpStanUtils();
+        $exports = [];
+        $fn = function (Node $node, string $class_name, array $generic_args) use ($utils, &$exports) {
+            [$node, $new_exports] = $utils->rewriteType($node, $class_name, $generic_args);
+            foreach ($new_exports as $key => $value) {
+                $exports[$key] = $value;
+            }
+            return $node;
+        };
+        $this->assertEquals([
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    10: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String,
+                    11: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString,
+                    12: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray,
+                    13: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T,
+                }
+                ZZZZZZZZZZ),
+        ], $utils->getSuperGenerics(SubClass::class, TheInterface::class, $fn));
+        $this->assertEquals([
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String' => $this->getTypeNode('non-empty-string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    0: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String,
+                    1: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString,
+                    2: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray,
+                }
+                ZZZZZZZZZZ),
+        ], $exports);
+    }
+
     public function testGetSuperClassGenerics(): void {
         $utils = new PhpStanUtils();
         $this->assertEquals([
@@ -779,6 +720,45 @@ final class PhpStanUtilsTest extends UnitTestCase {
                 }
                 ZZZZZZZZZZ),
         ], $utils->getSuperGenerics(SubClass::class, SuperClass::class));
+    }
+
+    public function testGetSuperClassGenericsWithExports(): void {
+        $utils = new PhpStanUtils();
+        $exports = [];
+        $fn = function (Node $node, string $class_name, array $generic_args) use ($utils, &$exports) {
+            [$node, $new_exports] = $utils->rewriteType($node, $class_name, $generic_args);
+            foreach ($new_exports as $key => $value) {
+                $exports[$key] = $value;
+            }
+            return $node;
+        };
+        $this->assertEquals([
+            $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T'),
+            $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    20: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String,
+                    21: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString,
+                    22: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray,
+                    23: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T,
+                }
+                ZZZZZZZZZZ),
+        ], $utils->getSuperGenerics(SubClass::class, SuperClass::class, $fn));
+        $this->assertEquals([
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String' => $this->getTypeNode('non-empty-string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+                array{
+                    0: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String,
+                    1: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString,
+                    2: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray,
+                }
+                ZZZZZZZZZZ),
+        ], $exports);
     }
 
     public function testGetSuperGenericsNotSuperClass(): void {
@@ -827,63 +807,54 @@ final class PhpStanUtilsTest extends UnitTestCase {
              * @return int
              */
             ZZZZZZZZZZ);
+        $getGenericArgs = function (string $type_string) {
+            $node = $this->getTypeNode($type_string);
+            if (!$node instanceof GenericTypeNode) {
+                throw new \Exception("Not generic: {$type_string}");
+            }
+            return $node->genericTypes;
+        };
 
         $this->assertEquals([
             'T' => ['type' => $this->getTypeNode("string")],
             'U' => ['type' => $this->getTypeNode("'foo'")],
             'V' => ['type' => $this->getTypeNode("int")],
             'W' => ['type' => $this->getTypeNode("int<0, max>")],
-            // @phpstan-ignore-next-line argument.type
-        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 'foo'>")));
+        ], $utils->getTemplateAliases($phpDocNode, $getGenericArgs("A<string, 'foo'>")));
         $this->assertEquals([
             'T' => ['type' => $this->getTypeNode("string")],
             'U' => ['type' => $this->getTypeNode("'foo'")],
             'V' => ['type' => $this->getTypeNode("3")],
             'W' => ['type' => $this->getTypeNode("-1")],
-            // @phpstan-ignore-next-line argument.type
-        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 'foo', 3, -1>")));
+        ], $utils->getTemplateAliases($phpDocNode, $getGenericArgs("A<string, 'foo', 3, -1>")));
         // We don't do checks
         $this->assertEquals([
             'T' => ['type' => $this->getTypeNode("string")],
             'U' => ['type' => $this->getTypeNode("3")],
             'V' => ['type' => $this->getTypeNode("'foo'")],
             'W' => ['type' => $this->getTypeNode("'bar'")],
-            // @phpstan-ignore-next-line argument.type
-        ], $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<string, 3, 'foo', 'bar'>")));
+        ], $utils->getTemplateAliases($phpDocNode, $getGenericArgs("A<string, 3, 'foo', 'bar'>")));
         try {
-            // @phpstan-ignore-next-line argument.type
-            $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<'too few'>"));
+            $utils->getTemplateAliases($phpDocNode, $getGenericArgs("A<'too few'>"));
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
-                "Expected 2-4 generic arguments, but got 'A<'too few'>'",
+                "Expected 2-4 generic arguments, but got '<'too few'>'",
                 $th->getMessage(),
             );
         }
         try {
-            // @phpstan-ignore-next-line argument.type
-            $utils->getTemplateAliases($phpDocNode, $this->getTypeNode("A<'too', 'many', 'args', 'in', 'here'>"));
+            $utils->getTemplateAliases($phpDocNode, $getGenericArgs("A<'too', 'many', 'args', 'in', 'here'>"));
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
-                "Expected 2-4 generic arguments, but got 'A<'too', 'many', 'args', 'in', 'here'>'",
+                "Expected 2-4 generic arguments, but got '<'too', 'many', 'args', 'in', 'here'>'",
                 $th->getMessage(),
             );
         }
 
         // Null-related edge cases
-        $this->assertEquals([], $utils->getTemplateAliases(null, null));
-        try {
-            $this->assertEquals([], $utils->getTemplateAliases($phpDocNode, null));
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                "Expected 2-4 generic arguments, but got '<>'",
-                $th->getMessage(),
-            );
-        }
-        // @phpstan-ignore-next-line argument.type
-        $this->assertEquals([], $utils->getTemplateAliases(null, $this->getTypeNode("A<string, 'foo'>")));
+        $this->assertEquals([], $utils->getTemplateAliases(null, $getGenericArgs("A<string, 'foo'>")));
     }
 
     public function testGetPrettyAlias(): void {

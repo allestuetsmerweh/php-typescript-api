@@ -13,7 +13,6 @@ use PHPStan\PhpDocParser\Ast\Node;
 final class ReplaceNodesVisitor extends AbstractNodeVisitor {
     /** @param callable(Node): Node $replaceFn */
     public function __construct(
-        protected PhpStanUtils $phpStanUtils,
         protected mixed $replaceFn,
     ) {
     }

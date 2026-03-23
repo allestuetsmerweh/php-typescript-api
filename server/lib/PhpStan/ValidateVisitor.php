@@ -106,8 +106,11 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                 }
                 $serialized_node = $this->phpStanUtils->getApiObjectTypeNode($node->name);
                 if ($serialized_node) {
-                    $class_info = $this->phpStanUtils->resolveApiObjectClass($node->name);
-                    $class = $class_info?->getName();
+                    $class = $node->name;
+                    // @phpstan-ignore-next-line phpstanApi.runtimeReflection
+                    if (!is_subclass_of($class, ApiObjectInterface::class)) {
+                        throw new \Exception("ValidateVisitor: Invalid ApiObjectInterface: {$class}");
+                    }
                     if ($class && $this->value instanceof $class) {
                         $data = $this->value->toWire();
                         $result = $this->subValidate($data, $serialized_node);
@@ -119,7 +122,6 @@ final class ValidateVisitor extends AbstractNodeVisitor {
                     $result = $this->subValidate($this->value, $serialized_node);
                     if (!$this->serialize) {
                         try {
-                            // @phpstan-ignore staticMethod.nonObject
                             $result->setValue($class::fromWire($this->value));
                         } catch (\Throwable $th) {
                             return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));

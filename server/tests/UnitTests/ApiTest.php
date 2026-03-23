@@ -170,9 +170,9 @@ final class ApiTest extends UnitTestCase {
 
             export type PhpTypeScriptApi_PhpStan_IsoDate = string;
 
-            export type SampleTypedExport1 = Record<string, never>;
+            export type PhpTypeScriptApi_Tests_UnitTests_FakeApiTestTypedEndpoint1_SampleTypedExport1 = Record<string, never>;
 
-            export type SampleTypedExport2 = Record<string, never>;
+            export type PhpTypeScriptApi_Tests_UnitTests_FakeApiTestTypedEndpoint2_SampleTypedExport2 = Record<string, never>;
 
             export type _PhpTypeScriptApi_PhpStan_IsoTime = string;
 
@@ -189,13 +189,13 @@ final class ApiTest extends UnitTestCase {
                 fakeEndpoint1: unknown,
                 fakeEndpoint2: SampleExport2,
                 fakeTypedEndpoint1: ({'date': PhpTypeScriptApi_PhpStan_IsoDate} | null),
-                fakeTypedEndpoint2: SampleTypedExport2,
+                fakeTypedEndpoint2: PhpTypeScriptApi_Tests_UnitTests_FakeApiTestTypedEndpoint2_SampleTypedExport2,
             }
 
             export interface FakeApiResponses extends FakeApiEndpointMapping {
                 fakeEndpoint1: SampleExport1,
                 fakeEndpoint2: unknown,
-                fakeTypedEndpoint1: (SampleTypedExport1 | null),
+                fakeTypedEndpoint1: (PhpTypeScriptApi_Tests_UnitTests_FakeApiTestTypedEndpoint1_SampleTypedExport1 | null),
                 fakeTypedEndpoint2: {'time': _PhpTypeScriptApi_PhpStan_IsoTime},
             }
 

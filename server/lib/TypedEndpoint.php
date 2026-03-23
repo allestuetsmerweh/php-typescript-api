@@ -2,9 +2,8 @@
 
 namespace PhpTypeScriptApi;
 
+use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
-use PHPStan\PhpDocParser\Ast\PhpDoc\ExtendsTagValueNode;
-use PHPStan\PhpDocParser\Ast\PhpDoc\PhpDocNode;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
@@ -33,109 +32,27 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     public function parseType(): void {
         $class_name = get_called_class();
-        // TODO: Replace with getSuperGenerics once it supports aliases ("exported")
-        $class_info = new \ReflectionClass($class_name);
         $this->aliasNodes = [];
-        $template_aliases = [];
-        $extends_node = null;
-        while ($class_info->getParentClass()) {
-            $php_doc_node = $this->phpStanUtils->parseDocComment(
-                $class_info->getDocComment(),
-                $class_info->getFileName() ?: null,
-            );
-            $template_aliases = $this->getTemplateAliases($php_doc_node, $extends_node);
-            foreach ($template_aliases as $key => $value) {
-                $this->aliasNodes[$key] = $this->phpStanUtils->resolveAlias($value);
+        $fn = function (Node $node, string $class_name, array $generic_args) {
+            [$node, $new_exports] = $this->phpStanUtils->rewriteType($node, $class_name, $generic_args);
+            foreach ($new_exports as $key => $value) {
+                if (!$value instanceof TypeNode) {
+                    throw new \Exception("Exporting non-TypeNode: {$value}");
+                }
+                $this->aliasNodes[$key] = $value;
             }
-            foreach ($this->phpStanUtils->getAliases($php_doc_node) as $key => $value) {
-                $this->aliasNodes[$key] = $this->phpStanUtils->resolveAlias($value);
-            }
-            $extends_node = $this->getResolvedExtendsNode($php_doc_node, $template_aliases);
-            $parent_class_info = $class_info->getParentClass();
-            if ($parent_class_info->getName() === TypedEndpoint::class) {
-                break;
-            }
-            $class_info = $parent_class_info;
-        }
-        // $this->aliasNodes = [
-        //     ...$this->aliasNodes,
-        //     ...$template_aliases,
-        // ];
-        if (!$extends_node) {
-            throw new \Exception("Could not parse type for {$class_name}");
-        }
-        if (!preg_match('/(^|\\\)TypedEndpoint$/', "{$extends_node->type->type}")) {
-            throw new \Exception("{$class_name} does not extend TypedEndpoint");
-        }
-        if (count($extends_node->type->genericTypes) !== 2) {
+            return $node;
+        };
+        $generics = $this->phpStanUtils->getSuperGenerics($class_name, TypedEndpoint::class, $fn);
+        if (count($generics) !== 2) {
             // @codeCoverageIgnoreStart
             // Reason: phpstan does not allow testing this!
-            $pretty_generics = implode(', ', $extends_node->type->genericTypes);
+            $pretty_generics = implode(', ', $generics);
             throw new \Exception("{$class_name} must provide two generics to TypedEndpoint, provided TypedEndpoint<{$pretty_generics}>");
             // @codeCoverageIgnoreEnd
         }
-        $this->requestTypeNode = $extends_node->type->genericTypes[0];
-        $this->responseTypeNode = $extends_node->type->genericTypes[1];
-    }
-
-    /**
-     * @return NamespaceAliases
-     */
-    protected function getTemplateAliases(
-        ?PhpDocNode $php_doc_node,
-        ?ExtendsTagValueNode $previous_extends_node,
-    ): array {
-        if (!$php_doc_node) {
-            return [];
-        }
-        $aliases = [];
-        $args = $previous_extends_node?->type->genericTypes ?? [];
-        $template_nodes = $php_doc_node->getTemplateTagValues();
-        $min_args = 0;
-        $max_args = count($template_nodes);
-        foreach ($template_nodes as $template_node) {
-            $min_args += $template_node->default === null ? 1 : 0;
-        }
-        $pretty_range = $min_args === $max_args ? $min_args : "{$min_args}-{$max_args}";
-        if (count($args) < $min_args || count($args) > $max_args) {
-            $pretty_generics = implode(', ', $args);
-            throw new \Exception("Expected {$pretty_range} generic arguments, but got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
-        }
-        for ($i = 0; $i < count($template_nodes); $i++) {
-            $node = $template_nodes[$i];
-            $value = $args[$i] ?? $node->default;
-            if ($value === null) {
-                // @codeCoverageIgnoreStart
-                // Reason: phpstan does not allow testing this!
-                $pretty_generics = implode(', ', $args);
-                throw new \Exception("This should never happen: Template[{$i}] is null. Expected {$pretty_range} generic arguments, got '{$previous_extends_node?->type->type}<{$pretty_generics}>'");
-                // @codeCoverageIgnoreEnd
-            }
-            $aliases[$node->name] = ['type' => $value];
-        }
-        return $aliases;
-    }
-
-    /**
-     * @param NamespaceAliases $template_aliases
-     */
-    protected function getResolvedExtendsNode(
-        ?PhpDocNode $php_doc_node,
-        array $template_aliases,
-    ): ?ExtendsTagValueNode {
-        $extends_type_node = $php_doc_node?->getExtendsTagValues()[0] ?? null;
-        if (!$extends_type_node) {
-            return null;
-        }
-
-        $resolved_extends_node = $this->phpStanUtils->resolveType($extends_type_node, $template_aliases);
-        if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            throw new \Exception("Expected ExtendsTagValueNode, but got {$resolved_extends_node}");
-            // @codeCoverageIgnoreEnd
-        }
-        return $resolved_extends_node;
+        $this->requestTypeNode = $generics[0];
+        $this->responseTypeNode = $generics[1];
     }
 
     public function setup(): void {
