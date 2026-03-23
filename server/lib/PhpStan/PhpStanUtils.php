@@ -100,7 +100,8 @@ class PhpStanUtils {
                 return $node;
             }
             $esc_class_name = str_replace('\\', '_', $class_name);
-            $absolute_name = "{$esc_class_name}_{$node->name}";
+            $md5_generic_args = $generic_args ? md5(implode(',', $generic_args)) : '';
+            $absolute_name = "{$esc_class_name}{$md5_generic_args}_{$node->name}";
             if (isset($alias['type'])) {
                 [$new_node, $new_exports] = $this->rewriteType($alias['type'], $class_name, $generic_args);
                 $exports = [
