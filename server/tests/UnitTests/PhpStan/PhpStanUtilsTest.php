@@ -434,19 +434,19 @@ final class PhpStanUtilsTest extends UnitTestCase {
             $this->assertSame("Expected 2-4 generic arguments, but got '<>'", $th->getMessage());
         }
         $this->assertEquals(
-            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item"), [
-                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_AliasedUtil3Item' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+            [$this->getTypeNode("PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_AliasedUtil3Item"), [
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_AliasedUtil3Item' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
                     array{
-                        t: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_T,
-                        u: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_U,
-                        v: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_V,
-                        w: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_W,
+                        t: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_T,
+                        u: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_U,
+                        v: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_V,
+                        w: PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_W,
                     }
                     ZZZZZZZZZZ),
-                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_T' => $this->getTypeNode('int<0, 1>'),
-                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_U' => $this->getTypeNode('class-string'),
-                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_V' => $this->getTypeNode('int'),
-                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3_W' => $this->getTypeNode('int<0, max>'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_T' => $this->getTypeNode('int<0, 1>'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_U' => $this->getTypeNode('class-string'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_V' => $this->getTypeNode('int'),
+                'PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil3c386f9420dd5e25ada49395d6998b62b_W' => $this->getTypeNode('int<0, max>'),
             ]],
             $utils->rewriteType($this->getTypeNode("AliasedUtil3Item"), FakeUtil3::class, [
                 $this->getTypeNode("int<0, 1>"),
@@ -672,10 +672,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertEquals([
             $this->getTypeNode(<<<'ZZZZZZZZZZ'
                 array{
-                    10: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String,
-                    11: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString,
-                    12: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray,
-                    13: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T,
+                    10: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String,
+                    11: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedString,
+                    12: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedArray,
+                    13: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_T,
                 }
                 ZZZZZZZZZZ),
         ], $utils->getSuperGenerics(SubClass::class, TheInterface::class, $fn));
@@ -684,10 +684,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString' => $this->getTypeNode('string'),
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String>'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString' => $this->getTypeNode('string'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String>'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
                 array{
                     0: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String,
                     1: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString,
@@ -733,13 +733,13 @@ final class PhpStanUtilsTest extends UnitTestCase {
             return $node;
         };
         $this->assertEquals([
-            $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T'),
+            $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_T'),
             $this->getTypeNode(<<<'ZZZZZZZZZZ'
                 array{
-                    20: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String,
-                    21: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString,
-                    22: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray,
-                    23: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T,
+                    20: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String,
+                    21: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedString,
+                    22: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedArray,
+                    23: PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_T,
                 }
                 ZZZZZZZZZZ),
         ], $utils->getSuperGenerics(SubClass::class, SuperClass::class, $fn));
@@ -748,10 +748,10 @@ final class PhpStanUtilsTest extends UnitTestCase {
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString' => $this->getTypeNode('string'),
             'PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String>'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedString' => $this->getTypeNode('string'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_AliasedUtil1String>'),
-            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String' => $this->getTypeNode('PhpTypeScriptApi_Tests_UnitTests_PhpStan_FakeUtil1_AliasedUtil1String'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedString' => $this->getTypeNode('string'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedArray' => $this->getTypeNode('array<PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_AliasedUtil1String>'),
+            'PhpTypeScriptApi_Tests_UnitTests_PhpStan_IntermediateClass8d9cb7c172e88173a8485028a2d583eb_T' => $this->getTypeNode(<<<'ZZZZZZZZZZ'
                 array{
                     0: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedUtil1String,
                     1: PhpTypeScriptApi_Tests_UnitTests_PhpStan_SubClass_AliasedString,

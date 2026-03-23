@@ -326,14 +326,14 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeLeafGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Input", $endpoint->getRequestTsType());
-        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Out", $endpoint->getResponseTsType());
+        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_Input", $endpoint->getRequestTsType());
+        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_Out", $endpoint->getResponseTsType());
         $this->assertEquals([
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Input' => "{'in': PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_In, 'custom'?: PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_CustomIn}",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Out' => 'PhpTypeScriptApi_Tests_UnitTests_FakeLeafGenericTypedEndpoint_AliasedString',
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_Input' => "{'in': PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_In, 'custom'?: PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_CustomIn}",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_Out' => 'PhpTypeScriptApi_Tests_UnitTests_FakeLeafGenericTypedEndpoint_AliasedString',
             'PhpTypeScriptApi_Tests_UnitTests_FakeLeafGenericTypedEndpoint_AliasedString' => "string",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_In' => "number",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_CustomIn' => "number",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_In' => "number",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint9e8898dd171e16fef23859974ed8e6a2_CustomIn' => "number",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
@@ -341,14 +341,14 @@ class TypedEndpointTest extends UnitTestCase {
     public function testFakeLeafPartialGenericTypedEndpointMetadata(): void {
         $endpoint = new FakeLeafPartialGenericTypedEndpoint();
         $endpoint->setLogger($this->fakeLogger);
-        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Input", $endpoint->getRequestTsType());
-        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Out", $endpoint->getResponseTsType());
+        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_Input", $endpoint->getRequestTsType());
+        $this->assertSame("PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_Out", $endpoint->getResponseTsType());
         $this->assertEquals([
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Input' => "{'in': PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_In, 'custom'?: PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_CustomIn}",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_Out' => 'PhpTypeScriptApi_Tests_UnitTests_FakeLeafPartialGenericTypedEndpoint_AliasedString',
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_Input' => "{'in': PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_In, 'custom'?: PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_CustomIn}",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_Out' => 'PhpTypeScriptApi_Tests_UnitTests_FakeLeafPartialGenericTypedEndpoint_AliasedString',
             'PhpTypeScriptApi_Tests_UnitTests_FakeLeafPartialGenericTypedEndpoint_AliasedString' => "string",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_In' => "number",
-            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpoint_CustomIn' => "never",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_In' => "number",
+            'PhpTypeScriptApi_Tests_UnitTests_FakeIntermediateGenericTypedEndpointf70527c952d0bbb01eb9faa41d61ad07_CustomIn' => "never",
         ], $endpoint->getNamedTsTypes());
         $this->assertSame([], $this->fakeLogHandler->getPrettyRecords());
     }
