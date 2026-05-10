@@ -1,6 +1,6 @@
 <?php
 
-use PhpTypeScriptApi\Fields\ValidationError;
+use PhpTypeScriptApi\HttpError;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -18,7 +18,7 @@ abstract class DivideTypedEndpoint extends TypedEndpoint {
         $dividend = $input['dividend'];
         $divisor = $input['divisor'];
         if (floatval($divisor) === 0.0) {
-            throw new ValidationError(['divisor' => ["Cannot divide by zero."]]);
+            throw HttpError::validationError(['divisor' => ["Cannot divide by zero."]]);
         }
         // @phpstan-ignore return.type
         return $dividend / $divisor;

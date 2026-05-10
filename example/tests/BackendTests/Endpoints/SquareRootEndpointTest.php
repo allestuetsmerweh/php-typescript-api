@@ -34,13 +34,9 @@ final class SquareRootEndpointTest extends ExampleBackendTestCase {
         $result = $this->callBackend('squareRoot', -1);
         $this->assertSame(400, $result['http_code']);
         $this->assertSame([
+            'status' => 400,
             'message' => '',
-            'error' => [
-                'type' => 'ValidationError',
-                'validationErrors' => [
-                    '.' => [''],
-                ],
-            ],
+            'error' => ['.' => ['']],
         ], $result['result']);
     }
 }

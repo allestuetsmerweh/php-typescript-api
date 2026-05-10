@@ -1,6 +1,6 @@
 {
     "name": "allestuetsmerweh/php-typescript-api",
-    "version": "3.0.1",
+    "version": "4.0.0",
     "type": "library",
     "description": "Build a typed Web API using PHP and TypeScript",
     "keywords": ["PHP","TypeScript","API"],
@@ -32,7 +32,7 @@
         "phpstan/phpdoc-parser": "^2.0"
     },
     "scripts": {
-        "check": "vendor/bin/phpstan",
+        "stan": "vendor/bin/phpstan",
         "run-example": "cd ./example; ./run.sh",
         "fix": "php-cs-fixer fix --config=./.php_cs_config.php -v",
         "fixdiff": "php-cs-fixer fix --config=./.php_cs_config.php -v --dry-run --diff",

@@ -21,11 +21,8 @@ class ValidationError extends \Exception {
         return $this->validationErrors;
     }
 
-    /** @return array{type: string, validationErrors: array<string, array<mixed>>} */
+    /** @return array<string, array<string>> */
     public function getStructuredAnswer(): array {
-        return [
-            'type' => 'ValidationError',
-            'validationErrors' => $this->validationErrors,
-        ];
+        return $this->validationErrors;
     }
 }

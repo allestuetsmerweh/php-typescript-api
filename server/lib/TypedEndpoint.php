@@ -5,7 +5,6 @@ namespace PhpTypeScriptApi;
 use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
-use PhpTypeScriptApi\Fields\ValidationError;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
 use PhpTypeScriptApi\PhpStan\ValidateVisitor;
@@ -101,18 +100,15 @@ abstract class TypedEndpoint implements EndpointInterface {
         );
         if (!$result->isValid()) {
             $this->logger?->notice("Bad user request", [$result->getErrors()]);
-            throw new HttpError(400, Translator::__('endpoint.bad_input'), new ValidationError($result->getErrors()));
+            throw new HttpError(400, Translator::__('endpoint.bad_input'), null, $result->getErrors());
         }
         $this->logger?->info("Valid user request");
         $input = $result->getValue();
 
         try {
             $raw_output = $this->handle($input);
-        } catch (ValidationError $verr) {
-            $this->logger?->notice("Bad user request", $verr->getStructuredAnswer());
-            throw new HttpError(400, Translator::__('endpoint.bad_input'), $verr);
         } catch (HttpError $http_error) {
-            $this->logger?->notice("HTTP error {$http_error->getCode()}", [$http_error]);
+            $this->logger?->notice("HTTP error {$http_error->getCode()} {$http_error->getMessage()}", [$http_error->getErrorsByField()]);
             throw $http_error;
         } catch (\Exception $exc) {
             $message = $exc->getMessage();
@@ -128,7 +124,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         );
         if (!$result->isValid()) {
             $this->logger?->critical("Bad output prohibited", [$result->getErrors()]);
-            throw new HttpError(500, Translator::__('endpoint.internal_server_error'), new ValidationError($result->getErrors()));
+            throw new HttpError(500, Translator::__('endpoint.internal_server_error'), null, $result->getErrors());
         }
         $this->logger?->info("Valid user response");
         return $result->getValue();

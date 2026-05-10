@@ -26,10 +26,7 @@ final class ValidationErrorTest extends UnitTestCase {
             $error->getValidationErrors()
         );
         $this->assertSame(
-            [
-                'type' => 'ValidationError',
-                'validationErrors' => ['.' => ['root error']],
-            ],
+            ['.' => ['root error']],
             $error->getStructuredAnswer()
         );
     }

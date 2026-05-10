@@ -161,9 +161,9 @@ final class ObjectFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'one' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                'two' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                'three' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'one' => ["Wert muss 'foo' oder 'bar' sein."],
+                'two' => ["Wert muss 'foo' oder 'bar' sein."],
+                'three' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'one' => 'Eins',
@@ -173,7 +173,7 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'two' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'two' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'one' => 'foo',
@@ -183,7 +183,7 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'one' => [['.' => ["Field can not be empty."]]],
+                'one' => ["Field can not be empty."],
             ],
             $field->getValidationErrors([
                 'one' => null,
@@ -240,7 +240,7 @@ final class ObjectFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'test' => [['.' => ["Field can not be empty."]]],
+                'test' => ["Field can not be empty."],
             ],
             $field->getValidationErrors(['test' => null])
         );

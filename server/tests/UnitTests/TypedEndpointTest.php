@@ -446,6 +446,7 @@ class TypedEndpointTest extends UnitTestCase {
             $this->assertSame(429, $err->getCode());
             $this->assertSame('Too many requests', $err->getMessage());
             $this->assertSame([
+                'status' => 429,
                 'message' => 'Too many requests',
                 'error' => true,
             ], $err->getStructuredAnswer());
@@ -465,11 +466,9 @@ class TypedEndpointTest extends UnitTestCase {
             $this->assertSame(400, $err->getCode());
             $this->assertSame('Bad input', $err->getMessage());
             $this->assertSame([
+                'status' => 400,
                 'message' => 'Bad input',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Value must be an object.']],
-                ],
+                'error' => ['.' => ['Value must be an object.']],
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "NOTICE Bad user request",
@@ -491,6 +490,7 @@ class TypedEndpointTest extends UnitTestCase {
                 $err->getMessage()
             );
             $this->assertSame([
+                'status' => 500,
                 'message' => 'An error occurred. Please try again later.',
                 'error' => true,
             ], $err->getStructuredAnswer());
@@ -513,38 +513,14 @@ class TypedEndpointTest extends UnitTestCase {
             $this->assertSame(418, $err->getCode());
             $this->assertSame('I\'m a teapot', $err->getMessage());
             $this->assertSame([
+                'status' => 418,
                 'message' => 'I\'m a teapot',
                 'error' => true,
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "INFO Valid user request",
                 "INFO Handling with HTTP error...",
-                "NOTICE HTTP error 418",
-            ], $this->fakeLogHandler->getPrettyRecords());
-        }
-    }
-
-    public function testFakeTypedEndpointWithExecutionValidationError(): void {
-        $endpoint = new FakeTypedEndpointWithErrors();
-        $endpoint->setLogger($this->fakeLogger);
-        $endpoint->handle_with_validation_error = true;
-        try {
-            $endpoint->call(self::$raw_input);
-            $this->fail('Error expected');
-        } catch (HttpError $err) {
-            $this->assertSame(400, $err->getCode());
-            $this->assertSame('Bad input', $err->getMessage());
-            $this->assertSame([
-                'message' => 'Bad input',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Fundamental error']],
-                ],
-            ], $err->getStructuredAnswer());
-            $this->assertSame([
-                "INFO Valid user request",
-                "INFO Handling with validation error...",
-                "NOTICE Bad user request",
+                "NOTICE HTTP error 418 I'm a teapot",
             ], $this->fakeLogHandler->getPrettyRecords());
         }
     }
@@ -564,11 +540,9 @@ class TypedEndpointTest extends UnitTestCase {
                 $err->getMessage()
             );
             $this->assertSame([
+                'status' => 500,
                 'message' => 'An error occurred. Please try again later.',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Value must be an object.']],
-                ],
+                'error' => ['.' => ['Value must be an object.']],
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "INFO Valid user request",

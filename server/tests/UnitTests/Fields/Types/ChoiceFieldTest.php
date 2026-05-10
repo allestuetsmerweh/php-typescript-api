@@ -208,7 +208,7 @@ final class ChoiceFieldTest extends UnitTestCase {
             ],
         ]);
         $this->assertSame([
-            'one' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+            'one' => ["Wert muss 'foo' oder 'bar' sein."],
         ], $field->getValidationErrors([
             'one' => 'Eins',
         ]));
@@ -216,7 +216,7 @@ final class ChoiceFieldTest extends UnitTestCase {
             'one' => 'foo',
         ]));
         $this->assertSame([
-            'two' => [['.' => ["Field can not be empty."]]],
+            'two' => ["Field can not be empty."],
         ], $field->getValidationErrors([
             'two' => null,
         ]));
@@ -259,7 +259,7 @@ final class ChoiceFieldTest extends UnitTestCase {
             '.' => ["Unknown key: unknown_key."],
         ], $field->getValidationErrors(['unknown_key' => 'WTF?']));
         $this->assertSame([
-            'test' => [['.' => ["Field can not be empty."]]],
+            'test' => ["Field can not be empty."],
         ], $field->getValidationErrors(['test' => null]));
         $this->assertSame([], $field->getValidationErrors(['test' => 'foo']));
         $this->assertSame([
