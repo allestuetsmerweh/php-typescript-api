@@ -1,7 +1,7 @@
 import {Api} from './Api';
-import {ValidationError} from './ValidationError';
+import {ApiError} from './ApiError';
 
 export {
     Api,
-    ValidationError,
+    ApiError,
 };

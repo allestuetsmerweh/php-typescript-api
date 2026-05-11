@@ -30,7 +30,7 @@ export type SPTransportStop = {
     'platform': string|null,
 };
 
-export type DivideTypedEndpoint_T = DivideNumbersTypedEndpoint_DefaultNumberType;
+export type DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T = DivideNumbersTypedEndpoint_DefaultNumberType;
 
 export type DivideNumbersTypedEndpoint_DefaultNumberType = DivideTypedEndpoint_DefaultNumberType;
 
@@ -83,7 +83,7 @@ export interface ExampleApiRequests extends ExampleApiEndpointMapping {
             'isArrivalTime': boolean|null,
         },
     empty: Record<string, never>,
-    divideNumbersTyped: {'dividend': DivideTypedEndpoint_T, 'divisor': DivideTypedEndpoint_T},
+    divideNumbersTyped: {'dividend': DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T, 'divisor': DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T},
     squareRootTyped: (number | number),
     combineDateTimeTyped: {'date': PhpTypeScriptApi_PhpStan_IsoDate, 'time': _PhpTypeScriptApi_PhpStan_IsoTime},
     searchSwissPublicTransportConnectionTyped: {'from': string, 'to': string, 'via': (Array<string> | null), 'date': _PhpTypeScriptApi_PhpStan_IsoDate, 'time': string, 'isArrivalTime': (boolean | null)},
@@ -98,7 +98,7 @@ export interface ExampleApiResponses extends ExampleApiEndpointMapping {
             'connections': Array<SPTransportConnection>,
         },
     empty: Record<string, never>,
-    divideNumbersTyped: DivideTypedEndpoint_T,
+    divideNumbersTyped: DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T,
     squareRootTyped: number,
     combineDateTimeTyped: {'dateTime': PhpTypeScriptApi_PhpStan_IsoDateTime},
     searchSwissPublicTransportConnectionTyped: {'stationById': {[key: string]: SwissPublicTransportConnectionsTypedEndpoint_SptLocation}, 'connections': Array<SwissPublicTransportConnectionsTypedEndpoint_SptConnection>},

@@ -403,6 +403,7 @@ final class ApiTest extends UnitTestCase {
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
         $this->assertSame(null, $response->getCharset());
         $this->assertSame(json_encode([
+            'status' => 400,
             'message' => 'Invalid endpoint',
             'error' => true,
         ]), $response->getContent());
@@ -490,6 +491,7 @@ final class ApiTest extends UnitTestCase {
         $this->assertSame('application/json', $response->headers->get('Content-Type'));
         $this->assertSame(null, $response->getCharset());
         $this->assertSame(json_encode([
+            'status' => 500,
             'message' => 'An error occurred. Please try again later.',
             'error' => true,
         ]), $response->getContent());

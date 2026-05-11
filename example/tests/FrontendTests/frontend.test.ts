@@ -2,7 +2,7 @@ import {spawn, ChildProcess} from 'child_process';
 import path from 'path';
 import http from 'http';
 import {ExampleApi} from '../../web/ExampleApi';
-import {ValidationError} from 'php-typescript-api';
+import {ApiError} from 'php-typescript-api';
 
 describe('frontend end-to-end', () => {
     let server: ChildProcess;
@@ -65,11 +65,11 @@ describe('frontend end-to-end', () => {
                 await exampleApi.call('divideNumbers', {dividend: 6, divisor: 0});
                 throw new Error('error expected');
             } catch (err: unknown) {
-                if (!(err instanceof ValidationError)) {
-                    fail('ValidationError expected');
+                if (!(err instanceof ApiError)) {
+                    fail('ApiError expected');
                 }
                 expect(err.message).toEqual('Bad input');
-                expect(err.getErrorsByField()).toEqual({
+                expect(err.errorsByField).toEqual({
                     'divisor': ['Cannot divide by zero.'],
                 });
             }
@@ -110,11 +110,11 @@ describe('frontend end-to-end', () => {
                 await exampleApi.call('squareRoot', -1);
                 throw new Error('error expected');
             } catch (err: unknown) {
-                if (!(err instanceof ValidationError)) {
-                    fail('ValidationError expected');
+                if (!(err instanceof ApiError)) {
+                    fail('ApiError expected');
                 }
                 expect(err.message).toEqual('Bad input');
-                expect(err.getErrorsByField()).toEqual({
+                expect(err.errorsByField).toEqual({
                     '.': ['Value must not be less than 0.'],
                 });
             }
@@ -144,11 +144,11 @@ describe('frontend end-to-end', () => {
                 await exampleApi.call('divideNumbersTyped', {dividend: 6, divisor: 0});
                 throw new Error('error expected');
             } catch (err: unknown) {
-                if (!(err instanceof ValidationError)) {
-                    fail('ValidationError expected');
+                if (!(err instanceof ApiError)) {
+                    fail('ApiError expected');
                 }
                 expect(err.message).toEqual('Bad input');
-                expect(err.getErrorsByField()).toEqual({
+                expect(err.errorsByField).toEqual({
                     'divisor': ['Cannot divide by zero.'],
                 });
             }
@@ -193,11 +193,11 @@ describe('frontend end-to-end', () => {
                 await exampleApi.call('squareRootTyped', -1);
                 throw new Error('error expected');
             } catch (err: unknown) {
-                if (!(err instanceof ValidationError)) {
-                    fail('ValidationError expected');
+                if (!(err instanceof ApiError)) {
+                    fail('ApiError expected');
                 }
                 expect(err.message).toEqual('Bad input');
-                expect(err.getErrorsByField()).toEqual({
+                expect(err.errorsByField).toEqual({
                     '.': ['Value must not be negative'],
                 });
             }
@@ -206,11 +206,11 @@ describe('frontend end-to-end', () => {
                 await exampleApi.call('squareRootTyped', -1.5);
                 throw new Error('error expected');
             } catch (err: unknown) {
-                if (!(err instanceof ValidationError)) {
-                    fail('ValidationError expected');
+                if (!(err instanceof ApiError)) {
+                    fail('ApiError expected');
                 }
                 expect(err.message).toEqual('Bad input');
-                expect(err.getErrorsByField()).toEqual({
+                expect(err.errorsByField).toEqual({
                     '.': ['Value must not be negative'],
                 });
             }

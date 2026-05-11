@@ -17,13 +17,11 @@ final class DivideNumbersTypedEndpointTest extends ExampleBackendTestCase {
         $this->assertSame(400, $result['http_code']);
         $this->assertSame(
             [
+                'status' => 400,
                 'message' => '',
                 'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => [
-                        'dividend' => [''],
-                        'divisor' => [''],
-                    ],
+                    'dividend' => [''],
+                    'divisor' => [''],
                 ],
             ],
             $result['result']
@@ -59,12 +57,10 @@ final class DivideNumbersTypedEndpointTest extends ExampleBackendTestCase {
         $this->assertSame(400, $result['http_code']);
         $this->assertSame(
             [
+                'status' => 400,
                 'message' => '',
                 'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => [
-                        'divisor' => ['Cannot divide by zero.'],
-                    ],
+                    'divisor' => ['Cannot divide by zero.'],
                 ],
             ],
             $result['result']

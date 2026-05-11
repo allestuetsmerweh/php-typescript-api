@@ -1,5 +1,5 @@
 import fetch from 'unfetch';
-import {ErrorsByField, ValidationError} from './ValidationError';
+import {ApiError, ErrorsByField} from './ApiError';
 
 export abstract class Api<
     Endpoints extends string,
@@ -25,63 +25,51 @@ export abstract class Api<
         })
             .then(async (response) => {
                 const responseText = await response.text();
-                const error = this.getValidationErrorFromResponseText(responseText);
-                if (error) {
-                    throw error;
-                }
-                if (!response.ok && !error) {
-                    throw new Error('Ein Fehler ist aufgetreten. Bitte später nochmals versuchen.');
+                if (!response.ok) {
+                    const error = this.getApiErrorFromResponseText(responseText);
+                    if (error) {
+                        throw error;
+                    }
+                    throw new ApiError(
+                        response.status,
+                        'Ein Fehler ist aufgetreten. Bitte später nochmals versuchen.',
+                    );
                 }
                 return response.json() as Responses[T];
             });
     }
 
-    public mergeValidationErrors(
-        validationErrors: ValidationError[],
-    ): ValidationError {
-        const initialValidationErrors = {} as ErrorsByField;
-        let merged = new ValidationError('', initialValidationErrors);
-        for (const validationError of validationErrors) {
-            const newMessage = validationError.message
-                ? merged.message + (merged.message ? '\n' : '') + validationError.message
-                : merged.message;
-            const newErrorsByField = validationError.getErrorsByField();
-            const newValidationErrors = {
-                ...merged.getErrorsByField(),
-            };
-            for (const fieldId of Object.keys(newErrorsByField)) {
-                const existingErrors = newValidationErrors[fieldId] ?? [];
-                const newErrors = newErrorsByField[fieldId];
-                newValidationErrors[fieldId] = [...existingErrors, ...newErrors];
-            }
-            merged = new ValidationError(newMessage, newValidationErrors);
-        }
-        return merged;
-    }
-
-    public getValidationErrorFromResponseText(
+    public getApiErrorFromResponseText(
         responseText?: string,
-    ): ValidationError | undefined {
+    ): ApiError | undefined {
         if (!responseText) {
             return undefined;
         }
-        let structuredError;
+        let error;
         try {
-            structuredError = JSON.parse(responseText);
+            error = JSON.parse(responseText);
         } catch (_e: unknown) {
             return undefined;
         }
-        if (structuredError?.error?.type !== 'ValidationError') {
+        if (typeof error !== 'object' || error === null) {
             return undefined;
         }
-        const message = structuredError.message;
-        const validationErrors = structuredError.error.validationErrors;
-        if (!message) {
-            throw new Error(`Validation error missing message: ${structuredError}`);
+        if (
+            'status' in error
+            && 'message' in error
+            && Number.isInteger(error.status)
+            && typeof error.message === 'string'
+        ) {
+            const status = Number(error.status);
+            let errorsByField: ErrorsByField | undefined = undefined;
+            if (
+                'error' in error
+                && typeof error.error === 'object'
+            ) {
+                errorsByField = error.error as unknown as ErrorsByField;
+            }
+            return new ApiError(status, error.message, errorsByField);
         }
-        if (!validationErrors) {
-            throw new Error(`Validation error missing errors: ${structuredError}`);
-        }
-        return new ValidationError(message, validationErrors);
+        return undefined;
     }
 }

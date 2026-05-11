@@ -131,21 +131,21 @@ final class ArrayFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '2' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '4' => [['.' => ["Field can not be empty."]]],
+                '0' => ["Wert muss 'foo' oder 'bar' sein."],
+                '2' => ["Wert muss 'foo' oder 'bar' sein."],
+                '4' => ["Field can not be empty."],
             ],
             $field->getValidationErrors(['neither', 'foo', 'nor', 'bar', null])
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                '0' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors(['not', 'foo'])
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Field can not be empty."]]],
+                '0' => ["Field can not be empty."],
             ],
             $field->getValidationErrors([null])
         );
@@ -167,13 +167,13 @@ final class ArrayFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '2' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                '0' => ["Wert muss 'foo' oder 'bar' sein."],
+                '2' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors(['neither', 'foo', 'nor', 'bar', null])
         );
         $this->assertSame(
-            ['0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]]],
+            ['0' => ["Wert muss 'foo' oder 'bar' sein."]],
             $field->getValidationErrors(['not', 'foo'])
         );
         $this->assertSame([], $field->getValidationErrors([null]));
@@ -196,21 +196,21 @@ final class ArrayFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '2' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                '4' => [['.' => ["Field can not be empty."]]],
+                '0' => ["Wert muss 'foo' oder 'bar' sein."],
+                '2' => ["Wert muss 'foo' oder 'bar' sein."],
+                '4' => ["Field can not be empty."],
             ],
             $field->getValidationErrors(['neither', 'foo', 'nor', 'bar', null])
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                '0' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors(['not', 'foo'])
         );
         $this->assertSame(
             [
-                '0' => [['.' => ["Field can not be empty."]]],
+                '0' => ["Field can not be empty."],
             ],
             $field->getValidationErrors([null])
         );

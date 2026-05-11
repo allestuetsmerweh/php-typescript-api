@@ -1,6 +1,6 @@
 <?php
 
-use PhpTypeScriptApi\Fields\ValidationError;
+use PhpTypeScriptApi\HttpError;
 use PhpTypeScriptApi\TypedEndpoint;
 
 /**
@@ -12,7 +12,7 @@ use PhpTypeScriptApi\TypedEndpoint;
 class SquareRootTypedEndpoint extends TypedEndpoint {
     protected function handle(mixed $input): mixed {
         if ($input < 0.0) {
-            throw new ValidationError(['.' => ['Value must not be negative']]);
+            throw HttpError::validationError(['.' => ['Value must not be negative']]);
         }
         return sqrt((float) $input);
     }

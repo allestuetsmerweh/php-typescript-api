@@ -118,8 +118,8 @@ final class DictFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                'another_key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'key' => ["Wert muss 'foo' oder 'bar' sein."],
+                'another_key' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'key' => 'value',
@@ -128,7 +128,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'offending' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'offending' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'offending' => 'offending',
@@ -137,7 +137,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'key' => [['.' => ["Field can not be empty."]]],
+                'key' => ["Field can not be empty."],
             ],
             $field->getValidationErrors(['key' => null])
         );
@@ -163,8 +163,8 @@ final class DictFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                'another_key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'key' => ["Wert muss 'foo' oder 'bar' sein."],
+                'another_key' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'key' => 'value',
@@ -173,7 +173,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'offending' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'offending' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'offending' => 'offending',
@@ -204,8 +204,8 @@ final class DictFieldTest extends UnitTestCase {
         ]);
         $this->assertSame(
             [
-                'key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
-                'another_key' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'key' => ["Wert muss 'foo' oder 'bar' sein."],
+                'another_key' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'key' => 'value',
@@ -214,7 +214,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'offending' => [['.' => ["Wert muss 'foo' oder 'bar' sein."]]],
+                'offending' => ["Wert muss 'foo' oder 'bar' sein."],
             ],
             $field->getValidationErrors([
                 'offending' => 'offending',
@@ -223,7 +223,7 @@ final class DictFieldTest extends UnitTestCase {
         );
         $this->assertSame(
             [
-                'key' => [['.' => ["Field can not be empty."]]],
+                'key' => ["Field can not be empty."],
             ],
             $field->getValidationErrors(['key' => null])
         );

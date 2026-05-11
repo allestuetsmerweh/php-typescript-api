@@ -156,7 +156,6 @@ final class EndpointTest extends UnitTestCase {
     }
 
     public function testFakeEndpointRuntimeSetup(): void {
-        global $_GET, $_POST;
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->setup();
@@ -167,7 +166,6 @@ final class EndpointTest extends UnitTestCase {
     }
 
     public function testFakeEndpointSetupFunction(): void {
-        global $_GET, $_POST;
         $logger = $this->fakeLogger;
         $endpoint = new FakeEndpoint('fake_resource');
         $endpoint->setLogger($this->fakeLogger);
@@ -184,7 +182,6 @@ final class EndpointTest extends UnitTestCase {
     }
 
     public function testFakeEndpointNoSetupImplemented(): void {
-        global $_GET, $_POST;
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         try {
@@ -203,12 +200,13 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_throttling = true;
         try {
-            $result = $endpoint->call(null);
+            $endpoint->call(null);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(429, $err->getCode());
             $this->assertSame('Too many requests', $err->getMessage());
             $this->assertSame([
+                'status' => 429,
                 'message' => 'Too many requests',
                 'error' => true,
             ], $err->getStructuredAnswer());
@@ -222,17 +220,15 @@ final class EndpointTest extends UnitTestCase {
         $endpoint = new FakeEndpointWithErrors();
         $endpoint->setLogger($this->fakeLogger);
         try {
-            $result = $endpoint->call(null);
+            $endpoint->call(null);
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
             $this->assertSame('Bad input', $err->getMessage());
             $this->assertSame([
+                'status' => 400,
                 'message' => 'Bad input',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Field can not be empty.']],
-                ],
+                'error' => ['.' => ['Field can not be empty.']],
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "NOTICE Bad user request",
@@ -245,7 +241,7 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_error = true;
         try {
-            $result = $endpoint->call('test');
+            $endpoint->call('test');
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
@@ -254,6 +250,7 @@ final class EndpointTest extends UnitTestCase {
                 $err->getMessage()
             );
             $this->assertSame([
+                'status' => 500,
                 'message' => 'An error occurred. Please try again later.',
                 'error' => true,
             ], $err->getStructuredAnswer());
@@ -270,12 +267,13 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_http_error = true;
         try {
-            $result = $endpoint->call('test');
+            $endpoint->call('test');
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(418, $err->getCode());
             $this->assertSame('I\'m a teapot', $err->getMessage());
             $this->assertSame([
+                'status' => 418,
                 'message' => 'I\'m a teapot',
                 'error' => true,
             ], $err->getStructuredAnswer());
@@ -292,17 +290,15 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->setLogger($this->fakeLogger);
         $endpoint->handle_with_validation_error = true;
         try {
-            $result = $endpoint->call('test');
+            $endpoint->call('test');
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(400, $err->getCode());
             $this->assertSame('Bad input', $err->getMessage());
             $this->assertSame([
+                'status' => 400,
                 'message' => 'Bad input',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Fundamental error']],
-                ],
+                'error' => ['.' => ['Fundamental error']],
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "INFO Valid user request",
@@ -318,7 +314,7 @@ final class EndpointTest extends UnitTestCase {
         $endpoint->handle_with_error = false;
         $endpoint->handle_with_output = null;
         try {
-            $result = $endpoint->call('test');
+            $endpoint->call('test');
             $this->fail('Error expected');
         } catch (HttpError $err) {
             $this->assertSame(500, $err->getCode());
@@ -327,11 +323,9 @@ final class EndpointTest extends UnitTestCase {
                 $err->getMessage()
             );
             $this->assertSame([
+                'status' => 500,
                 'message' => 'An error occurred. Please try again later.',
-                'error' => [
-                    'type' => 'ValidationError',
-                    'validationErrors' => ['.' => ['Field can not be empty.']],
-                ],
+                'error' => ['.' => ['Field can not be empty.']],
             ], $err->getStructuredAnswer());
             $this->assertSame([
                 "INFO Valid user request",

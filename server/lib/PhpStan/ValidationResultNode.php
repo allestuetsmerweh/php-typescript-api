@@ -7,28 +7,43 @@ namespace PhpTypeScriptApi\PhpStan;
 use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprNode;
 use PHPStan\PhpDocParser\Ast\NodeAttributes;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
+use PhpTypeScriptApi\HttpError;
 
+/**
+ * @phpstan-import-type ErrorsByField from HttpError
+ */
 class ValidationResultNode implements TypeNode, ConstExprNode {
     use NodeAttributes;
 
-    /** @var array<string, array<array<mixed>|string>> */
+    /** @var ErrorsByField */
     protected array $errors = [];
 
     protected mixed $value = null;
 
-    /** @param string|array<string, array<array<mixed>|string>> $message */
+    /** @param string|ErrorsByField $message */
     public function recordError(array|string $message): void {
         $this->recordErrorInKey('.', $message);
     }
 
-    /** @param string|array<string, array<array<mixed>|string>> $message */
+    /** @param string|ErrorsByField $message */
     public function recordErrorInKey(string $key, array|string $message): void {
+        if (is_array($message)) {
+            foreach ($message as $sub_key => $sub_errors) {
+                $new_key = $sub_key === '.' ? $key : "{$key}.{$sub_key}";
+                $this->errors[$new_key] ??= [];
+                $this->errors[$new_key] = [
+                    ...$this->errors[$new_key],
+                    ...$sub_errors,
+                ];
+            }
+            return;
+        }
         $errors = $this->errors[$key] ?? [];
         $errors[] = $message;
         $this->errors[$key] = $errors;
     }
 
-    /** @return array<string, array<array<mixed>|string>> */
+    /** @return ErrorsByField */
     public function getErrors(): array {
         return $this->errors;
     }
