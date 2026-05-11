@@ -24,10 +24,10 @@ export type SPTransportSection = {
 
 export type SPTransportStop = {
     'stationId': string,
-    'arrival': string|null,
-    'departure': string|null,
-    'delay': number|null,
-    'platform': string|null,
+    'arrival': string | null,
+    'departure': string | null,
+    'delay': number | null,
+    'platform': string | null,
 };
 
 export type DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T = DivideNumbersTypedEndpoint_DefaultNumberType;
@@ -54,34 +54,34 @@ export type SwissPublicTransportConnectionsTypedEndpoint_SptSection = {'departur
 
 export type SwissPublicTransportConnectionsTypedEndpoint_SptStop = {'stationId': string, 'arrival': (string | null), 'departure': (string | null), 'delay': (number | null), 'platform': (string | null)};
 
-// eslint-disable-next-line no-shadow
+
 export type ExampleApiEndpoint =
-    'divideNumbers'|
-    'squareRoot'|
-    'searchSwissPublicTransportConnection'|
-    'empty'|
-    'divideNumbersTyped'|
-    'squareRootTyped'|
-    'combineDateTimeTyped'|
-    'searchSwissPublicTransportConnectionTyped'|
+    'divideNumbers' |
+    'squareRoot' |
+    'searchSwissPublicTransportConnection' |
+    'empty' |
+    'divideNumbersTyped' |
+    'squareRootTyped' |
+    'combineDateTimeTyped' |
+    'searchSwissPublicTransportConnectionTyped' |
     'emptyTyped';
 
 type ExampleApiEndpointMapping = {[key in ExampleApiEndpoint]: unknown};
 
 export interface ExampleApiRequests extends ExampleApiEndpointMapping {
     divideNumbers: {
-            'dividend': number,
-            'divisor': number,
-        },
+        'dividend': number,
+        'divisor': number,
+    },
     squareRoot: number,
     searchSwissPublicTransportConnection: {
-            'from': string,
-            'to': string,
-            'via': Array<string>|null,
-            'date': string,
-            'time': string,
-            'isArrivalTime': boolean|null,
-        },
+        'from': string,
+        'to': string,
+        'via': Array<string> | null,
+        'date': string,
+        'time': string,
+        'isArrivalTime': boolean | null,
+    },
     empty: Record<string, never>,
     divideNumbersTyped: {'dividend': DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T, 'divisor': DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T},
     squareRootTyped: (number | number),
@@ -94,9 +94,9 @@ export interface ExampleApiResponses extends ExampleApiEndpointMapping {
     divideNumbers: number,
     squareRoot: number,
     searchSwissPublicTransportConnection: {
-            'stationById': {[key: string]: SPTransportLocation},
-            'connections': Array<SPTransportConnection>,
-        },
+        'stationById': {[key: string]: SPTransportLocation},
+        'connections': Array<SPTransportConnection>,
+    },
     empty: Record<string, never>,
     divideNumbersTyped: DivideTypedEndpointd68d9a964141d7627f8d89b7d441dc15_T,
     squareRootTyped: number,

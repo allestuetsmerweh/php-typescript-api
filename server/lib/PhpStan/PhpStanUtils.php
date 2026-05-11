@@ -111,21 +111,15 @@ class PhpStanUtils {
                 ];
                 return new IdentifierTypeNode($absolute_name);
             }
-            if (isset($alias['namespace'])) {
-                $import_node = new IdentifierTypeNode($alias['name']);
-                [$new_node, $new_exports] = $this->rewriteType($import_node, $alias['namespace']);
-                $exports = [
-                    ...$exports,
-                    ...$new_exports,
-                    $absolute_name => $new_node,
-                ];
-                return new IdentifierTypeNode($absolute_name);
-            }
-            // @codeCoverageIgnoreStart
-            // Reason: phpstan does not allow testing this!
-            $enc_alias = json_encode($alias) ?: '';
-            throw new \Exception("Invalid alias: {$enc_alias}");
-            // @codeCoverageIgnoreEnd
+            // Namespace alias
+            $import_node = new IdentifierTypeNode($alias['name']);
+            [$new_node, $new_exports] = $this->rewriteType($import_node, $alias['namespace']);
+            $exports = [
+                ...$exports,
+                ...$new_exports,
+                $absolute_name => $new_node,
+            ];
+            return new IdentifierTypeNode($absolute_name);
         });
         $traverser = new NodeTraverser([$visitor]);
         [$resolved_node] = $traverser->traverse([$node]);
@@ -424,14 +418,7 @@ class PhpStanUtils {
         if (isset($alias['type'])) {
             return "{$alias['type']}";
         }
-        if (isset($alias['namespace'])) {
-            return "{$alias['namespace']}::{$alias['name']}";
-        }
-        // @codeCoverageIgnoreStart
-        // Reason: phpstan does not allow testing this!
-        $enc_alias = json_encode($alias) ?: '';
-        return "INVALID ALIAS: {$enc_alias}";
-        // @codeCoverageIgnoreEnd
+        return "{$alias['namespace']}::{$alias['name']}";
     }
 
     /** @return ?\ReflectionClass<object> */
