@@ -32,7 +32,7 @@ class HttpError extends \Exception {
     }
 
     /**
-     * @return array{message: string, error: ErrorsByField|true}
+     * @return array{status: int, message: string, error: ErrorsByField|true}
      */
     public function getStructuredAnswer(): array {
         $error = true;
