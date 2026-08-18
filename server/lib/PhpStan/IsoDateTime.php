@@ -14,10 +14,11 @@ class IsoDateTime extends \DateTime implements ApiObjectInterface {
         if (!is_string($data)) {
             throw new \InvalidArgumentException("IsoDateTime must be string");
         }
-        if (!preg_match('/^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$/', $data)) {
-            throw new \InvalidArgumentException("IsoDateTime must be Y-m-d H:i:s");
+        $date_time = \DateTime::createFromFormat('Y-m-d H:i:s', $data);
+        if ($date_time === false || $date_time->format('Y-m-d H:i:s') !== $data) {
+            throw new \InvalidArgumentException("IsoDateTime must be valid Y-m-d H:i:s format, got: {$data}");
         }
-        return new IsoDateTime($data);
+        return new IsoDateTime($date_time->format('Y-m-d H:i:s'));
     }
 
     public static function fromDateTime(?\DateTimeInterface $date_time): ?IsoDateTime {

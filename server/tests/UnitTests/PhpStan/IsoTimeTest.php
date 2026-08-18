@@ -39,7 +39,7 @@ final class IsoTimeTest extends UnitTestCase {
             IsoTime::fromWire('malformed');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            $this->assertSame('IsoTime must be H:i:s', $th->getMessage());
+            $this->assertSame('IsoTime must be valid H:i:s format, got: malformed', $th->getMessage());
         }
     }
 
@@ -48,11 +48,7 @@ final class IsoTimeTest extends UnitTestCase {
             IsoTime::fromWire('99:99:99');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            if (\PHP_VERSION_ID < 80300) {
-                $this->assertSame(\Exception::class, get_class($th));
-            } else {
-                $this->assertSame(\DateMalformedStringException::class, get_class($th));
-            }
+            $this->assertSame(\InvalidArgumentException::class, get_class($th));
         }
     }
 
