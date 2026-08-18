@@ -31,6 +31,10 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     public function parseType(): void {
         $class_name = get_called_class();
+        // @phpstan-ignore-next-line function.alreadyNarrowedType
+        if (!is_subclass_of($class_name, TypedEndpoint::class)) {
+            throw new \LogicException("parseType() must be called on a TypedEndpoint subclass");
+        }
         $this->aliasNodes = [];
         $fn = function (Node $node, string $class_name, array $generic_args) {
             [$node, $new_exports] = $this->phpStanUtils->rewriteType($node, $class_name, $generic_args);
