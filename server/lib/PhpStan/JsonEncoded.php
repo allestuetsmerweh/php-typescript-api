@@ -24,7 +24,7 @@ class JsonEncoded implements ApiObjectInterface {
         if (!is_string($wire) || !$wire) {
             throw new \InvalidArgumentException("{$class_name} must be string");
         }
-        $data = json_decode($wire, true);
+        $data = json_decode($wire, true, depth: 512);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \InvalidArgumentException("{$class_name} must be valid JSON");
         }
@@ -47,7 +47,7 @@ class JsonEncoded implements ApiObjectInterface {
 
     /** @return T */
     public function toData(): mixed {
-        return json_decode($this->json_encoded_data, true);
+        return json_decode($this->json_encoded_data, true, depth: 512);
     }
 
     /**
