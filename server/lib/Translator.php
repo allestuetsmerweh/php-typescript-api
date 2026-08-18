@@ -126,7 +126,7 @@ class Translator {
         if (!$messages_json_content) {
             return [];
         }
-        return json_decode($messages_json_content, true) ?? [];
+        return json_decode($messages_json_content, true, depth: 512) ?? [];
     }
 
     public static function getInstance(): Translator {
