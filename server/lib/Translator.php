@@ -23,7 +23,7 @@ class Translator {
         $langs = array_filter($entries, function ($entry) {
             $lang_path = $this::$lang_path;
             return
-                $entry !== '.' && $entry !== '..'
+                preg_match('/^[a-z0-9_]+$/', $entry)
                 && is_file("{$lang_path}{$entry}/messages.json");
         });
         $this->setProjectLangs($langs);
@@ -119,6 +119,9 @@ class Translator {
      * @return array<string, string|array<string, string>>
      */
     protected function readMessagesJson(string $lang): array {
+        if (!preg_match('/^[a-z0-9_]+$/', $lang)) {
+            return [];
+        }
         $lang_path = $this::$lang_path;
         $messages_json_path = "{$lang_path}{$lang}/messages.json";
         $messages_json_content = is_file($messages_json_path)
