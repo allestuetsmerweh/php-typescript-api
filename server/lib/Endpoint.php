@@ -35,10 +35,10 @@ abstract class Endpoint implements EndpointInterface {
 
     /** Override to handle custom requests. */
     public function parseInput(Request $request): mixed {
-        $input = json_decode($request->getContent(), true);
+        $input = json_decode($request->getContent(), true, depth: 512);
         // GET param `request`.
         if (!$input && $request->query->has('request')) {
-            $input = json_decode($request->get('request'), true);
+            $input = json_decode($request->get('request'), true, depth: 512);
         }
         return $input;
     }
