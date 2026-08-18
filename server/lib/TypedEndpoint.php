@@ -31,7 +31,7 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     public function parseType(): void {
         $class_name = get_called_class();
-        // phpstan-ignore function.alreadyNarrowedType
+        // @phpstan-ignore-next-line function.alreadyNarrowedType
         if (!is_subclass_of($class_name, TypedEndpoint::class)) {
             throw new \LogicException("parseType() must be called on a TypedEndpoint subclass");
         }
