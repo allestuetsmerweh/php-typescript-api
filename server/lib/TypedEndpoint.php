@@ -70,7 +70,7 @@ abstract class TypedEndpoint implements EndpointInterface {
 
     /** Override to handle custom requests. */
     public function parseInput(Request $request): mixed {
-        $input = json_decode($request->getContent(), true);
+        $input = json_decode($request->getContent(), true, depth: 512);
         if (!json_last_error()) {
             return $input;
         }
@@ -79,7 +79,7 @@ abstract class TypedEndpoint implements EndpointInterface {
         if (!is_string($request_param)) {
             return null;
         }
-        return json_decode($request_param, true);
+        return json_decode($request_param, true, depth: 512);
     }
 
     /**
