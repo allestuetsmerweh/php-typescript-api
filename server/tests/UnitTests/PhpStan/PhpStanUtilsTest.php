@@ -373,7 +373,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
                 FakeLoop2::class => true,
             ], $utils->testOnlyGetAliasCacheKeys());
             $this->assertSame(
-                'Maximum recusion level (100) reached while resolving alias InfiniteLoop from PhpTypeScriptApi\Tests\UnitTests\PhpStan\FakeLoop1',
+                'Maximum recusion level (100) reached while resolving alias InfiniteLoop from PhpTypeScriptApi\Tests\UnitTests\PhpStan\FakeLoop2',
                 $th->getMessage(),
             );
         }
