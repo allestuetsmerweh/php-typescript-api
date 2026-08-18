@@ -59,8 +59,8 @@ class PhpStanUtils {
             // Resolve ImportAlias
             $namespace = null;
             for ($i = 0; isset($alias['namespace']); $i++) {
-                if ($i > $this->max_recursion) {
-                    throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached: Failed importing {$alias['name']} from {$alias['namespace']}");
+                if ($i >= $this->max_recursion) {
+                    throw new \Exception("Maximum recusion level ({$this->max_recursion}) reached while resolving alias {$alias['name']} from {$alias['namespace']}");
                 }
                 $namespace = $alias['namespace'];
                 $alias = $this->resolveImportAlias($alias);
