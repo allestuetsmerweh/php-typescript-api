@@ -39,7 +39,7 @@ final class IsoDateTest extends UnitTestCase {
             IsoDate::fromWire('malformed');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            $this->assertSame('IsoDate must be Y-m-d', $th->getMessage());
+            $this->assertSame('IsoDate must be valid Y-m-d format, got: malformed', $th->getMessage());
         }
     }
 
@@ -48,11 +48,7 @@ final class IsoDateTest extends UnitTestCase {
             IsoDate::fromWire('2024-99-99');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
-            if (\PHP_VERSION_ID < 80300) {
-                $this->assertSame(\Exception::class, get_class($th));
-            } else {
-                $this->assertSame(\DateMalformedStringException::class, get_class($th));
-            }
+            $this->assertSame(\InvalidArgumentException::class, get_class($th));
         }
     }
 
