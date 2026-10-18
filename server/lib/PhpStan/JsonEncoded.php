@@ -38,7 +38,7 @@ class JsonEncoded implements ApiObjectInterface {
             // @codeCoverageIgnoreEnd
         }
         $type_node = $generics[0];
-        $result_node = ValidateVisitor::validateDeserialize($php_stan_utils, $data, $type_node);
+        $result_node = Validator::validateDeserialize($php_stan_utils, $data, $type_node);
         if (!$result_node->isValid()) {
             throw new \InvalidArgumentException("{$class_name} must be valid {$type_node}");
         }

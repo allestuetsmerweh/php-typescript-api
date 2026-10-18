@@ -4,17 +4,12 @@ declare(strict_types=1);
 
 namespace PhpTypeScriptApi\PhpStan;
 
-use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprNode;
-use PHPStan\PhpDocParser\Ast\NodeAttributes;
-use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\HttpError;
 
 /**
  * @phpstan-import-type ErrorsByField from HttpError
  */
-class ValidationResultNode implements TypeNode, ConstExprNode {
-    use NodeAttributes;
-
+class ValidationResultNode {
     /** @var ErrorsByField */
     protected array $errors = [];
 
