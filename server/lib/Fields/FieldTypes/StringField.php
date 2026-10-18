@@ -12,8 +12,10 @@ class StringField extends Field {
     /** @param array<string, mixed> $config */
     public function __construct(array $config = []) {
         parent::__construct($config);
-        $this->max_length = $config['max_length'] ?? null;
-        $this->allow_empty = $config['allow_empty'] ?? false;
+        $max_length = $config['max_length'] ?? null;
+        $this->max_length = is_int($max_length) ? $max_length : null;
+        $allow_empty = $config['allow_empty'] ?? false;
+        $this->allow_empty = is_bool($allow_empty) ? $allow_empty : false;
     }
 
     public function getMaxLength(): ?int {
@@ -39,7 +41,7 @@ class StringField extends Field {
             }
         }
         if ($this->max_length !== null) {
-            if ($value !== null && strlen($value) > $this->max_length) {
+            if (is_string($value) && strlen($value) > $this->max_length) {
                 $validation_result->recordError(Translator::__(
                     'fields.must_not_be_longer',
                     ['max_length' => "{$this->max_length}"]

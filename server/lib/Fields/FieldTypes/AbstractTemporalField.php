@@ -12,8 +12,10 @@ abstract class AbstractTemporalField extends Field {
     /** @param array<string, mixed> $config */
     public function __construct(array $config = []) {
         parent::__construct($config);
-        $this->min_value = $config['min_value'] ?? null;
-        $this->max_value = $config['max_value'] ?? null;
+        $min_value = $config['min_value'] ?? null;
+        $this->min_value = is_string($min_value) ? $min_value : null;
+        $max_value = $config['max_value'] ?? null;
+        $this->max_value = is_string($max_value) ? $max_value : null;
     }
 
     public function getMinValue(): ?string {

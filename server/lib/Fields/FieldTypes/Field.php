@@ -12,9 +12,11 @@ class Field {
 
     /** @param array<string, mixed> $config */
     public function __construct(array $config = []) {
-        $this->allow_null = $config['allow_null'] ?? false;
+        $allow_null = $config['allow_null'] ?? false;
+        $this->allow_null = is_bool($allow_null) ? $allow_null : false;
         $this->default_value = $config['default_value'] ?? null;
-        $this->export_as = $config['export_as'] ?? null;
+        $export_as = $config['export_as'] ?? null;
+        $this->export_as = is_string($export_as) ? $export_as : null;
     }
 
     public function getAllowNull(): bool {

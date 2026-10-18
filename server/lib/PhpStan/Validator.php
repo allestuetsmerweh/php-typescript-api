@@ -253,10 +253,13 @@ final class Validator {
                 $value_node = $this->validateNode($item_value, $value_type);
                 if (!$value_node->isValid()) {
                     $result_node->recordErrorInKey("{$key}", $value_node->getErrors());
-                } elseif ($key_node->getValue() === null) {
-                    $result_node->recordErrorInKey("{$key}", Translator::__('fields.must_not_be_empty', []));
                 } else {
-                    $validated_value[$key_node->getValue()] = $value_node->getValue();
+                    $validated_key = $key_node->getValue();
+                    if (is_int($validated_key) || is_string($validated_key)) {
+                        $validated_value[$validated_key] = $value_node->getValue();
+                    } else {
+                        $result_node->recordErrorInKey("{$key}", Translator::__('fields.must_not_be_empty', []));
+                    }
                 }
             }
             $result_node->setValue($validated_value);

@@ -23,6 +23,7 @@ class DivideNumbersEndpoint extends Endpoint {
     }
 
     protected function handle(mixed $input): mixed {
+        /** @var array{dividend: int|float, divisor: int|float} $input */
         $dividend = $input['dividend'];
         $divisor = $input['divisor'];
         if ($divisor === 0 || $divisor === 0.0) {

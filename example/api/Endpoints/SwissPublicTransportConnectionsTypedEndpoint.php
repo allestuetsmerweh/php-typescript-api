@@ -13,6 +13,12 @@ use PhpTypeScriptApi\TypedEndpoint;
  * @phpstan-type SptStop array{stationId: string, arrival: ?string, departure: ?string, delay: ?int, platform: ?string}
  * @phpstan-type SptSection array{departure: SptStop, arrival: SptStop, passList: array<SptStop>}
  * @phpstan-type SptConnection array{sections: array<SptSection>}
+ * @phpstan-type SptBackendCoordinate array{type: string, x: string, y: string}
+ * @phpstan-type SptBackendLocation array{id: string, name: string, coordinate: SptBackendCoordinate}
+ * @phpstan-type SptBackendStop array{station: ?SptBackendLocation, arrival: ?string, departure: ?string, delay: ?int, platform: ?string}
+ * @phpstan-type SptBackendSection array{departure: SptBackendStop, arrival: SptBackendStop, journey: array{passList: array<SptBackendStop>}}
+ * @phpstan-type SptBackendConnection array{sections: array<SptBackendSection>}
+ * @phpstan-type SptBackendResult array{connections: array<SptBackendConnection>}
  *
  * @extends TypedEndpoint<
  *   array{'from': string, 'to': string, 'via': ?array<string>, 'date': \PhpTypeScriptApi\PhpStan\IsoDate, 'time': string, 'isArrivalTime': ?bool},
@@ -36,13 +42,15 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
         }
         $backend_result = json_decode($backend_response, true);
         return [
+            // @phpstan-ignore argument.type
             'stationById' => $this->getStationByIds($backend_result),
+            // @phpstan-ignore argument.type
             'connections' => $this->getConnections($backend_result),
         ];
     }
 
     /**
-     * @param array<string, mixed> $backend_result
+     * @param SptBackendResult $backend_result
      *
      * @return array<string, SptLocation>
      */
@@ -66,7 +74,7 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_station
+     * @param SptBackendLocation $backend_station
      *
      * @return SptLocation
      */
@@ -79,7 +87,7 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @param array<string, mixed> $args
+     * @param SptBackendCoordinate $args
      *
      * @return SptCoordinate
      */
@@ -92,7 +100,7 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_result
+     * @param SptBackendResult $backend_result
      *
      * @return array<SptConnection>
      */
@@ -117,13 +125,17 @@ class SwissPublicTransportConnectionsTypedEndpoint extends TypedEndpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_stop
+     * @param SptBackendStop $backend_stop
      *
      * @return SptStop
      */
     protected function convertStop(array $backend_stop): array {
+        $station = $backend_stop['station'] ?? null;
+        if ($station === null) {
+            throw new Exception('Backend stop must contain a station.');
+        }
         return [
-            'stationId' => $backend_stop['station']['id'],
+            'stationId' => $station['id'],
             'arrival' => $this->getTime($backend_stop['arrival'] ?? null),
             'departure' => $this->getTime($backend_stop['departure'] ?? null),
             'delay' => $backend_stop['delay'],

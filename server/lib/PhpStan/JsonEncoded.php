@@ -42,6 +42,7 @@ class JsonEncoded implements ApiObjectInterface {
         if (!$result_node->isValid()) {
             throw new \InvalidArgumentException("{$class_name} must be valid {$type_node}");
         }
+        // @phpstan-ignore return.type
         return new self($wire);
     }
 
@@ -61,6 +62,7 @@ class JsonEncoded implements ApiObjectInterface {
             $pretty_data = var_export($data, true);
             throw new \Exception("JsonEncoded::fromData with invalid data: {$pretty_data}");
         }
+        // @phpstan-ignore return.type
         return new JsonEncoded($json_encoded_data);
     }
 

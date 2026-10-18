@@ -17,6 +17,9 @@ class SquareRootEndpoint extends Endpoint {
     }
 
     protected function handle(mixed $input): mixed {
-        return sqrt($input);
+        if (!is_numeric($input)) {
+            throw new InvalidArgumentException('Input must be numeric.');
+        }
+        return sqrt((float) $input);
     }
 }

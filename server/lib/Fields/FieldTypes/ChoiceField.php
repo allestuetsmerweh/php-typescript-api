@@ -16,12 +16,20 @@ class ChoiceField extends Field {
         if ($field_map === null) {
             throw new \Exception('`field_map` must be defined.');
         }
+        if (!is_array($field_map)) {
+            throw new \Exception('`field_map` must be an array.');
+        }
+        $validated_field_map = [];
         foreach ($field_map as $key => $field) {
+            if (!is_string($key)) {
+                throw new \Exception('`field_map` keys must be strings.');
+            }
             if (!$field instanceof Field) {
                 throw new \Exception("Field für Schlüssel '{$key}' muss ein Field sein.");
             }
+            $validated_field_map[$key] = $field;
         }
-        $this->field_map = $field_map;
+        $this->field_map = $validated_field_map;
     }
 
     /** @return array<string, Field> */
