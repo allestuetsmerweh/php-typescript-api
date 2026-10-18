@@ -18,6 +18,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 abstract class TypedEndpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
+    use EndpointTrait;
 
     protected PhpStanUtils $phpStanUtils;
     private ?TypeNode $requestTypeNode = null;

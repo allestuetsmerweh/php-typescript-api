@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class Endpoint implements EndpointInterface {
     use \Psr\Log\LoggerAwareTrait;
+    use EndpointTrait;
 
     private mixed $setupFunction = null;
 
