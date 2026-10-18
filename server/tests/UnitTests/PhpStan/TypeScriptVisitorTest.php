@@ -46,10 +46,11 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame('number', $this->getTypeScript('float'));
         $this->assertSame('number', $this->getTypeScript('double'));
         $this->assertSame('number', $this->getTypeScript('number'));
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: scalar',
-            $this->getTypeScript('scalar'),
-        );
+    }
+
+    public function testScalarNode(): void {
+        $this->assertSame('string | number', $this->getTypeScript('array-key'));
+        $this->assertSame('string | number | boolean', $this->getTypeScript('scalar'));
     }
 
     public function testStringNode(): void {
@@ -68,23 +69,14 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         );
         $this->assertSame('string', $this->getTypeScript('numeric-string'));
         $this->assertSame('string', $this->getTypeScript('non-empty-string'));
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: non-falsy-string',
-            $this->getTypeScript('non-falsy-string'),
-        );
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: truthy-string',
-            $this->getTypeScript('truthy-string'),
-        );
+        $this->assertSame('string', $this->getTypeScript('non-falsy-string'));
+        $this->assertSame('string', $this->getTypeScript('truthy-string'));
         $this->assertSame(
             '🛑Unknown IdentifierTypeNode name: literal-string',
             $this->getTypeScript('literal-string'),
         );
         $this->assertSame('string', $this->getTypeScript('lowercase-string'));
-        $this->assertSame(
-            '🛑Unknown IdentifierTypeNode name: array-key',
-            $this->getTypeScript('array-key'),
-        );
+        $this->assertSame('string', $this->getTypeScript('uppercase-string'));
     }
 
     public function testEnumNode(): void {
@@ -99,6 +91,15 @@ final class TypeScriptVisitorTest extends UnitTestCase {
         $this->assertSame("Array<(number | null)>", $this->getTypeScript("array<?int>"));
         $this->assertSame("Array<string>", $this->getTypeScript("array<string>"));
         $this->assertSame("Array<string>", $this->getTypeScript("non-empty-array<string>"));
+        $this->assertSame("Array<number>", $this->getTypeScript("int[]"));
+        $this->assertSame("Array<string>", $this->getTypeScript("string[]"));
+    }
+
+    public function testListNode(): void {
+        $this->assertSame("Array", $this->getTypeScript("list"));
+        $this->assertSame("Array<number>", $this->getTypeScript("list<int>"));
+        $this->assertSame("Array<boolean>", $this->getTypeScript("list<bool>"));
+        $this->assertSame("Array<string>", $this->getTypeScript("non-empty-list<string>"));
     }
 
     public function testDictNode(): void {

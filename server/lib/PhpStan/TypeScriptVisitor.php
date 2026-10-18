@@ -11,6 +11,7 @@ use PHPStan\PhpDocParser\Ast\ConstExpr\ConstExprStringNode;
 use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeItemNode;
 use PHPStan\PhpDocParser\Ast\Type\ArrayShapeNode;
+use PHPStan\PhpDocParser\Ast\Type\ArrayTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\ConstTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
 use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
@@ -81,14 +82,22 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
                 'float' => 'number',
                 'double' => 'number',
                 'number' => 'number',
+                // Scalar
+                'array-key' => 'string | number',
+                'scalar' => 'string | number | boolean',
                 // String
                 'string' => 'string',
                 'numeric-string' => 'string',
                 'non-empty-string' => 'string',
                 'lowercase-string' => 'string',
+                'uppercase-string' => 'string',
+                'truthy-string' => 'string',
+                'non-falsy-string' => 'string',
                 // Array
                 'array' => 'Array',
                 'non-empty-array' => 'Array',
+                'list' => 'Array',
+                'non-empty-list' => 'Array',
                 'object' => 'Array',
                 // Never
                 'never' => 'never',
@@ -120,6 +129,8 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
             // Do not modify $node in this case
         } elseif ($node instanceof UnionTypeNode) {
             // Do not modify $node in this case
+        } elseif ($node instanceof ArrayTypeNode) {
+            return new GenericTypeNode(new IdentifierTypeNode('Array'), [$node->type]);
         } elseif ($node instanceof NullableTypeNode) {
             return new UnionTypeNode([$node->type, new IdentifierTypeNode('null')]);
         } else {

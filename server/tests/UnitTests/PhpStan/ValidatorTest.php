@@ -246,7 +246,7 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNull($this->validate('number', 0));
         $this->assertNull($this->validate('number', 2));
         $this->assertNull($this->validate('number', PHP_INT_MAX));
-        $this->assertNull($this->validate('number', '5')); // wow!
+        $this->assertNotNull($this->validate('number', '5'));
         $this->assertNull($this->validate('number', 3.14));
         $this->assertNull($this->validate('number', 7.64E+5));
         $this->assertNull($this->validate('number', INF));
@@ -254,6 +254,41 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('number', 'text'));
         $this->assertNotNull($this->validate('number', [1, 2, 3]));
         $this->assertNotNull($this->validate('number', ['foo' => 'bar']));
+    }
+
+    public function testNumericNode(): void {
+        $this->assertNotNull($this->validate('numeric', null));
+        $this->assertNotNull($this->validate('numeric', true));
+        $this->assertNotNull($this->validate('numeric', false));
+        $this->assertNotNull($this->validate('numeric', 'text'));
+        $this->assertNotNull($this->validate('numeric', ''));
+        $this->assertNotNull($this->validate('numeric', [1, 2, 3]));
+        $this->assertNotNull($this->validate('numeric', ['foo' => 'bar']));
+        $this->assertNull($this->validate('numeric', PHP_INT_MIN));
+        $this->assertNull($this->validate('numeric', 0));
+        $this->assertNull($this->validate('numeric', 2));
+        $this->assertNull($this->validate('numeric', '5'));
+        $this->assertNull($this->validate('numeric', '-3.14'));
+        $this->assertNull($this->validate('numeric', 3.14));
+    }
+
+    public function testArrayKeyNode(): void {
+        $this->assertNotNull($this->validate('array-key', null));
+        $this->assertNotNull($this->validate('array-key', true));
+        $this->assertNotNull($this->validate('array-key', 3.14));
+        $this->assertNotNull($this->validate('array-key', [1, 2, 3]));
+        $this->assertNull($this->validate('array-key', 2));
+        $this->assertNull($this->validate('array-key', 'key'));
+    }
+
+    public function testScalarNode(): void {
+        $this->assertNotNull($this->validate('scalar', null));
+        $this->assertNotNull($this->validate('scalar', [1, 2, 3]));
+        $this->assertNull($this->validate('scalar', true));
+        $this->assertNull($this->validate('scalar', false));
+        $this->assertNull($this->validate('scalar', 2));
+        $this->assertNull($this->validate('scalar', 3.14));
+        $this->assertNull($this->validate('scalar', 'text'));
     }
 
     public function testIntRangeNode(): void {
@@ -405,15 +440,6 @@ final class ValidatorTest extends UnitTestCase {
 
     public function testUnsupportedNumberNodes(): void {
         try {
-            $this->validate('scalar', 1);
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: scalar',
-                $th->getMessage(),
-            );
-        }
-        try {
             $this->validate('3.1', [1, 'foo']);
             $this->fail('Error expected');
         } catch (\Throwable $th) {
@@ -461,6 +487,7 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('non-empty-string', 2));
         $this->assertNull($this->validate('non-empty-string', 'Foo Bar'));
         $this->assertNull($this->validate('non-empty-string', '5'));
+        $this->assertNull($this->validate('non-empty-string', '0'));
         $this->assertNull($this->validate('non-empty-string', '-3.14'));
         $this->assertNotNull($this->validate('non-empty-string', ''));
         $this->assertNull($this->validate('non-empty-string', 'lower'));
@@ -475,13 +502,56 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNotNull($this->validate('lowercase-string', false));
         $this->assertNotNull($this->validate('lowercase-string', 2));
         $this->assertNotNull($this->validate('lowercase-string', 'Foo Bar'));
-        $this->assertNotNull($this->validate('lowercase-string', '5'));
-        $this->assertNotNull($this->validate('lowercase-string', '-3.14'));
-        $this->assertNotNull($this->validate('lowercase-string', ''));
+        $this->assertNull($this->validate('lowercase-string', '5'));
+        $this->assertNull($this->validate('lowercase-string', '-3.14'));
+        $this->assertNull($this->validate('lowercase-string', ''));
         $this->assertNull($this->validate('lowercase-string', 'lower'));
+        $this->assertNull($this->validate('lowercase-string', 'lower 123'));
         $this->assertNotNull($this->validate('lowercase-string', 'UPPER'));
         $this->assertNotNull($this->validate('lowercase-string', [1, 2, 3]));
         $this->assertNotNull($this->validate('lowercase-string', ['foo' => 'bar']));
+    }
+
+    public function testUppercaseStringNode(): void {
+        $this->assertNotNull($this->validate('uppercase-string', null));
+        $this->assertNotNull($this->validate('uppercase-string', true));
+        $this->assertNotNull($this->validate('uppercase-string', false));
+        $this->assertNotNull($this->validate('uppercase-string', 2));
+        $this->assertNotNull($this->validate('uppercase-string', 'Foo Bar'));
+        $this->assertNull($this->validate('uppercase-string', '5'));
+        $this->assertNull($this->validate('uppercase-string', '-3.14'));
+        $this->assertNull($this->validate('uppercase-string', ''));
+        $this->assertNull($this->validate('uppercase-string', 'UPPER'));
+        $this->assertNull($this->validate('uppercase-string', 'UPPER 123'));
+        $this->assertNotNull($this->validate('uppercase-string', 'lower'));
+        $this->assertNotNull($this->validate('uppercase-string', [1, 2, 3]));
+        $this->assertNotNull($this->validate('uppercase-string', ['foo' => 'bar']));
+    }
+
+    public function testTruthyStringNode(): void {
+        $this->assertNotNull($this->validate('truthy-string', null));
+        $this->assertNotNull($this->validate('truthy-string', true));
+        $this->assertNotNull($this->validate('truthy-string', 2));
+        $this->assertNotNull($this->validate('truthy-string', ''));
+        $this->assertNotNull($this->validate('truthy-string', '0'));
+        $this->assertNotNull($this->validate('truthy-string', [1, 2, 3]));
+        $this->assertNull($this->validate('truthy-string', '0.0'));
+        $this->assertNull($this->validate('truthy-string', 'text'));
+        $this->assertNull($this->validate('truthy-string', 'lower'));
+        $this->assertNull($this->validate('truthy-string', 'UPPER'));
+    }
+
+    public function testNonFalsyStringNode(): void {
+        $this->assertNotNull($this->validate('non-falsy-string', null));
+        $this->assertNotNull($this->validate('non-falsy-string', true));
+        $this->assertNotNull($this->validate('non-falsy-string', 2));
+        $this->assertNotNull($this->validate('non-falsy-string', ''));
+        $this->assertNotNull($this->validate('non-falsy-string', '0'));
+        $this->assertNotNull($this->validate('non-falsy-string', [1, 2, 3]));
+        $this->assertNull($this->validate('non-falsy-string', '0.0'));
+        $this->assertNull($this->validate('non-falsy-string', 'text'));
+        $this->assertNull($this->validate('non-falsy-string', 'lower'));
+        $this->assertNull($this->validate('non-falsy-string', 'UPPER'));
     }
 
     public function testConstStringNode(): void {
@@ -529,38 +599,11 @@ final class ValidatorTest extends UnitTestCase {
             );
         }
         try {
-            $this->validate('non-falsy-string', 'foo');
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: non-falsy-string',
-                $th->getMessage(),
-            );
-        }
-        try {
-            $this->validate('truthy-string', 'foo');
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: truthy-string',
-                $th->getMessage(),
-            );
-        }
-        try {
             $this->validate('literal-string', 'foo');
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
                 'Unknown IdentifierTypeNode name: literal-string',
-                $th->getMessage(),
-            );
-        }
-        try {
-            $this->validate('array-key', 'foo');
-            $this->fail('Error expected');
-        } catch (\Throwable $th) {
-            $this->assertSame(
-                'Unknown IdentifierTypeNode name: array-key',
                 $th->getMessage(),
             );
         }
@@ -642,7 +685,7 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNull($this->validate('array<string>', ['a', 'b', 'c']));
         $this->assertNotNull($this->validate('array<string>', ['a', 'b', null]));
         $this->assertNotNull($this->validate('array<string>', [1, 2, 3]));
-        $this->assertNotNull($this->validate('array<string>', ['foo' => 'bar']));
+        $this->assertNull($this->validate('array<string>', ['foo' => 'bar']));
     }
 
     public function testStringNonEmptyArrayNode(): void {
@@ -656,7 +699,43 @@ final class ValidatorTest extends UnitTestCase {
         $this->assertNull($this->validate('non-empty-array<string>', ['a', 'b', 'c']));
         $this->assertNotNull($this->validate('non-empty-array<string>', ['a', 'b', null]));
         $this->assertNotNull($this->validate('non-empty-array<string>', [1, 2, 3]));
-        $this->assertNotNull($this->validate('non-empty-array<string>', ['foo' => 'bar']));
+        $this->assertNull($this->validate('non-empty-array<string>', ['foo' => 'bar']));
+    }
+
+    public function testStringListArrayNode(): void {
+        $this->assertNotNull($this->validate('list<string>', null));
+        $this->assertNotNull($this->validate('list<string>', true));
+        $this->assertNotNull($this->validate('list<string>', 2));
+        $this->assertNotNull($this->validate('list<string>', 'text'));
+        $this->assertNull($this->validate('list<string>', []));
+        $this->assertNull($this->validate('list<string>', ['foo']));
+        $this->assertNull($this->validate('list<string>', ['a', 'b', 'c']));
+        $this->assertNotNull($this->validate('list<string>', ['a', 'b', null]));
+        $this->assertNotNull($this->validate('list<string>', [1, 2, 3]));
+        $this->assertNotNull($this->validate('list<string>', ['foo' => 'bar']));
+        $this->assertNotNull($this->validate('list<string>', [2 => 'foo']));
+    }
+
+    public function testStringNonEmptyListArrayNode(): void {
+        $this->assertNotNull($this->validate('non-empty-list<string>', null));
+        $this->assertNotNull($this->validate('non-empty-list<string>', true));
+        $this->assertNotNull($this->validate('non-empty-list<string>', []));
+        $this->assertNull($this->validate('non-empty-list<string>', ['foo']));
+        $this->assertNull($this->validate('non-empty-list<string>', ['a', 'b', 'c']));
+        $this->assertNotNull($this->validate('non-empty-list<string>', ['a', 'b', null]));
+        $this->assertNotNull($this->validate('non-empty-list<string>', [1, 2, 3]));
+        $this->assertNotNull($this->validate('non-empty-list<string>', ['foo' => 'bar']));
+    }
+
+    public function testArrayTypeNode(): void {
+        $this->assertNotNull($this->validate('int[]', null));
+        $this->assertNotNull($this->validate('int[]', 2));
+        $this->assertNotNull($this->validate('int[]', 'text'));
+        $this->assertNull($this->validate('int[]', []));
+        $this->assertNull($this->validate('int[]', [1, 2, 3]));
+        $this->assertNotNull($this->validate('int[]', [1, 'a']));
+        $this->assertNull($this->validate('int[]', ['foo' => 1]));
+        $this->assertNotNull($this->validate('int[]', ['foo' => 'bar']));
     }
 
     public function testUnsupportedArrayNodes(): void {
