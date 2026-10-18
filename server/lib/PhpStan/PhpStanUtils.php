@@ -328,7 +328,7 @@ class PhpStanUtils {
                     if (!$resolved_implements_node instanceof ImplementsTagValueNode) {
                         // @codeCoverageIgnoreStart
                         // Reason: phpstan does not allow testing this!
-                        throw new \Exception("getSuperGenerics: Implements node {$implements_node} resolved to non-implements node {$resolved_implements_node}");
+                        throw new \Exception("getSuperGenerics: Implements node {$this->prettyNode($implements_node)} resolved to non-implements node {$resolved_implements_node}");
                         // @codeCoverageIgnoreEnd
                     }
                     return $resolved_implements_node->type->genericTypes;
@@ -340,7 +340,7 @@ class PhpStanUtils {
                 if (!$resolved_extends_node instanceof ExtendsTagValueNode) {
                     // @codeCoverageIgnoreStart
                     // Reason: phpstan does not allow testing this!
-                    throw new \Exception("getSuperGenerics: Extends node {$extends_node} resolved to non-extends node {$resolved_extends_node}");
+                    throw new \Exception("getSuperGenerics: Extends node {$this->prettyNode($extends_node)} resolved to non-extends node {$resolved_extends_node}");
                     // @codeCoverageIgnoreEnd
                 }
                 $extends_node = $resolved_extends_node;
@@ -401,12 +401,12 @@ class PhpStanUtils {
     }
 
     /** @param AliasCache $alias_cache */
-    public function getPrettyAliasCache(array $alias_cache): string {
+    public function prettyAliasCache(array $alias_cache): string {
         $out = '---';
         foreach ($alias_cache as $namespace => $aliases) {
             $out .= "\n{$namespace}\n";
             foreach ($aliases as $name => $alias) {
-                $out .= "    {$name} => {$this->getPrettyAlias($alias)}\n";
+                $out .= "    {$name} => {$this->prettyAlias($alias)}\n";
             }
         }
         $out .= "---\n";
@@ -414,11 +414,20 @@ class PhpStanUtils {
     }
 
     /** @param Alias $alias */
-    public function getPrettyAlias(array $alias): string {
+    public function prettyAlias(array $alias): string {
         if (isset($alias['type'])) {
             return "{$alias['type']}";
         }
         return "{$alias['namespace']}::{$alias['name']}";
+    }
+
+    public function prettyNode(?Node $node): string {
+        if ($node === null) {
+            return 'null';
+        }
+        $class_components = explode('\\', get_class($node));
+        $class_basename = $class_components[count($class_components) - 1];
+        return "{$node} ({$class_basename})";
     }
 
     /** @return ?\ReflectionClass<object> */

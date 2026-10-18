@@ -182,7 +182,7 @@ final class TypeScriptVisitorTest extends UnitTestCase {
 
     public function testUnsupportedNodes(): void {
         $this->assertSame(
-            '🛑leaveNode: Unknown node class: PHPStan\PhpDocParser\Ast\Type\ThisTypeNode',
+            '🛑leaveNode: Unknown node class: $this (ThisTypeNode)',
             $this->getTypeScript(new ThisTypeNode())
         );
     }

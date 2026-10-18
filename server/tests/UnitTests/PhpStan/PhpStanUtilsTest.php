@@ -6,6 +6,8 @@ namespace PhpTypeScriptApi\Tests\UnitTests\PhpStan;
 
 use PHPStan\PhpDocParser\Ast\Node;
 use PHPStan\PhpDocParser\Ast\Type\GenericTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\IdentifierTypeNode;
+use PHPStan\PhpDocParser\Ast\Type\ThisTypeNode;
 use PhpTypeScriptApi\PhpStan\ApiObjectInterface;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
@@ -857,18 +859,18 @@ final class PhpStanUtilsTest extends UnitTestCase {
         $this->assertEquals([], $utils->getTemplateAliases(null, $getGenericArgs("A<string, 'foo'>")));
     }
 
-    public function testGetPrettyAlias(): void {
+    public function testPrettyAlias(): void {
         $utils = new PhpStanUtils();
-        $this->assertSame("array<string>", $utils->getPrettyAlias([
+        $this->assertSame("array<string>", $utils->prettyAlias([
             'type' => $this->getTypeNode('array<string>'),
         ]));
-        $this->assertSame("Namespace::Name", $utils->getPrettyAlias([
+        $this->assertSame("Namespace::Name", $utils->prettyAlias([
             'namespace' => 'Namespace',
             'name' => 'Name',
         ]));
     }
 
-    public function testGetPrettyAliasCache(): void {
+    public function testPrettyAliasCache(): void {
         $utils = new PhpStanUtils();
 
         $this->assertSame(<<<'ZZZZZZZZZZ'
@@ -881,7 +883,7 @@ final class PhpStanUtilsTest extends UnitTestCase {
                 IntArrayType => array<int>
             ---
             
-            ZZZZZZZZZZ, $utils->getPrettyAliasCache([
+            ZZZZZZZZZZ, $utils->prettyAliasCache([
             'Class1' => [
                 'StringArrayType' => [
                     'type' => $this->getTypeNode('array<string>'),
@@ -897,5 +899,16 @@ final class PhpStanUtilsTest extends UnitTestCase {
                 ],
             ],
         ]));
+    }
+
+    public function testPrettyNodeNull(): void {
+        $utils = new PhpStanUtils();
+        $this->assertSame('null', $utils->prettyNode(null));
+    }
+
+    public function testPrettyNode(): void {
+        $utils = new PhpStanUtils();
+        $this->assertSame('int (IdentifierTypeNode)', $utils->prettyNode(new IdentifierTypeNode('int')));
+        $this->assertSame('$this (ThisTypeNode)', $utils->prettyNode(new ThisTypeNode()));
     }
 }
