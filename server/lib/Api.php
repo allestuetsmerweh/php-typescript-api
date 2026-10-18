@@ -4,7 +4,6 @@ namespace PhpTypeScriptApi;
 
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
 
 class Api {
     use \Psr\Log\LoggerAwareTrait;
@@ -111,6 +110,8 @@ class Api {
             $handler->registerErrorHandler();
             $handler->registerExceptionHandler();
         }
+        $response = new JsonResponse(null);
+        $endpoint = null;
         try {
             if (!isset($this->endpoints[$endpoint_name])) {
                 if ($this->logger) {
@@ -126,20 +127,21 @@ class Api {
                 $endpoint->setLogger(new \Monolog\Logger('NullLogger'));
             }
             $endpoint->setup();
+            $endpoint->setHttpContext($request, $response);
             $input = $endpoint->parseInput($request);
             $result = $endpoint->call($input);
-            return new JsonResponse($result, Response::HTTP_OK);
+            $response->setData($result);
         } catch (HttpError $httperr) {
-            return new JsonResponse(
-                $httperr->getStructuredAnswer(),
-                $httperr->getCode(),
-            );
+            $response->setData($httperr->getStructuredAnswer());
+            $response->setStatusCode($httperr->getCode());
         } finally {
+            $endpoint?->clearHttpContext();
             if ($this->logger) {
                 restore_error_handler();
                 restore_exception_handler();
             }
         }
+        return $response;
     }
 
     protected function getSanitizedEndpointName(string $path_info): string {
