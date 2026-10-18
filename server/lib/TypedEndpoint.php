@@ -7,7 +7,7 @@ use PHPStan\PhpDocParser\Ast\NodeTraverser;
 use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
 use PhpTypeScriptApi\PhpStan\TypeScriptVisitor;
-use PhpTypeScriptApi\PhpStan\ValidateVisitor;
+use PhpTypeScriptApi\PhpStan\Validator;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -96,7 +96,7 @@ abstract class TypedEndpoint implements EndpointInterface {
             throw new HttpError(429, Translator::__('endpoint.too_many_requests'));
         }
 
-        $result = ValidateVisitor::validateDeserialize(
+        $result = Validator::validateDeserialize(
             $this->phpStanUtils,
             $raw_input,
             $this->getRequestTypeNode(),
@@ -120,7 +120,7 @@ abstract class TypedEndpoint implements EndpointInterface {
             throw new HttpError(500, Translator::__('endpoint.internal_server_error'), $exc);
         }
 
-        $result = ValidateVisitor::validateSerialize(
+        $result = Validator::validateSerialize(
             $this->phpStanUtils,
             $raw_output,
             $this->getResponseTypeNode(),

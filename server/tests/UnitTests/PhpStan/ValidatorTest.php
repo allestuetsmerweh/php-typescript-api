@@ -9,15 +9,15 @@ use PHPStan\PhpDocParser\Ast\Type\TypeNode;
 use PhpTypeScriptApi\PhpStan\IsoDate;
 use PhpTypeScriptApi\PhpStan\IsoTime;
 use PhpTypeScriptApi\PhpStan\PhpStanUtils;
-use PhpTypeScriptApi\PhpStan\ValidateVisitor;
+use PhpTypeScriptApi\PhpStan\Validator;
 use PhpTypeScriptApi\Tests\UnitTests\Common\UnitTestCase;
 
 /**
  * @internal
  *
- * @covers \PhpTypeScriptApi\PhpStan\ValidateVisitor
+ * @covers \PhpTypeScriptApi\PhpStan\Validator
  */
-final class ValidateVisitorTest extends UnitTestCase {
+final class ValidatorTest extends UnitTestCase {
     public function testMixedNode(): void {
         $this->assertNull($this->validate('mixed', null));
         $this->assertNull($this->validate('mixed', true));
@@ -1019,11 +1019,11 @@ final class ValidateVisitorTest extends UnitTestCase {
 
         $this->assertSame(
             '2024-12-24',
-            ValidateVisitor::validateSerialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
+            Validator::validateSerialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
         );
         $this->assertSame(
             '2024-12-24',
-            ValidateVisitor::validateSerialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
+            Validator::validateSerialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
         );
     }
 
@@ -1033,11 +1033,11 @@ final class ValidateVisitorTest extends UnitTestCase {
 
         $this->assertEquals(
             new IsoDate('2024-12-24'),
-            ValidateVisitor::validateDeserialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
+            Validator::validateDeserialize($php_stan_utils, '2024-12-24', $type_node)->getValue(),
         );
         $this->assertEquals(
             new IsoDate('2024-12-24'),
-            ValidateVisitor::validateDeserialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
+            Validator::validateDeserialize($php_stan_utils, new IsoDate('2024-12-24'), $type_node)->getValue(),
         );
     }
 
@@ -1059,7 +1059,7 @@ final class ValidateVisitorTest extends UnitTestCase {
             $this->fail('Error expected');
         } catch (\Throwable $th) {
             $this->assertSame(
-                'enterNode: Unknown node class: $this (ThisTypeNode)',
+                'validateNode: Unknown node class: $this (ThisTypeNode)',
                 $th->getMessage(),
             );
         }
@@ -1079,7 +1079,7 @@ final class ValidateVisitorTest extends UnitTestCase {
         ];
         $php_stan_utils = new PhpStanUtils();
 
-        $result_node = ValidateVisitor::validateDeserialize($php_stan_utils, $value, $type_node, $aliases);
+        $result_node = Validator::validateDeserialize($php_stan_utils, $value, $type_node, $aliases);
         return $result_node->isValid() ? null : "{$result_node}";
     }
 }
