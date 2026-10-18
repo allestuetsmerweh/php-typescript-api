@@ -199,7 +199,7 @@ class IntermediateClass extends SuperClass implements BogusInterface, TheInterfa
     ) {
     }
 
-    /** @return array<array<T>> */
+    /** @return array<T> */
     public function get(): mixed {
         return $this->value;
     }

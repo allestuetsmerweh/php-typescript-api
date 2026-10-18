@@ -33,7 +33,7 @@ class ExampleBackendTestCase extends TestCase {
         date_default_timezone_set('UTC');
     }
 
-    /** @return array{output: bool|string, result: ?string, error: ?string, http_code: int} */
+    /** @return array{output: bool|string, result: mixed, error: ?string, http_code: int} */
     public function callBackend(string $endpoint, mixed $input): array {
         $backend_url = self::BACKEND_URL;
         $url = "{$backend_url}/{$endpoint}";
@@ -59,7 +59,9 @@ class ExampleBackendTestCase extends TestCase {
     }
 
     public static function tearDownAfterClass(): void {
-        proc_terminate(self::$process);
+        if (is_resource(self::$process)) {
+            proc_terminate(self::$process);
+        }
         if (is_string(self::$initial_dir)) {
             chdir(self::$initial_dir);
         }

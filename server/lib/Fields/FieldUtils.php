@@ -18,7 +18,9 @@ class FieldUtils {
         $value = $input ?? null;
         if ($options['parse'] ?? false) {
             try {
-                $value = $field->parse($value);
+                if (is_string($value) || $value === null) {
+                    $value = $field->parse($value);
+                }
             } catch (\Exception $exc) {
                 $errors = ['.' => [$exc->getMessage()]];
                 throw new ValidationError($errors);

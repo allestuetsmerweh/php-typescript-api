@@ -13,6 +13,9 @@ class EnumField extends Field {
     public function __construct(array $config = []) {
         parent::__construct($config);
         $allowed_values = $config['allowed_values'] ?? [];
+        if (!is_array($allowed_values)) {
+            throw new \Exception('`allowed_values` must be an array.');
+        }
         if (count($allowed_values) <= 0) {
             throw new \Exception('`allowed_values` must not be empty.');
         }

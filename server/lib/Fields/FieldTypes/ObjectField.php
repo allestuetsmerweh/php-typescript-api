@@ -13,12 +13,20 @@ class ObjectField extends Field {
     public function __construct(array $config = []) {
         parent::__construct($config);
         $field_structure = $config['field_structure'] ?? [];
+        if (!is_array($field_structure)) {
+            throw new \Exception('`field_structure` must be an array.');
+        }
+        $validated_field_structure = [];
         foreach ($field_structure as $key => $field) {
+            if (!is_string($key)) {
+                throw new \Exception('`field_structure` keys must be strings.');
+            }
             if (!$field instanceof Field) {
                 throw new \Exception("`field_structure`['{$key}'] must be an instance of `Field`");
             }
+            $validated_field_structure[$key] = $field;
         }
-        $this->field_structure = $field_structure;
+        $this->field_structure = $validated_field_structure;
     }
 
     /** @return array<string, Field> */

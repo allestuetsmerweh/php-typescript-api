@@ -21,7 +21,7 @@ class ValidationError extends \Exception {
         return $this->validationErrors;
     }
 
-    /** @return array<string, array<string>> */
+    /** @return array<string, array<mixed>> */
     public function getStructuredAnswer(): array {
         return $this->validationErrors;
     }

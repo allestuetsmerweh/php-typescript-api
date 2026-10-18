@@ -129,7 +129,28 @@ class Translator {
         if (!$messages_json_content) {
             return [];
         }
-        return json_decode($messages_json_content, true, depth: 512) ?? [];
+        $decoded = json_decode($messages_json_content, true, depth: 512);
+        if (!is_array($decoded)) {
+            return [];
+        }
+        $messages = [];
+        foreach ($decoded as $key => $value) {
+            if (!is_string($key)) {
+                continue;
+            }
+            if (is_string($value)) {
+                $messages[$key] = $value;
+            } elseif (is_array($value)) {
+                $nested_messages = [];
+                foreach ($value as $nested_key => $nested_value) {
+                    if (is_string($nested_key) && is_string($nested_value)) {
+                        $nested_messages[$nested_key] = $nested_value;
+                    }
+                }
+                $messages[$key] = $nested_messages;
+            }
+        }
+        return $messages;
     }
 
     public static function getInstance(): Translator {

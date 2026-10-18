@@ -8,6 +8,13 @@ use PhpTypeScriptApi\Fields\FieldTypes;
  *
  * for further information on the backend used, see
  * https://transport.opendata.ch/docs.html#connections
+ *
+ * @phpstan-type SptBackendCoordinate array{type: string, x: int|float, y: int|float}
+ * @phpstan-type SptBackendLocation array{id: string, name: string, coordinate: SptBackendCoordinate}
+ * @phpstan-type SptBackendStop array{station: ?SptBackendLocation, arrival: ?string, departure: ?string, delay: int|float, platform: ?string}
+ * @phpstan-type SptBackendSection array{departure: SptBackendStop, arrival: SptBackendStop, journey: array{passList: array<SptBackendStop>}}
+ * @phpstan-type SptBackendConnection array{sections: array<SptBackendSection>}
+ * @phpstan-type SptBackendResult array{connections: array<SptBackendConnection>}
  */
 class SwissPublicTransportConnectionsEndpoint extends Endpoint {
     public function runtimeSetup(): void {
@@ -98,6 +105,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
     }
 
     protected function handle(mixed $input): mixed {
+        /** @var array{from: string, to: string, via: ?array<string>, date: string, time: string, isArrivalTime: ?bool} $input */
         $base_url = 'https://transport.opendata.ch/v1/connections';
         $get_params = http_build_query([
             'from' => $input['from'],
@@ -113,13 +121,15 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
         }
         $backend_result = json_decode($backend_response, true);
         return [
+            // @phpstan-ignore argument.type
             'stationById' => $this->getStationByIds($backend_result),
+            // @phpstan-ignore argument.type
             'connections' => $this->getConnections($backend_result),
         ];
     }
 
     /**
-     * @param array<string, mixed> $backend_result
+     * @param SptBackendResult $backend_result
      *
      * @return array<int|string, array{id: string, name: string, coordinate: array{type: string, x: int|float, y: int|float}}>
      */
@@ -141,7 +151,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_station
+     * @param SptBackendLocation $backend_station
      *
      * @return array{id: string, name: string, coordinate: array{type: string, x: int|float, y: int|float}}
      */
@@ -158,7 +168,7 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_result
+     * @param SptBackendResult $backend_result
      *
      * @return array<array{sections: array<mixed>}>
      */
@@ -183,13 +193,17 @@ class SwissPublicTransportConnectionsEndpoint extends Endpoint {
     }
 
     /**
-     * @param array<string, mixed> $backend_stop
+     * @param SptBackendStop $backend_stop
      *
      * @return array{stationId: string, arrival: ?string, departure: ?string, delay: int|float, platform: ?string}
      */
     protected function convertStop(array $backend_stop): array {
+        $station = $backend_stop['station'] ?? null;
+        if ($station === null) {
+            throw new Exception('Backend stop must contain a station.');
+        }
         return [
-            'stationId' => $backend_stop['station']['id'],
+            'stationId' => $station['id'],
             'arrival' => $this->getTime($backend_stop['arrival'] ?? null),
             'departure' => $this->getTime($backend_stop['departure'] ?? null),
             'delay' => $backend_stop['delay'],

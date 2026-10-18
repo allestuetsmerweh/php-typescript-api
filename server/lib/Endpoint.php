@@ -17,6 +17,9 @@ abstract class Endpoint implements EndpointInterface {
             $this->runtimeSetup();
             return;
         }
+        if (!is_callable($setup_function)) {
+            throw new \Exception("Setup function must be callable");
+        }
         $setup_function($this);
     }
 
@@ -39,7 +42,10 @@ abstract class Endpoint implements EndpointInterface {
         $input = json_decode($request->getContent(), true, depth: 512);
         // GET param `request`.
         if (!$input && $request->query->has('request')) {
-            $input = json_decode($request->get('request'), true, depth: 512);
+            $request_param = $request->get('request');
+            if (is_string($request_param)) {
+                $input = json_decode($request_param, true, depth: 512);
+            }
         }
         return $input;
     }
