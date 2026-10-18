@@ -123,8 +123,7 @@ final class TypeScriptVisitor extends AbstractNodeVisitor {
         } elseif ($node instanceof NullableTypeNode) {
             return new UnionTypeNode([$node->type, new IdentifierTypeNode('null')]);
         } else {
-            $node_class_name = get_class($node);
-            throw new \Exception("leaveNode: Unknown node class: {$node_class_name}");
+            throw new \Exception("leaveNode: Unknown node class: {$this->phpStanUtils->prettyNode($node)}");
         }
         return $node;
     }

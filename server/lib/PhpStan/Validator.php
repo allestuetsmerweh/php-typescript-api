@@ -78,7 +78,7 @@ final class Validator {
                 }
                 return ValidationResultNode::valid($value);
             }
-            throw new \Exception("Unknown ConstTypeNode->constExpr {$this->prettyNode($node->constExpr)}");
+            throw new \Exception("Unknown ConstTypeNode->constExpr {$this->phpStanUtils->prettyNode($node->constExpr)}");
         }
         if ($node instanceof IdentifierTypeNode) {
             $mapping = [
@@ -155,37 +155,37 @@ final class Validator {
                     return ValidationResultNode::error(Translator::__('fields.must_be_type', ['type' => "{$node}"]));
                 }
                 if (count($node->genericTypes) !== 2) {
-                    throw new \Exception("{$this->prettyNode($node)} must have two generic types");
+                    throw new \Exception("{$this->phpStanUtils->prettyNode($node)} must have two generic types");
                 }
                 $lower = $node->genericTypes[0];
                 if ($lower instanceof ConstTypeNode) {
                     if (!$lower->constExpr instanceof ConstExprIntegerNode) {
-                        throw new \Exception("Unsupported lower constExpr {$this->prettyNode($lower->constExpr)}");
+                        throw new \Exception("Unsupported lower constExpr {$this->phpStanUtils->prettyNode($lower->constExpr)}");
                     }
                     if ($value < intval($lower->constExpr->value)) {
                         return ValidationResultNode::error(Translator::__('fields.must_not_be_smaller', ['min_value' => "{$lower}"]));
                     }
                 } elseif ($lower instanceof IdentifierTypeNode) {
                     if ($lower->name !== 'min') {
-                        throw new \Exception("Unsupported lower IdentifierTypeNode {$this->prettyNode($lower)}");
+                        throw new \Exception("Unsupported lower IdentifierTypeNode {$this->phpStanUtils->prettyNode($lower)}");
                     }
                 } else {
-                    throw new \Exception("Unsupported lower type {$this->prettyNode($lower)}");
+                    throw new \Exception("Unsupported lower type {$this->phpStanUtils->prettyNode($lower)}");
                 }
                 $upper = $node->genericTypes[1];
                 if ($upper instanceof ConstTypeNode) {
                     if (!$upper->constExpr instanceof ConstExprIntegerNode) {
-                        throw new \Exception("Unsupported upper constExpr {$this->prettyNode($upper->constExpr)}");
+                        throw new \Exception("Unsupported upper constExpr {$this->phpStanUtils->prettyNode($upper->constExpr)}");
                     }
                     if ($value > intval($upper->constExpr->value)) {
                         return ValidationResultNode::error(Translator::__('fields.must_not_be_larger', ['max_value' => "{$upper}"]));
                     }
                 } elseif ($upper instanceof IdentifierTypeNode) {
                     if ($upper->name !== 'max') {
-                        throw new \Exception("Unsupported upper IdentifierTypeNode {$this->prettyNode($upper)}");
+                        throw new \Exception("Unsupported upper IdentifierTypeNode {$this->phpStanUtils->prettyNode($upper)}");
                     }
                 } else {
-                    throw new \Exception("Unsupported upper type {$this->prettyNode($upper)}");
+                    throw new \Exception("Unsupported upper type {$this->phpStanUtils->prettyNode($upper)}");
                 }
                 return ValidationResultNode::valid($value);
             }
@@ -243,7 +243,7 @@ final class Validator {
                     $result_node->setValue($validated_value);
                     return $result_node;
                 }
-                throw new \Exception("{$this->prettyNode($node)} must have one or two generic types");
+                throw new \Exception("{$this->phpStanUtils->prettyNode($node)} must have one or two generic types");
             }
             throw new \Exception("Unknown GenericTypeNode {$node}");
         }
@@ -280,7 +280,7 @@ final class Validator {
                     }
                     $validated_value[$key] = $value_node->getValue();
                 } else {
-                    throw new \Exception("Object key must be ConstExprStringNode, not {$this->prettyNode($item->keyName)}");
+                    throw new \Exception("Object key must be ConstExprStringNode, not {$this->phpStanUtils->prettyNode($item->keyName)}");
                 }
             }
             $result_node->setValue($validated_value);
@@ -311,15 +311,6 @@ final class Validator {
             }
             return $this->validateNode($value, $node->type);
         }
-        throw new \Exception("validateNode: Unknown node class: {$this->prettyNode($node)}");
-    }
-
-    private function prettyNode(?Node $node): string {
-        if ($node === null) {
-            return 'null';
-        }
-        $class_components = explode('\\', get_class($node));
-        $class_basename = $class_components[count($class_components) - 1];
-        return "{$node} ({$class_basename})";
+        throw new \Exception("validateNode: Unknown node class: {$this->phpStanUtils->prettyNode($node)}");
     }
 }
